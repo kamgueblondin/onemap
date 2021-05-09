@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'oulu';
@@ -30,6 +31,9 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
+  // Navbar logo
+  logo: 'oulu/oulu-logo.png',
+
   searchParams: {
     'boundary.rect.min_lat': 64.71,
     'boundary.rect.max_lat': 65.38,
@@ -43,6 +47,10 @@ export default configMerger(walttiConfig, {
     address: 'Keskusta',
     lat: 65.0118,
     lon: 25.4702,
+  },
+
+  defaultSettings: {
+    walkBoardCost: 900,
   },
 
   defaultOrigins: [
@@ -90,7 +98,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Oulun joukkoliikenne joukkoliikenteen reittisuunnittelua varten Oulun, Iin, Kempeleen, Limingan, Lumijoen, Muhoksen ja Tyrnävän alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan.',
+          'Tämän palvelun tarjoaa Oulun joukkoliikenne joukkoliikenteen reittisuunnittelua varten Oulun, Iin, Kempeleen, Limingan, Lumijoen, Muhoksen ja Tyrnävän alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan.',
         ],
       },
     ],

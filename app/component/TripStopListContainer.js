@@ -9,27 +9,52 @@ import values from 'lodash/values';
 
 import TripRouteStop from './TripRouteStop';
 import { getDistanceToNearestStop } from '../util/geo-utils';
+import withBreakpoint from '../util/withBreakpoint';
 
-class TripStopListContainer extends React.Component {
+class TripStopListContainer extends React.PureComponent {
   static propTypes = {
     trip: PropTypes.object.isRequired,
     className: PropTypes.string,
     vehicles: PropTypes.object,
     locationState: PropTypes.object.isRequired,
     currentTime: PropTypes.object.isRequired,
+    relay: PropTypes.shape({
+      forceFetch: PropTypes.func.isRequired,
+    }).isRequired,
     tripStart: PropTypes.string.isRequired,
-    fullscreenMap: PropTypes.bool,
+    breakpoint: PropTypes.string,
+  };
+
+  static defaultProps = {
+    vehicles: {},
   };
 
   static contextTypes = {
-    breakpoint: PropTypes.string,
     config: PropTypes.object.isRequired,
   };
 
+  constructor(props) {
+    super(props);
+    this.state = { hasScrolled: false };
+  }
+
   componentDidMount() {
-    const el = document.getElementsByClassName('selected-tail-icon')[0];
-    if (el) {
-      el.scrollIntoView();
+    if (this.props.breakpoint === 'large') {
+      this.scrollToSelectedTailIcon();
+    }
+  }
+
+  componentWillReceiveProps({ relay, currentTime }) {
+    const currUnix = this.props.currentTime.unix();
+    const nextUnix = currentTime.unix();
+    if (currUnix !== nextUnix) {
+      relay.forceFetch();
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.props.breakpoint === 'large' && !this.state.hasScrolled) {
+      this.scrollToSelectedTailIcon();
     }
   }
 
@@ -43,19 +68,23 @@ class TripStopListContainer extends React.Component {
       : null;
 
   getStops() {
-    const stops = this.props.trip.stoptimesForDate.map(
-      stoptime => stoptime.stop,
-    );
+    const {
+      breakpoint,
+      currentTime,
+      trip,
+      tripStart,
+      vehicles: propVehicles,
+    } = this.props;
+    const stops = trip.stoptimesForDate.map(stoptime => stoptime.stop);
 
     const nearest = this.getNearestStopDistance(stops);
 
-    const mode = this.props.trip.route.mode.toLowerCase();
+    const mode = trip.route.mode.toLowerCase();
 
     const vehicles = groupBy(
-      values(this.props.vehicles)
+      values(propVehicles)
         .filter(
-          vehicle =>
-            this.props.currentTime - vehicle.timestamp * 1000 < 5 * 60 * 1000,
+          vehicle => currentTime - vehicle.timestamp * 1000 < 5 * 60 * 1000,
         )
         .filter(
           vehicle =>
@@ -65,16 +94,14 @@ class TripStopListContainer extends React.Component {
     );
 
     const vehicleStops = groupBy(
-      vehicles[this.props.trip.pattern.directionId],
+      vehicles[trip.pattern.directionId],
       vehicle => `HSL:${vehicle.next_stop}`,
     );
 
-    const vehiclesWithCorrectStartTime = Object.keys(this.props.vehicles)
-      .map(key => this.props.vehicles[key])
-      .filter(
-        vehicle => vehicle.direction === this.props.trip.pattern.directionId,
-      )
-      .filter(vehicle => vehicle.tripStartTime === this.props.tripStart);
+    const vehiclesWithCorrectStartTime = Object.keys(propVehicles)
+      .map(key => propVehicles[key])
+      .filter(vehicle => vehicle.direction === trip.pattern.directionId)
+      .filter(vehicle => vehicle.tripStartTime === tripStart);
 
     // selected vehicle
     const vehicle =
@@ -84,14 +111,11 @@ class TripStopListContainer extends React.Component {
 
     let stopPassed = true;
 
-    return this.props.trip.stoptimesForDate.map((stoptime, index) => {
+    return trip.stoptimesForDate.map((stoptime, index) => {
       if (nextStop === stoptime.stop.gtfsId) {
         stopPassed = false;
-      } else if (vehicle.stop_index === index) {
-        stopPassed = false;
       } else if (
-        stoptime.realtimeDeparture + stoptime.serviceDay >
-          this.props.currentTime &&
+        stoptime.realtimeDeparture + stoptime.serviceDay > currentTime.unix() &&
         isEmpty(vehicle)
       ) {
         stopPassed = false;
@@ -103,11 +127,7 @@ class TripStopListContainer extends React.Component {
           stoptime={stoptime}
           stop={stoptime.stop}
           mode={mode}
-          color={
-            this.props.trip.route && this.props.trip.route.color
-              ? `#${this.props.trip.route.color}`
-              : null
-          }
+          color={trip.route && trip.route.color ? `#${trip.route.color}` : null}
           vehicles={vehicleStops[stoptime.stop.gtfsId]}
           selectedVehicle={vehicle}
           stopPassed={stopPassed}
@@ -120,18 +140,25 @@ class TripStopListContainer extends React.Component {
               this.context.config.nearestStopDistance.maxShownDistance &&
             nearest.distance
           }
-          currentTime={this.props.currentTime.unix()}
+          currentTime={currentTime.unix()}
           realtimeDeparture={stoptime.realtimeDeparture}
-          pattern={this.props.trip.pattern.code}
-          route={this.props.trip.route.gtfsId}
-          last={index === this.props.trip.stoptimesForDate.length - 1}
+          pattern={trip.pattern.code}
+          route={trip.route.gtfsId}
+          last={index === trip.stoptimesForDate.length - 1}
           first={index === 0}
-          fullscreenMap={this.props.fullscreenMap}
-          className={`bp-${this.context.breakpoint}`}
+          className={`bp-${breakpoint}`}
         />
       );
     });
   }
+
+  scrollToSelectedTailIcon = () => {
+    const el = document.getElementsByClassName('selected-tail-icon')[0];
+    if (el) {
+      el.scrollIntoView();
+      this.setState({ hasScrolled: true });
+    }
+  };
 
   render() {
     return (
@@ -144,9 +171,9 @@ class TripStopListContainer extends React.Component {
   }
 }
 
-export default Relay.createContainer(
+const connectedComponent = Relay.createContainer(
   connectToStores(
-    TripStopListContainer,
+    withBreakpoint(TripStopListContainer),
     ['RealTimeInformationStore', 'PositionStore', 'TimeStore'],
     ({ getStore }) => ({
       vehicles: getStore('RealTimeInformationStore').vehicles,
@@ -168,13 +195,16 @@ export default Relay.createContainer(
           directionId
         }
         stoptimesForDate {
-          stop{
+          stop {
             gtfsId
             name
             desc
             code
             lat
             lon
+            alerts {
+              alertSeverityLevel
+            }
           }
           realtimeDeparture
           realtime
@@ -187,3 +217,5 @@ export default Relay.createContainer(
     },
   },
 );
+
+export { connectedComponent as default, TripStopListContainer as Component };

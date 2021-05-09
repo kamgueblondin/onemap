@@ -3,11 +3,11 @@ import React from 'react';
 import { intlShape } from 'react-intl';
 import cx from 'classnames';
 import { routerShape, locationShape } from 'react-router';
-import getContext from 'recompose/getContext';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 import shouldUpdate from 'recompose/shouldUpdate';
 import isEqual from 'lodash/isEqual';
 import d from 'debug';
+
 import {
   initGeolocation,
   checkPositioningPermission,
@@ -15,7 +15,7 @@ import {
 import storeOrigin from '../action/originActions';
 import FrontPagePanelLarge from './FrontPagePanelLarge';
 import FrontPagePanelSmall from './FrontPagePanelSmall';
-import MapWithTracking from '../component/map/MapWithTracking';
+import MapWithTracking from './map/MapWithTracking';
 import PageFooter from './PageFooter';
 import DTAutosuggestPanel from './DTAutosuggestPanel';
 import { isBrowser } from '../util/browser';
@@ -31,7 +31,12 @@ import { dtLocationShape } from '../util/shapes';
 import Icon from './Icon';
 import NearbyRoutesPanel from './NearbyRoutesPanel';
 import FavouritesPanel from './FavouritesPanel';
+import SelectMapLayersDialog from './SelectMapLayersDialog';
+import SelectStreetModeDialog from './SelectStreetModeDialog';
 import events from '../util/events';
+import * as ModeUtils from '../util/modeUtils';
+import withBreakpoint from '../util/withBreakpoint';
+import ComponentUsageExample from './ComponentUsageExample';
 
 const debug = d('IndexPage.js');
 
@@ -39,17 +44,29 @@ class IndexPage extends React.Component {
   static contextTypes = {
     location: locationShape.isRequired,
     router: routerShape.isRequired,
-    piwik: PropTypes.object,
     config: PropTypes.object.isRequired,
     executeAction: PropTypes.func.isRequired,
   };
 
   static propTypes = {
+    autoSetOrigin: PropTypes.bool,
     breakpoint: PropTypes.string.isRequired,
     origin: dtLocationShape.isRequired,
     destination: dtLocationShape.isRequired,
     tab: PropTypes.string,
     showSpinner: PropTypes.bool.isRequired,
+    routes: PropTypes.arrayOf(
+      PropTypes.shape({
+        footerOptions: PropTypes.shape({
+          hidden: PropTypes.bool,
+        }),
+      }).isRequired,
+    ).isRequired,
+  };
+
+  static defaultProps = {
+    autoSetOrigin: true,
+    tab: TAB_NEARBY,
   };
 
   constructor(props, context) {
@@ -57,7 +74,9 @@ class IndexPage extends React.Component {
     this.state = {
       mapExpanded: false, // Show right-now as default
     };
-    context.executeAction(storeOrigin, props.origin);
+    if (this.props.autoSetOrigin) {
+      context.executeAction(storeOrigin, props.origin);
+    }
   }
 
   componentDidMount() {
@@ -70,7 +89,6 @@ class IndexPage extends React.Component {
   }
 
   componentWillReceiveProps = nextProps => {
-    this.handleBreakpointProps(nextProps);
     this.handleLocationProps(nextProps);
   };
 
@@ -93,20 +111,6 @@ class IndexPage extends React.Component {
     }
   };
 
-  handleBreakpointProps = nextProps => {
-    const frombp = this.props.breakpoint;
-    const tobp = nextProps.breakpoint;
-
-    if (frombp === tobp) {
-      return;
-    }
-
-    if (this.getSelectedTab() === undefined) {
-      // auto open nearby tab on bp change to large
-      this.clickNearby();
-    }
-  };
-
   /* eslint-disable no-param-reassign */
   handleLocationProps = nextProps => {
     if (!isEqual(nextProps.origin, this.props.origin)) {
@@ -125,20 +129,24 @@ class IndexPage extends React.Component {
     }
   };
 
-  trackEvent = (...args) => {
-    if (typeof this.context.piwik === 'object') {
-      this.context.piwik.trackEvent(...args);
-    }
-  };
-
   clickNearby = () => {
     this.openTab(TAB_NEARBY);
-    this.trackEvent('Front page tabs', 'Nearby', 'open');
+    window.dataLayer.push({
+      event: 'sendMatomoEvent',
+      category: 'Front page tabs',
+      action: 'Nearby',
+      name: 'open',
+    });
   };
 
   clickFavourites = () => {
     this.openTab(TAB_FAVOURITES);
-    this.trackEvent('Front page tabs', 'Favourites', 'open');
+    window.dataLayer.push({
+      event: 'sendMatomoEvent',
+      category: 'Front page tabs',
+      action: 'Favourites',
+      name: 'open',
+    });
   };
 
   openTab = tab => {
@@ -157,44 +165,64 @@ class IndexPage extends React.Component {
   };
 
   renderTab = () => {
+    let Tab;
     switch (this.props.tab) {
       case TAB_NEARBY:
-        return (
-          <NearbyRoutesPanel
-            origin={this.props.origin}
-            destination={this.props.destination}
-          />
-        );
+        Tab = NearbyRoutesPanel;
+        break;
       case TAB_FAVOURITES:
-        return (
-          <FavouritesPanel
-            origin={this.props.origin}
-            destination={this.props.destination}
-          />
-        );
+        Tab = FavouritesPanel;
+        break;
       default:
-        return null;
+        Tab = NearbyRoutesPanel;
     }
+    return (
+      <Tab origin={this.props.origin} destination={this.props.destination} />
+    );
   };
+
+  renderStreetModeSelector = (config, router) => (
+    <SelectStreetModeDialog
+      selectedStreetMode={ModeUtils.getStreetMode(router.location, config)}
+      selectStreetMode={(streetMode, isExclusive) =>
+        ModeUtils.setStreetMode(streetMode, config, router, isExclusive)
+      }
+      streetModeConfigs={ModeUtils.getAvailableStreetModeConfigs(config)}
+    />
+  );
+
+  renderMapLayerSelector = () => <SelectMapLayersDialog />;
+
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
   render() {
+    const { config, router } = this.context;
+    const { breakpoint, destination, origin, routes, tab } = this.props;
+    const { mapExpanded } = this.state;
+
+    const footerOptions = Object.assign(
+      {},
+      ...routes.map(route => route.footerOptions),
+    );
     const selectedMainTab = this.getSelectedTab();
 
-    return this.props.breakpoint === 'large' ? (
+    return breakpoint === 'large' ? (
       <div
-        className={`front-page flex-vertical ${this.props.origin &&
-          this.props.origin.gps === true &&
-          this.props.origin.ready === false &&
-          this.props.origin.gpsError === false &&
-          `blurred`} fullscreen bp-${this.props.breakpoint}`}
+        className={`front-page flex-vertical ${origin &&
+          origin.gps === true &&
+          origin.ready === false &&
+          origin.gpsError === false &&
+          `blurred`} fullscreen bp-${breakpoint}`}
       >
-        <DTAutosuggestPanel
-          origin={this.props.origin}
-          destination={this.props.destination}
-          tab={this.props.tab}
-          searchType="all"
-          originPlaceHolder="search-origin"
-        />
+        <div className="search-container">
+          <DTAutosuggestPanel
+            origin={origin}
+            destination={destination}
+            tab={tab}
+            searchType="all"
+            originPlaceHolder="search-origin"
+            destinationPlaceHolder="search-destination"
+          />
+        </div>
         <div key="foo" className="fpccontainer">
           <FrontPagePanelLarge
             selectedPanel={selectedMainTab}
@@ -205,43 +233,53 @@ class IndexPage extends React.Component {
           </FrontPagePanelLarge>
         </div>
         <MapWithTracking
-          breakpoint={this.props.breakpoint}
+          breakpoint={breakpoint}
           showStops
           showScaleBar
-          origin={this.props.origin}
+          origin={origin}
+          renderCustomButtons={() => (
+            <React.Fragment>
+              {this.renderStreetModeSelector(config, router)}
+              {this.renderMapLayerSelector()}
+            </React.Fragment>
+          )}
         />
         {(this.props.showSpinner && <OverlayWithSpinner />) || null}
-        <div id="page-footer-container">
-          <PageFooter
-            content={
-              (this.context.config.footer &&
-                this.context.config.footer.content) ||
-              []
-            }
-          />
-        </div>
+        {!footerOptions.hidden && (
+          <div id="page-footer-container">
+            <PageFooter
+              content={(config.footer && config.footer.content) || []}
+            />
+          </div>
+        )}
       </div>
     ) : (
       <div
-        className={`front-page flex-vertical ${this.props.origin &&
-          this.props.origin.gps === true &&
-          this.props.origin.ready === false &&
-          this.props.origin.gpsError === false &&
-          `blurred`} fullscreen bp-${this.props.breakpoint}`}
+        className={`front-page flex-vertical ${origin &&
+          origin.gps === true &&
+          origin.ready === false &&
+          origin.gpsError === false &&
+          `blurred`} fullscreen bp-${breakpoint}`}
       >
         <div
           className={cx('flex-grow', 'map-container', {
-            expanded: this.state.mapExpanded,
+            expanded: mapExpanded,
           })}
         >
           <MapWithTracking
-            breakpoint={this.props.breakpoint}
+            breakpoint={breakpoint}
             showStops
-            origin={this.props.origin}
+            origin={origin}
+            renderCustomButtons={() => (
+              <React.Fragment>
+                {this.renderStreetModeSelector(config, router)}
+                {this.renderMapLayerSelector()}
+              </React.Fragment>
+            )}
           >
             {(this.props.showSpinner && <OverlayWithSpinner />) || null}
             <DTAutosuggestPanel
-              origin={this.props.origin}
+              origin={origin}
               destination={this.props.destination}
               searchType="all"
               originPlaceHolder="search-origin"
@@ -250,26 +288,24 @@ class IndexPage extends React.Component {
           </MapWithTracking>
         </div>
         <div style={{ position: 'relative' }}>
-          {
-            <div
-              className={cx('fullscreen-toggle', {
-                expanded: this.state.mapExpanded,
-              })}
-              onClick={this.togglePanelExpanded}
-            >
-              {this.state.mapExpanded ? (
-                <Icon img="icon-icon_minimize" className="cursor-pointer" />
-              ) : (
-                <Icon img="icon-icon_maximize" className="cursor-pointer" />
-              )}
-            </div>
-          }
+          <div
+            className={cx('fullscreen-toggle', {
+              expanded: mapExpanded,
+            })}
+            onClick={this.togglePanelExpanded}
+          >
+            {mapExpanded ? (
+              <Icon img="icon-icon_minimize" className="cursor-pointer" />
+            ) : (
+              <Icon img="icon-icon_maximize" className="cursor-pointer" />
+            )}
+          </div>
           <FrontPagePanelSmall
             selectedPanel={selectedMainTab}
             nearbyClicked={this.clickNearby}
             favouritesClicked={this.clickFavourites}
-            mapExpanded={this.state.mapExpanded}
-            location={this.props.origin}
+            mapExpanded={mapExpanded}
+            location={origin}
           >
             {this.renderTab()}
           </FrontPagePanelSmall>
@@ -293,16 +329,24 @@ const Index = shouldUpdate(
     ),
 )(IndexPage);
 
-const IndexPageWithBreakpoint = getContext({
-  breakpoint: PropTypes.string.isRequired,
-})(Index);
+const IndexPageWithBreakpoint = withBreakpoint(Index);
 
-const IndexPageWithLang = connectToStores(
-  IndexPageWithBreakpoint,
-  ['PreferencesStore'],
-  context => ({
-    lang: context.getStore('PreferencesStore').getLanguage(),
-  }),
+IndexPageWithBreakpoint.description = (
+  <ComponentUsageExample isFullscreen>
+    <IndexPageWithBreakpoint
+      autoSetOrigin={false}
+      destination={{
+        ready: false,
+        set: false,
+      }}
+      origin={{
+        ready: false,
+        set: false,
+      }}
+      routes={[]}
+      showSpinner={false}
+    />
+  </ComponentUsageExample>
 );
 
 /* eslint-disable no-param-reassign */
@@ -340,7 +384,7 @@ const processLocation = (locationString, locationState, intl) => {
 const tabs = [TAB_FAVOURITES, TAB_NEARBY];
 
 const IndexPageWithPosition = connectToStores(
-  IndexPageWithLang,
+  IndexPageWithBreakpoint,
   ['PositionStore'],
   (context, props) => {
     const locationState = context.getStore('PositionStore').getLocationState();
@@ -425,6 +469,8 @@ const IndexPageWithPosition = connectToStores(
         }
       });
     }
+    newProps.lang = context.getStore('PreferencesStore').getLanguage();
+
     return newProps;
   },
 );
@@ -437,4 +483,7 @@ IndexPageWithPosition.contextTypes = {
   intl: intlShape,
 };
 
-export default IndexPageWithPosition;
+export {
+  IndexPageWithPosition as default,
+  IndexPageWithBreakpoint as Component,
+};

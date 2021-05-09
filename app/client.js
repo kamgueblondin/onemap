@@ -17,7 +17,7 @@ import {
   batchMiddleware,
 } from 'react-relay-network-layer/lib';
 import OfflinePlugin from 'offline-plugin/runtime';
-import moment from 'moment-timezone';
+import Helmet from 'react-helmet';
 
 import Raven from './util/Raven';
 import configureMoment from './util/configure-moment';
@@ -27,12 +27,11 @@ import appCreator from './app';
 import translations from './translations';
 import historyCreator from './history';
 import { BUILD_TIME } from './buildInfo';
-import createPiwik from './util/piwik';
 import ErrorBoundary from './component/ErrorBoundary';
-
-import { getGeocodingResult } from './util/searchUtils';
-import { locationToOTP } from './util/otpStrings';
-import { kkj2ToWgs84 } from './util/geo-utils';
+import oldParamParser from './util/oldParamParser';
+import { ClientProvider as ClientBreakpointProvider } from './util/withBreakpoint';
+import meta from './meta';
+import { isIOSApp } from './util/browser';
 
 const plugContext = f => () => ({
   plugComponentContext: f,
@@ -45,19 +44,7 @@ window.debug = debug; // Allow _debug.enable('*') in browser console
 // TODO: this is an ugly hack, but required due to cyclical processing in app
 const { config } = window.state.context.plugins['extra-context-plugin'];
 const app = appCreator(config);
-
 const raven = Raven(config.SENTRY_DSN);
-const piwik = createPiwik(config, raven);
-
-const addPiwik = c => {
-  c.piwik = piwik; // eslint-disable-line no-param-reassign
-};
-
-const piwikPlugin = {
-  name: 'PiwikPlugin',
-  plugContext: plugContext(addPiwik),
-};
-
 const addRaven = c => {
   c.raven = raven; // eslint-disable-line no-param-reassign
 };
@@ -69,7 +56,6 @@ const ravenPlugin = {
 
 // Add plugins
 app.plug(ravenPlugin);
-app.plug(piwikPlugin);
 
 const getParams = query => {
   if (!query) {
@@ -87,57 +73,6 @@ const getParams = query => {
     }, {});
 };
 
-const placeParser = /^[^*]*\*([^*]*)\*([^*]*)\*([^*]*)/;
-
-function parseGeocodingResults(results) {
-  if (!Array.isArray(results) || results.length < 1) {
-    return ' ';
-  }
-  return locationToOTP({
-    address: results[0].properties.label,
-    lon: results[0].geometry.coordinates[0],
-    lat: results[0].geometry.coordinates[1],
-  });
-}
-
-function parseLocation(location, input, next) {
-  if (location) {
-    const parsedFrom = placeParser.exec(location);
-    if (parsedFrom) {
-      const coords = kkj2ToWgs84([parsedFrom[2], parsedFrom[3]]);
-      return Promise.resolve(
-        locationToOTP({
-          address: parsedFrom[1],
-          lon: coords[0],
-          lat: coords[1],
-        }),
-      );
-    }
-    return getGeocodingResult(
-      location,
-      config.searchParams,
-      null,
-      null,
-      null,
-      config,
-    )
-      .then(parseGeocodingResults)
-      .catch(next);
-  } else if (input) {
-    return getGeocodingResult(
-      input,
-      config.searchParams,
-      null,
-      null,
-      null,
-      config,
-    )
-      .then(parseGeocodingResults)
-      .catch(next);
-  }
-  return ' ';
-}
-
 // Run application
 const callback = () =>
   app.rehydrate(window.state, (err, context) => {
@@ -146,6 +81,8 @@ const callback = () =>
     }
 
     window.context = context;
+    // For Google Tag Manager
+    window.dataLayer = window.dataLayer || [];
 
     if (process.env.NODE_ENV === 'development') {
       try {
@@ -172,7 +109,6 @@ const callback = () =>
         next => req => {
           // eslint-disable-next-line no-param-reassign
           req.headers.OTPTimeout = config.OTPTimeout;
-          req.headers.id = piwik.getVisitorId();
           return next(req);
         },
       ]),
@@ -195,67 +131,30 @@ const callback = () =>
 
     configureMoment(language, config);
 
-    let hasSwUpdate = false;
-    const history = historyCreator(config);
+    const path = window.location.pathname;
+    const history = historyCreator(config, path);
 
     if (config.redirectReittiopasParams) {
-      const path = window.location.pathname;
       const query = getParams(window.location.search);
 
       if (query.from || query.to || query.from_in || query.to_in) {
-        const time = moment.tz(config.timezoneData.split('|')[0]);
-        if (query.year) {
-          time.year(query.year);
-        }
-        if (query.month) {
-          time.month(query.month - 1);
-        }
-        if (query.day) {
-          time.date(query.day);
-        }
-        if (query.hour) {
-          time.hour(query.hour);
-        }
-        if (query.minute) {
-          time.minute(query.minute);
-        }
-        let timeStr = `time=${time.unix()}&`;
-
-        if (config.queryMaxAgeDays) {
-          const now = moment.tz(config.timezoneData.split('|')[0]);
-          if (now.diff(time, 'days') > config.queryMaxAgeDays) {
-            // too old route time, drop it
-            timeStr = '';
-          }
-        }
-        const arriveBy = query.timetype === 'arrival';
-
-        Promise.all([
-          parseLocation(query.from, query.from_in, config),
-          parseLocation(query.to, query.to_in, config),
-        ]).then(([from, to]) => {
-          window.location.replace(
-            `/${from}/${to}?${timeStr}arriveBy=${arriveBy}`,
-          );
-        });
+        oldParamParser(query, config).then(redirectUrl =>
+          window.location.replace(redirectUrl),
+        );
       } else if (['/fi/', '/en/', '/sv/', '/ru/', '/slangi/'].includes(path)) {
         window.location.replace('/');
       }
     }
 
     function track() {
-      this.href = this.props.router.createHref(this.state.location);
-      piwik.setCustomUrl(this.href);
-      piwik.trackPageView();
-      if (hasSwUpdate && !this.state.location.state) {
-        window.location = this.href;
-      }
+      window.dataLayer.push({
+        event: 'Pageview',
+        url: this.href,
+      });
     }
 
     const ContextProvider = provideContext(StoreListeningIntlProvider, {
-      piwik: PropTypes.object,
       raven: PropTypes.object,
-      url: PropTypes.string,
       config: PropTypes.object,
       headers: PropTypes.object,
     });
@@ -270,37 +169,59 @@ const callback = () =>
         } else {
           IsomorphicRouter.prepareInitialRender(Relay.Store, renderProps).then(
             props => {
-              ReactDOM.hydrate(
-                <ContextProvider
-                  translations={translations}
-                  context={context.getComponentContext()}
+              const root = document.getElementById('app');
+              const { initialBreakpoint } = root.dataset;
+
+              // KLUDGE: SSR and CSR mismatch breaks the UI in iOS PWA mode
+              // see: https://github.com/facebook/react/issues/11336
+              if (isIOSApp) {
+                root.innerHTML = '';
+              }
+
+              const content = (
+                <ClientBreakpointProvider
+                  serverGuessedBreakpoint={initialBreakpoint}
                 >
-                  <ErrorBoundary>
-                    <MuiThemeProvider
-                      muiTheme={getMuiTheme(MUITheme(config), {
-                        userAgent: navigator.userAgent,
-                      })}
-                    >
-                      <Router {...props} onUpdate={track} />
-                    </MuiThemeProvider>
-                  </ErrorBoundary>
-                </ContextProvider>,
-                document.getElementById('app'),
-                () => {
-                  // Run only in production mode and when built in a docker container
-                  if (
-                    process.env.NODE_ENV === 'production' &&
-                    BUILD_TIME !== 'unset'
-                  ) {
-                    OfflinePlugin.install({
-                      onUpdateReady: () => OfflinePlugin.applyUpdate(),
-                      onUpdated: () => {
-                        hasSwUpdate = true;
-                      },
-                    });
-                  }
-                },
+                  <ContextProvider
+                    translations={translations}
+                    context={context.getComponentContext()}
+                  >
+                    <ErrorBoundary>
+                      <MuiThemeProvider
+                        muiTheme={getMuiTheme(MUITheme(config), {
+                          userAgent: navigator.userAgent,
+                        })}
+                      >
+                        <React.Fragment>
+                          <Helmet
+                            {...meta(
+                              context
+                                .getStore('PreferencesStore')
+                                .getLanguage(),
+                              window.location.host,
+                              window.location.href,
+                              config,
+                            )}
+                          />
+                          <Router {...props} onUpdate={track} />
+                        </React.Fragment>
+                      </MuiThemeProvider>
+                    </ErrorBoundary>
+                  </ContextProvider>
+                </ClientBreakpointProvider>
               );
+
+              ReactDOM.hydrate(content, root, () => {
+                // Run only in production mode and when built in a docker container
+                if (
+                  process.env.NODE_ENV === 'production' &&
+                  BUILD_TIME !== 'unset'
+                ) {
+                  OfflinePlugin.install({
+                    onUpdateReady: () => OfflinePlugin.applyUpdate(),
+                  });
+                }
+              });
             },
           );
         }
@@ -309,18 +230,28 @@ const callback = () =>
 
     // Listen for Web App Install Banner events
     window.addEventListener('beforeinstallprompt', e => {
-      piwik.trackEvent('installprompt', 'fired');
+      window.dataLayer.push({
+        event: 'sendMatomoEvent',
+        category: 'installprompt',
+        action: 'fired',
+        name: 'fired',
+      });
 
       // e.userChoice will return a Promise. (Only in chrome, not IE)
       if (e.userChoice) {
         e.userChoice.then(choiceResult =>
-          piwik.trackEvent('installprompt', 'result', choiceResult.outcome),
+          window.dataLayer.push({
+            event: 'sendMatomoEvent',
+            category: 'installprompt',
+            action: 'result',
+            name: choiceResult.outcome,
+          }),
         );
       }
     });
   });
 
-// Guard againist Samsung et.al. which are not properly polyfilled by polyfill-service
+// Guard againist Samsung et.al. which are not properly polyfilled by polyfill-library
 if (typeof window.Intl !== 'undefined') {
   callback();
 } else {

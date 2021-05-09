@@ -45,15 +45,7 @@ class CallAgencyLeg extends React.Component {
             }
           >
             <div className="itinerary-time-column-time">
-              <span className={this.props.leg.realTime ? 'realtime' : ''}>
-                {this.props.leg.realTime && (
-                  <Icon
-                    img="icon-icon_realtime"
-                    className="realtime-icon realtime"
-                  />
-                )}
-                {moment(this.props.leg.startTime).format('HH:mm')}
-              </span>
+              <span>{moment(this.props.leg.startTime).format('HH:mm')}</span>
               {originalTime}
             </div>
             <RouteNumber
@@ -100,6 +92,13 @@ class CallAgencyLeg extends React.Component {
                   'Only on demand: {routeName}, which needs to be booked in advance.'
                 }
               />
+              {this.props.leg.route.desc ? (
+                <div className="itinerary-warning-route-description">
+                  {this.props.leg.route.desc}
+                </div>
+              ) : (
+                ''
+              )}
               <div className="itinerary-warning-agency-container">
                 <LegAgencyInfo leg={this.props.leg} />
               </div>

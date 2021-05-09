@@ -38,7 +38,6 @@ class MessageBar extends Component {
     this.validMessages().map(el => (
       <MessageBarMessage
         key={el.id}
-        id={el.id}
         onMaximize={this.maximize}
         content={el.content[this.props.lang] || el.content.fi}
       />
@@ -140,7 +139,7 @@ class MessageBar extends Component {
         >
           <div className="banner-container">
             <Icon img={iconName} className="message-icon" />
-            <div className={`flex-grow message-bar-${type}`}>
+            <div className={`message-bar-content message-bar-${type}`}>
               <SwipeableViews
                 index={index}
                 onChangeIndex={this.handleChange}

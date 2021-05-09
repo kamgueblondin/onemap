@@ -23,7 +23,8 @@ const getLegText = (leg, config) => {
   const showAgency = get(config, 'agency.show', false);
   if (leg.transitLeg && leg.route.shortName) {
     return leg.route.shortName;
-  } else if (showAgency && leg.route.agency) {
+  }
+  if (showAgency && leg.route.agency) {
     return leg.route.agency.name;
   }
   return '';
@@ -31,7 +32,15 @@ const getLegText = (leg, config) => {
 
 class ItineraryLine extends React.Component {
   static contextTypes = {
-    getStore: PropTypes.func.isRequired,
+    config: PropTypes.object.isRequired,
+  };
+
+  static propTypes = {
+    legs: PropTypes.array,
+    passive: PropTypes.bool,
+    hash: PropTypes.number,
+    showTransferLabels: PropTypes.bool,
+    showIntermediateStops: PropTypes.bool,
   };
 
   render() {
@@ -40,11 +49,6 @@ class ItineraryLine extends React.Component {
     }
 
     const objs = [];
-
-    const usingOwnBicycle =
-      this.props.legs[0] != null &&
-      this.props.legs[0].mode === 'BICYCLE' &&
-      !this.props.legs[0].rentedBike;
 
     this.props.legs.forEach((leg, i) => {
       if (leg.mode === 'WAIT') {
@@ -55,10 +59,6 @@ class ItineraryLine extends React.Component {
 
       if (leg.rentedBike) {
         mode = 'CITYBIKE';
-      }
-
-      if (usingOwnBicycle && leg.mode === 'WALK') {
-        mode = 'BICYCLE_WALK';
       }
 
       const modePlusClass =
@@ -78,13 +78,16 @@ class ItineraryLine extends React.Component {
       );
 
       if (!this.props.passive) {
-        if (this.props.showIntermediateStops && leg.intermediateStops != null) {
-          leg.intermediateStops.forEach(stop =>
+        if (
+          this.props.showIntermediateStops &&
+          leg.intermediatePlaces != null
+        ) {
+          leg.intermediatePlaces.forEach(place =>
             objs.push(
               <StopMarker
                 disableModeIcons
-                stop={stop}
-                key={`intermediate-${stop.gtfsId}`}
+                stop={place.stop}
+                key={`intermediate-${place.stop.gtfsId}`}
                 mode={modePlusClass}
                 thin
               />,
@@ -96,8 +99,9 @@ class ItineraryLine extends React.Component {
           objs.push(
             <CityBikeMarker
               key={leg.from.bikeRentalStation.stationId}
-              transit
+              showBikeAvailability={leg.rentedBike}
               station={leg.from.bikeRentalStation}
+              transit
             />,
           );
         } else if (leg.transitLeg) {
@@ -180,18 +184,6 @@ class ItineraryLine extends React.Component {
   }
 }
 
-ItineraryLine.propTypes = {
-  legs: PropTypes.array,
-  passive: PropTypes.bool,
-  hash: PropTypes.number,
-  showTransferLabels: PropTypes.bool,
-  showIntermediateStops: PropTypes.bool,
-};
-
-ItineraryLine.contextTypes = {
-  config: PropTypes.object.isRequired,
-};
-
 export default Relay.createContainer(ItineraryLine, {
   fragments: {
     legs: () => Relay.QL`
@@ -245,13 +237,16 @@ export default Relay.createContainer(ItineraryLine, {
             pickupType
           }
         }
-        intermediateStops {
-          gtfsId
-          lat
-          lon
-          name
-          code
-          platformCode
+        intermediatePlaces {
+          arrivalTime
+          stop {
+            gtfsId
+            lat
+            lon
+            name
+            code
+            platformCode
+          }
         }
       }
     `,

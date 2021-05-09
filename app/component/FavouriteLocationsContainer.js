@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import Relay from 'react-relay/classic';
-import { routerShape, locationShape, Link } from 'react-router';
+import { routerShape, Link } from 'react-router';
 import SwipeableViews from 'react-swipeable-views';
 import { bindKeyboard } from 'react-swipeable-views-utils';
 import range from 'lodash/range';
@@ -25,7 +25,6 @@ class FavouriteLocationContainerRoute extends Relay.Route {
           to: variables.to,
           maxWalkDistance: variables.maxWalkDistance,
           wheelchair: variables.wheelchair,
-          preferred: variables.preferred,
           arriveBy: variables.arriveBy,
           disableRemainingWeightHeuristic:
             variables.disableRemainingWeightHeuristic,
@@ -33,10 +32,12 @@ class FavouriteLocationContainerRoute extends Relay.Route {
       }
     }`,
   };
+
   static paramDefinitions = {
     from: { required: true },
     to: { required: true },
   };
+
   static routeName = 'FavouriteLocationsContainerRoute';
 }
 
@@ -44,9 +45,7 @@ const SwipeableViewsKB = bindKeyboard(SwipeableViews);
 
 export default class FavouriteLocationsContainer extends React.Component {
   static contextTypes = {
-    executeAction: PropTypes.func.isRequired,
     router: routerShape.isRequired,
-    origin: locationShape.isRequired,
     config: PropTypes.object.isRequired,
   };
 
@@ -61,7 +60,7 @@ export default class FavouriteLocationsContainer extends React.Component {
 
   static propTypes = {
     favourites: PropTypes.array.isRequired,
-    currentTime: PropTypes.object.isRequired,
+    currentTime: PropTypes.number.isRequired,
     origin: dtLocationShape.isRequired,
   };
 
@@ -84,19 +83,23 @@ export default class FavouriteLocationsContainer extends React.Component {
   };
 
   onPrev = () => {
-    const newSlideIndex = Math.max(
-      0,
-      this.state.slideIndex - FavouriteLocationsContainer.SLOTS_PER_CLICK,
-    );
-    this.setState({ slideIndex: newSlideIndex });
+    this.setState(prevState => {
+      const newSlideIndex = Math.max(
+        0,
+        prevState.slideIndex - FavouriteLocationsContainer.SLOTS_PER_CLICK,
+      );
+      return { slideIndex: newSlideIndex };
+    });
   };
 
   onNext = () => {
-    const newSlideIndex = Math.min(
-      this.state.slideIndex + FavouriteLocationsContainer.SLOTS_PER_CLICK,
-      this.props.favourites.length - 2,
-    );
-    this.setState({ slideIndex: newSlideIndex });
+    this.setState(prevState => {
+      const newSlideIndex = Math.min(
+        prevState.slideIndex + FavouriteLocationsContainer.SLOTS_PER_CLICK,
+        this.props.favourites.length - 2,
+      );
+      return { slideIndex: newSlideIndex };
+    });
   };
 
   setDestination = (locationName, lat, lon) => {
@@ -138,6 +141,7 @@ export default class FavouriteLocationsContainer extends React.Component {
         <Relay.RootContainer
           Component={FavouriteLocationContainer}
           forceFetch
+          key={`relay_${key}`}
           route={
             new FavouriteLocationContainerRoute({
               from: {
@@ -152,11 +156,6 @@ export default class FavouriteLocationsContainer extends React.Component {
 
               maxWalkDistance: config.maxWalkDistance + 0.1,
               wheelchair: false,
-
-              preferred: {
-                agencies: config.preferredAgency || '',
-              },
-
               arriveBy: false,
               disableRemainingWeightHeuristic: false,
             })

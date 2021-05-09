@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'hameenlinna';
@@ -28,7 +29,10 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
-  favicon: './sass/themes/hameenlinna/favicon.png',
+  favicon: './app/configurations/images/hameenlinna/favicon.png',
+
+  // Navbar logo
+  logo: 'hameenlinna/logo.png',
 
   feedIds: ['Hameenlinna', 'HameenlinnaEly'],
 
@@ -50,6 +54,10 @@ export default configMerger(walttiConfig, {
     address: 'Hämeenlinnan linja-autoasema',
     lat: 60.9952717075545,
     lon: 24.4662911533486,
+  },
+
+  defaultSettings: {
+    minTransferTime: 60,
   },
 
   defaultOrigins: [
@@ -92,7 +100,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Hämeenlinnan seudun joukkoliikenne reittisuunnittelua varten Hattulan, Hämeenlinnan ja Janakkalan alueella. Palvelu sisältää paikallisen ja seudullisen joukkoliikenteen reitit ja aikataulut. Palvelu perustuu Digitransit palvelualustaan.',
+          'Tämän palvelun tarjoaa Hämeenlinnan seudun joukkoliikenne reittisuunnittelua varten Hattulan, Hämeenlinnan ja Janakkalan alueella. Palvelu sisältää paikallisen ja seudullisen joukkoliikenteen reitit ja aikataulut. Palvelu perustuu Digitransit-palvelualustaan.',
         ],
       },
     ],

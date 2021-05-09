@@ -3,6 +3,7 @@ import omit from 'lodash/omit';
 import L from 'leaflet';
 
 import { isBrowser } from '../../../util/browser';
+import { isLayerEnabled } from '../../../util/mapLayerUtils';
 
 class TileContainer {
   constructor(coords, done, props, config) {
@@ -30,31 +31,36 @@ class TileContainer {
 
     this.layers = this.props.layers
       .filter(Layer => {
+        const layerName = Layer.getName();
+        const isEnabled = isLayerEnabled(layerName, this.props.mapLayers);
         if (
-          Layer.getName() === 'stop' &&
+          layerName === 'stop' &&
           (this.coords.z >= config.stopsMinZoom ||
             this.coords.z >= config.terminalStopsMinZoom)
         ) {
-          return true;
-        } else if (
-          Layer.getName() === 'citybike' &&
+          return isEnabled;
+        }
+        if (
+          layerName === 'citybike' &&
           this.coords.z >= config.cityBike.cityBikeMinZoom
         ) {
-          return true;
-        } else if (
-          Layer.getName() === 'parkAndRide' &&
+          return isEnabled;
+        }
+        if (
+          layerName === 'parkAndRide' &&
           this.coords.z >= config.parkAndRide.parkAndRideMinZoom
         ) {
-          return true;
-        } else if (
-          Layer.getName() === 'ticketSales' &&
+          return isEnabled;
+        }
+        if (
+          layerName === 'ticketSales' &&
           this.coords.z >= config.ticketSales.ticketSalesMinZoom
         ) {
-          return true;
+          return isEnabled;
         }
         return false;
       })
-      .map(Layer => new Layer(this, config));
+      .map(Layer => new Layer(this, config, this.props.mapLayers));
 
     this.el.layers = this.layers.map(layer => omit(layer, 'tile'));
 
@@ -136,10 +142,12 @@ class TileContainer {
           this.timer = null;
         }
         return false;
-      } else if (nearest.length === 0 && e.type === 'contextmenu') {
+      }
+      if (nearest.length === 0 && e.type === 'contextmenu') {
         // no need to check double clicks
         return this.onSelectableTargetClicked([], e.latlng);
-      } else if (nearest.length === 1) {
+      }
+      if (nearest.length === 1) {
         L.DomEvent.stopPropagation(e);
         // open menu for single stop
         const latLon = L.latLng(this.project(nearest[0].feature.geom));

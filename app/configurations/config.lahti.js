@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'lahti';
@@ -28,6 +29,9 @@ export default configMerger(walttiConfig, {
   },
 
   title: APP_TITLE,
+
+  // Navbar logo
+  logo: 'lahti/lahti-logo.png',
 
   textLogo: false, // title text instead of logo img
 
@@ -99,7 +103,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa LSL joukkoliikenteen reittisuunnittelua varten Päijät-Hämeen alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan.',
+          'Tämän palvelun tarjoaa LSL joukkoliikenteen reittisuunnittelua varten Päijät-Hämeen alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan.',
         ],
       },
       {

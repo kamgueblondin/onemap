@@ -2,6 +2,7 @@
 
 # do nothing if the build is for tagging a prod release
 if [ -n "$TRAVIS_TAG" ]; then exit 0; fi
+
 openssl aes-256-cbc -K $encrypted_59b1a6418079_key -iv $encrypted_59b1a6418079_iv -in test/.dropbox_uploader.enc -out test/.dropbox_uploader -d
 
 set -e
@@ -13,10 +14,11 @@ sudo apt-get install -y libappindicator1 fonts-liberation
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 sudo dpkg -i google-chrome*.deb
 
-ORG=${ORG:-hsldevcom}
-yarn install
+#yarn install
 
-docker run -d -e CONFIG=hsl -p 127.0.0.1:8080:8080 $ORG/digitransit-ui:ci-$TRAVIS_COMMIT
-wget -N http://chromedriver.storage.googleapis.com/2.29/chromedriver_linux64.zip
+CONFIG=hsl yarn dev &
+sleep 2 # Sleep so that server starts in time for tests even if available route timetables can't be loaded
+
+wget -N http://chromedriver.storage.googleapis.com/2.38/chromedriver_linux64.zip
 unzip chromedriver_linux64.zip
 CHROMEDRIVER=./chromedriver test/flow/script/run-flow-tests.sh

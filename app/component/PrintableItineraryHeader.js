@@ -1,23 +1,18 @@
+import connectToStores from 'fluxible-addons-react/connectToStores';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
-import moment from 'moment';
-import get from 'lodash/get';
-
 import { FormattedMessage } from 'react-intl';
-import { displayDistance } from '../util/geo-utils';
-import RelativeDuration from './RelativeDuration';
+
 import Icon from './Icon';
+import RelativeDuration from './RelativeDuration';
+import { renderZoneTicketIcon, isWithinZoneB } from './ZoneTicketIcon';
+import PreferencesStore from '../store/PreferencesStore';
+import mapFares from '../util/fareUtils';
+import { displayDistance } from '../util/geo-utils';
+import { getTotalWalkingDistance, getZones } from '../util/legUtils';
 
-export default class PrintableItineraryHeader extends React.Component {
-  getFareId = () => {
-    const fareId = this.props.itinerary.fares
-      ? this.props.itinerary.fares[0].components[0].fareId
-      : null;
-    const fareMapping = get(this.context.config, 'fareMapping', {});
-    const mappedFareId = fareId ? fareMapping[fareId] : null;
-    return mappedFareId;
-  };
-
+class PrintableItineraryHeader extends React.Component {
   createHeaderBlock = obj => (
     <div className={`print-itinerary-header-single itinerary-${obj.name}`}>
       <div className="header-icon">
@@ -29,11 +24,13 @@ export default class PrintableItineraryHeader extends React.Component {
       <div className="header-details">
         <div className="header-details-title">
           <FormattedMessage
-            id={`itinerary-${obj.name}.title`}
+            id={`itinerary-${obj.textId}.title`}
             defaultMessage={`${obj.name}`}
           />
         </div>
-        <div className={obj.name === 'ticket' && `faretype-span`}>
+        <div
+          className={obj.name === 'ticket' ? `faretype-container` : undefined}
+        >
           <span className="header-details-content">{obj.contentDetails}</span>
         </div>
       </div>
@@ -42,13 +39,14 @@ export default class PrintableItineraryHeader extends React.Component {
 
   render() {
     const { config } = this.context;
-    const fare = this.getFareId();
-    const duration = moment(this.props.itinerary.endTime).diff(
-      moment(this.props.itinerary.startTime),
+    const { itinerary, language } = this.props;
+    const fares = mapFares(itinerary.fares, config, language);
+    const isOnlyZoneB = isWithinZoneB(getZones(itinerary.legs), fares);
+    const duration = moment(itinerary.endTime).diff(
+      moment(itinerary.startTime),
     );
-    const language = this.context.getStore('PreferencesStore').getLanguage();
-    const weekDay = moment(this.props.itinerary.startTime)
-      .lang(language)
+    const weekDay = moment(itinerary.startTime)
+      .locale(language)
       .format('dddd');
     const weekDayUpperCase = weekDay.charAt(0).toUpperCase() + weekDay.slice(1);
 
@@ -68,21 +66,15 @@ export default class PrintableItineraryHeader extends React.Component {
               />
             </div>
             <div className="subheader">
-              <span>{this.props.itinerary.legs[0].from.name}</span>
+              <span>{itinerary.legs[0].from.name}</span>
               {` — `}
-              <span>
-                {
-                  this.props.itinerary.legs[
-                    this.props.itinerary.legs.length - 1
-                  ].to.name
-                }
-              </span>
+              <span>{itinerary.legs[itinerary.legs.length - 1].to.name}</span>
               {` | `}
               <span>{weekDayUpperCase}</span>
               {` `}
               <span>
-                {moment(this.props.itinerary.startTime)
-                  .lang(language)
+                {moment(itinerary.startTime)
+                  .locale(language)
                   .format('DD.M.YYYY')}
               </span>
             </div>
@@ -91,34 +83,40 @@ export default class PrintableItineraryHeader extends React.Component {
         <div className="print-itinerary-header-bottom">
           {this.createHeaderBlock({
             name: 'time',
+            textId: 'time',
             contentDetails: (
               <span>
                 <RelativeDuration duration={duration} />
                 <span style={{ fontWeight: '400' }}>
-                  {` // ${moment(this.props.itinerary.startTime).format(
-                    'HH:mm',
-                  )}`}
-                  {` - ${moment(this.props.itinerary.endTime).format('HH:mm')}`}
+                  {` // ${moment(itinerary.startTime).format('HH:mm')}`}
+                  {` - ${moment(itinerary.endTime).format('HH:mm')}`}
                 </span>
               </span>
             ),
           })}
           {this.createHeaderBlock({
             name: 'walk',
+            textId: 'walk',
             contentDetails: displayDistance(
-              this.props.itinerary.walkDistance,
-              this.context.config,
+              getTotalWalkingDistance(itinerary),
+              config,
             ),
           })}
-          {fare !== null &&
-            config.showTicketInformation &&
+          {fares &&
             this.createHeaderBlock({
               name: 'ticket',
-              contentDetails: (
-                <FormattedMessage
-                  id={`ticket-type-${fare}`}
-                  defaultMessage={fare}
-                />
+              textId: fares.length > 1 ? 'tickets' : 'ticket',
+              contentDetails: fares.map(
+                fare =>
+                  config.useTicketIcons ? (
+                    <React.Fragment key={fare}>
+                      {renderZoneTicketIcon(fare, isOnlyZoneB)}
+                    </React.Fragment>
+                  ) : (
+                    <div key={fare} className="fare-details">
+                      <span>{fare}</span>
+                    </div>
+                  ),
               ),
             })}
         </div>
@@ -129,9 +127,17 @@ export default class PrintableItineraryHeader extends React.Component {
 
 PrintableItineraryHeader.propTypes = {
   itinerary: PropTypes.object.isRequired,
+  language: PropTypes.string.isRequired,
 };
 
 PrintableItineraryHeader.contextTypes = {
-  getStore: PropTypes.func.isRequired,
   config: PropTypes.object.isRequired,
 };
+
+const connectedComponent = connectToStores(
+  PrintableItineraryHeader,
+  [PreferencesStore],
+  ({ getStore }) => ({ language: getStore(PreferencesStore).getLanguage() }),
+);
+
+export { connectedComponent as default, PrintableItineraryHeader as Component };

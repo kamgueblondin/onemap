@@ -2,6 +2,8 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { intlShape } from 'react-intl';
 import { routerShape } from 'react-router';
+
+import ComponentUsageExample from './ComponentUsageExample';
 import Icon from './Icon';
 import LazilyLoad, { importLazy } from './LazilyLoad';
 
@@ -9,7 +11,6 @@ class MainMenuContainer extends Component {
   static contextTypes = {
     executeAction: PropTypes.func.isRequired,
     location: PropTypes.object.isRequired,
-    piwik: PropTypes.object,
     router: routerShape.isRequired,
     intl: intlShape.isRequired,
     config: PropTypes.object.isRequired,
@@ -17,6 +18,16 @@ class MainMenuContainer extends Component {
 
   static propTypes = {
     homeUrl: PropTypes.string.isRequired,
+    isOpen: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    isOpen: false,
+  };
+
+  mainMenuModules = {
+    Drawer: () => importLazy(import('material-ui/Drawer')),
+    MainMenu: () => importLazy(import('./MainMenu')),
   };
 
   onRequestChange = newState => this.internalSetOffcanvas(newState);
@@ -35,13 +46,12 @@ class MainMenuContainer extends Component {
   toggleOffcanvas = () => this.internalSetOffcanvas(!this.getOffcanvasState());
 
   internalSetOffcanvas = newState => {
-    if (this.context.piwik != null) {
-      this.context.piwik.trackEvent(
-        'Offcanvas',
-        'Index',
-        newState ? 'open' : 'close',
-      );
-    }
+    window.dataLayer.push({
+      event: 'sendMatomoEvent',
+      category: 'ItinerarySettings',
+      action: 'ExtraSettingsPanelClick',
+      name: newState ? 'ExtraSettingsPanelOpen' : 'ExtraSettingsPanelClose',
+    });
 
     if (newState) {
       this.context.router.push({
@@ -56,28 +66,26 @@ class MainMenuContainer extends Component {
     }
   };
 
-  mainMenuModules = {
-    Drawer: () => importLazy(import('material-ui/Drawer')),
-    MainMenu: () => importLazy(import('./MainMenu')),
-  };
-
-  render() {
+  render = () => {
+    const isOpen = this.getOffcanvasState() || this.props.isOpen;
+    const isForcedOpen = this.props.isOpen;
     return (
-      <div>
+      <React.Fragment>
         <LazilyLoad modules={this.mainMenuModules}>
           {({ Drawer, MainMenu }) => (
             <Drawer
               className="offcanvas"
               disableSwipeToOpen
               docked={false}
-              open={this.getOffcanvasState()}
+              open={isOpen}
               openSecondary
               onRequestChange={this.onRequestChange}
+              style={{ position: 'absolute' }}
             >
               <MainMenu
                 toggleVisibility={this.toggleOffcanvas}
-                showDisruptionInfo={this.getOffcanvasState()}
-                visible={this.getOffcanvasState()}
+                showDisruptionInfo={isOpen && !isForcedOpen}
+                visible={isOpen}
                 homeUrl={this.props.homeUrl}
               />
             </Drawer>
@@ -97,9 +105,15 @@ class MainMenuContainer extends Component {
             </button>
           </div>
         ) : null}
-      </div>
+      </React.Fragment>
     );
-  }
+  };
 }
+
+MainMenuContainer.description = (
+  <ComponentUsageExample isFullscreen>
+    <MainMenuContainer homeUrl="" isOpen />
+  </ComponentUsageExample>
+);
 
 export default MainMenuContainer;

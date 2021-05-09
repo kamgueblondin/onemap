@@ -1,6 +1,7 @@
 module.exports = {
   '@tags': ['itinerary tuning'],
   '@disabled': true,
+
   'Custom search options are not forgotten if endpoint changes': browser => {
     browser.url(browser.launch_url);
 
@@ -11,11 +12,9 @@ module.exports = {
     itinerarySummary.waitForFirstItineraryRow();
 
     const customizeSearch = browser.page.customizeSearch();
-    customizeSearch.clickCanvasToggle();
-    customizeSearch.waitOffcanvasOpen();
-
+    customizeSearch.openQuickSettings();
     customizeSearch.disableModality('rail');
-    customizeSearch.closeCanvas();
+    itinerarySummary.waitForFirstItineraryRow();
 
     // rautatieasema  - pasila surely had rail connections before disable
     // but disable will remove them
@@ -29,24 +28,27 @@ module.exports = {
     browser.end();
   },
 
-  'Current location is updated in searches triggered by a parameter change': browser => {
-    browser.url(browser.launch_url).setGeolocation(60.17, 24.941); // from railway station
+  'Earlier and later buttons work': browser => {
+    browser.url(browser.launch_url);
 
-    browser.page
-      .searchFields()
-      .setDestination('Opastinsilta 6, Helsinki')
-      .enterKeyDestination();
+    const searchFields = browser.page.searchFields();
+    searchFields.itinerarySearch('Helsingin rautatieasema', 'Opastinsilta 6');
 
     const itinerarySummary = browser.page.itinerarySummary();
     itinerarySummary.waitForFirstItineraryRow();
+    itinerarySummary.waitForItineraryRowOfType('rail');
 
-    browser.setGeolocation(60.1991, 24.936155); // LIVI opastinsilta 12
+    itinerarySummary.clickLater();
+    itinerarySummary.waitForFirstItineraryRow();
+    itinerarySummary.waitForItineraryRowOfType('rail');
 
-    itinerarySummary.clickLater(); // triggers new routing
+    itinerarySummary.clickEarlier();
+    itinerarySummary.waitForFirstItineraryRow();
+    itinerarySummary.waitForItineraryRowOfType('rail');
 
-    // rautatieasema  - pasila surely had rail connections, but
-    // when current location changed to pasila, rail should no longer be offered
-    itinerarySummary.waitForItineraryRowOfTypeNotPresent('rail');
+    itinerarySummary.clickNow();
+    itinerarySummary.waitForFirstItineraryRow();
+    itinerarySummary.waitForItineraryRowOfType('rail');
 
     browser.end();
   },

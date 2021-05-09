@@ -27,6 +27,8 @@ $standalone-btn-hover-color: $secondary-color;
 $standalone-btn-active-color: $secondary-color;
 $viewpoint-marker-color: $hsl-blue;
 $link-color: $primary-color;
+$desktop-title-color: #007ac9;
+$desktop-title-arrow-icon-color: $secondary-color;
 
 /* Vehicle palette */
 $airplane-color: #0046ad;
@@ -40,11 +42,9 @@ $ferry-color: $hsl-ferry-blue;
 $font-family: "Gotham Rounded SSm A","Gotham Rounded SSm B", Arial, Georgia, Serif;
 $font-weight-medium: 500;
 $letter-spacing: -0.025em;
+$font-size-medium-large: 1rem;
 
 $font-family-narrow: "Gotham XNarrow SSm A","Gotham XNarrow SSm B", Arial, Georgia, Serif;
-
-/* Navbar logo */
-$nav-logo: url('reittiopas-logo.svg');
 
 /* Spinner */
 $spinner-image: url('hsl-spinner.png');

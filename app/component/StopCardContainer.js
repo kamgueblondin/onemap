@@ -19,6 +19,7 @@ const StopCardContainer = connectToStores(
         limit={props.limit}
         isTerminal={props.isTerminal}
         currentTime={props.relay.variables.startTime}
+        showPlatformCodes
       />
     ),
   }),
@@ -37,7 +38,8 @@ export default Relay.createContainer(StopCardContainer, {
         stoptimes: stoptimesWithoutPatterns(
           startTime: $startTime,
           timeRange: $timeRange,
-          numberOfDepartures: $numberOfDepartures
+          numberOfDepartures: $numberOfDepartures,
+          omitCanceled: false
         ) {
           ${DepartureListContainer.getFragment('stoptimes')}
         }

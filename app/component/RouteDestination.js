@@ -8,23 +8,37 @@ import { realtimeDeparture as ExampleData } from './ExampleData';
 function RouteDestination(props, context) {
   let destination;
   if (props.isArrival) {
+    let message;
+    let icon;
+    if (props.isLastStop) {
+      icon = 'last-stop-icon';
+      message = context.intl.formatMessage({
+        id: 'route-destination-endpoint',
+        defaultMessage: 'Arrives / Terminus',
+      });
+    } else {
+      icon = 'drop-off-stop-icon';
+      message = context.intl.formatMessage({
+        id: 'route-destination-arrives',
+        defaultMessage: 'Drop-off only',
+      });
+    }
     destination = (
       <span className="destination arrival">
-        <span className={cx('last-stop-icon', props.mode.toLowerCase())} />
-        <span>
-          {context.intl.formatMessage({
-            id: 'route-destination-arrives',
-            defaultMessage: 'Arrives / Terminus',
-          })}
-        </span>
+        <span className={cx(icon, props.mode.toLowerCase())} />
+        <span title={message}>{message}</span>
       </span>
     );
   } else {
-    destination = <span className="destination">{props.destination}</span>;
+    destination = (
+      <span className="destination" title={props.destination}>
+        {props.destination}
+      </span>
+    );
   }
 
   return (
-    <span className={cx('route-destination', 'overflow-fade', props.className)}>
+    <span className={cx('route-destination', props.className)}>
       {destination}
     </span>
   );
@@ -41,13 +55,23 @@ RouteDestination.description = () => (
         }
       />
     </ComponentUsageExample>
-    <ComponentUsageExample description="isArrival true">
+    <ComponentUsageExample description="drop-off">
       <RouteDestination
         mode={ExampleData.pattern.route.mode}
         destination={
           ExampleData.pattern.headsign || ExampleData.pattern.route.longName
         }
         isArrival
+      />
+    </ComponentUsageExample>
+    <ComponentUsageExample description="last-stop">
+      <RouteDestination
+        mode={ExampleData.pattern.route.mode}
+        destination={
+          ExampleData.pattern.headsign || ExampleData.pattern.route.longName
+        }
+        isArrival
+        isLastStop
       />
     </ComponentUsageExample>
   </div>
@@ -58,6 +82,7 @@ RouteDestination.propTypes = {
   destination: PropTypes.string,
   className: PropTypes.string,
   isArrival: PropTypes.bool,
+  isLastStop: PropTypes.bool,
 };
 
 RouteDestination.contextTypes = {

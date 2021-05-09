@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
-import Relay from 'react-relay/classic';
 import { routerShape, locationShape } from 'react-router';
 import moment from 'moment';
 import { intlShape } from 'react-intl';
@@ -11,6 +10,7 @@ import withProps from 'recompose/withProps';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 
 import TimeSelectors from './TimeSelectors';
+import { replaceQueryParams } from '../util/queryUtils';
 
 class TimeSelectorContainer extends Component {
   static contextTypes = {
@@ -24,33 +24,26 @@ class TimeSelectorContainer extends Component {
       start: PropTypes.number.isRequired,
       end: PropTypes.number.isRequired,
     }).isRequired,
-    time: PropTypes.number.isRequired,
-    arriveBy: PropTypes.string.isRequired,
+    time: PropTypes.instanceOf(moment).isRequired,
     now: PropTypes.shape({}).isRequired,
   };
 
   getDates() {
-    const MAXRANGE = 30; // limit day selection to sensible range ?
     const dates = [];
-    const range = this.props.serviceTimeRange;
     const { now } = this.props;
-    const START = now.clone().subtract(MAXRANGE, 'd');
-    const END = now.clone().add(MAXRANGE, 'd');
-    let start = moment.unix(range.start);
-    start = moment.min(moment.max(start, START), now); // always include today!
-    let end = moment.unix(range.end);
-    end = moment.max(moment.min(end, END), now); // always include today!
+    const start = moment.unix(this.props.serviceTimeRange.start);
+    const end = moment.unix(this.props.serviceTimeRange.end);
+
     const tomorrow = now.clone().add(1, 'd');
     const endValue = end.unix();
     start.hours(this.props.time.hours());
     start.minutes(this.props.time.minutes());
     start.seconds(this.props.time.seconds());
 
-    let value;
     const day = start;
+    let value = `${day.unix()}`;
     do {
       let label;
-      value = `${day.unix()}`;
       if (day.isSame(now, 'day')) {
         label = this.context.intl.formatMessage({
           id: 'today',
@@ -70,37 +63,21 @@ class TimeSelectorContainer extends Component {
         </option>,
       );
       day.add(1, 'd');
+      value = `${day.unix()}`;
     } while (value <= endValue);
 
     return dates;
   }
 
-  setArriveBy = ({ target }) => {
-    const arriveBy = target.value;
-    this.context.router.replace({
-      pathname: this.context.location.pathname,
-      query: {
-        ...this.context.location.query,
-        arriveBy,
-      },
-    });
-  };
-
   setTime = debounce(newTime => {
-    this.context.router.replace({
-      pathname: this.context.location.pathname,
-      query: {
-        ...this.context.location.query,
-        time: newTime.unix(),
-      },
-    });
+    replaceQueryParams(this.context.router, { time: newTime.unix() });
   }, 10);
 
   changeTime = ({ hours, minutes, add }) => {
     const time = this.props.time.clone();
     if (add) {
       // delta from arrow keys
-      time.add(add.key, add.delta);
+      time.add(add.delta, add.key);
     } else {
       time.hours(hours);
       time.minutes(minutes);
@@ -116,9 +93,7 @@ class TimeSelectorContainer extends Component {
   render() {
     return (
       <TimeSelectors
-        arriveBy={this.props.arriveBy}
         time={this.props.time}
-        setArriveBy={this.setArriveBy}
         changeTime={this.changeTime}
         changeDate={this.changeDate}
         dates={this.getDates()}
@@ -139,17 +114,6 @@ const withNow = connectToStores(TSCWithProps, ['TimeStore'], context => ({
   now: context.getStore('TimeStore').getCurrentTime(),
 }));
 
-const withLocation = getContext({
+export default getContext({
   location: locationShape.isRequired,
 })(withNow);
-
-export default Relay.createContainer(withLocation, {
-  fragments: {
-    serviceTimeRange: () => Relay.QL`
-      fragment on serviceTimeRange {
-        start
-        end
-      }
-    `,
-  },
-});

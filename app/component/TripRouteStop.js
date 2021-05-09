@@ -5,9 +5,11 @@ import cx from 'classnames';
 
 import ComponentUsageExample from './ComponentUsageExample';
 import WalkDistance from './WalkDistance';
+import ServiceAlertIcon from './ServiceAlertIcon';
 import StopCode from './StopCode';
 import PatternLink from './PatternLink';
 import { fromStopTime } from './DepartureTime';
+import { RealtimeStateType, AlertSeverityLevelType } from '../constants';
 import { PREFIX_STOPS } from '../util/path';
 import {
   currentTime as exampleCurrentTime,
@@ -15,6 +17,7 @@ import {
   realtimeDeparture as exampleRealtimeDeparture,
   vehicle as exampleVehicle,
 } from './ExampleData';
+import { getMaximumAlertSeverityLevel } from '../util/alertUtils';
 
 const TripRouteStop = props => {
   const vehicles =
@@ -28,7 +31,6 @@ const TripRouteStop = props => {
         selected={
           props.selectedVehicle && props.selectedVehicle.id === vehicle.id
         }
-        fullscreenMap={props.fullscreenMap}
       />
     ));
 
@@ -62,7 +64,13 @@ const TripRouteStop = props => {
       <div className="route-stop-row_content-container">
         <Link to={`/${PREFIX_STOPS}/${encodeURIComponent(props.stop.gtfsId)}`}>
           <div className={`route-details_container ${props.mode}`}>
-            <span>{props.stop.name}</span>
+            <div>
+              <span>{props.stop.name}</span>
+              <ServiceAlertIcon
+                className="inline-icon"
+                severityLevel={getMaximumAlertSeverityLevel(props.stop.alerts)}
+              />
+            </div>
             <div>
               {props.stop.code && <StopCode code={props.stop.code} />}
               <span className="route-stop-address">{props.stop.desc}</span>
@@ -77,7 +85,7 @@ const TripRouteStop = props => {
             </div>
           </div>
           <div className="departure-times-container">
-            <div className=" route-stop-time">
+            <div className="route-stop-time">
               {props.stoptime &&
                 fromStopTime(props.stoptime, props.currentTime)}
             </div>
@@ -105,7 +113,6 @@ TripRouteStop.propTypes = {
     PropTypes.object,
     PropTypes.oneOf([false]),
   ]).isRequired,
-  fullscreenMap: PropTypes.bool,
 };
 
 TripRouteStop.displayName = 'TripRouteStop';
@@ -146,6 +153,68 @@ TripRouteStop.description = () => (
         stoptime={exampleRealtimeDeparture}
         currentTime={exampleCurrentTime}
         selectedVehicle={exampleVehicle}
+      />
+    </ComponentUsageExample>
+    <ComponentUsageExample description="With info:">
+      <TripRouteStop
+        key={exampleDeparture.stop.gtfsId}
+        stop={{
+          ...exampleDeparture.stop,
+          alerts: [
+            {
+              alertSeverityLevel: AlertSeverityLevelType.Info,
+            },
+          ],
+        }}
+        mode={exampleDeparture.pattern.route.mode}
+        route={exampleDeparture.pattern.route.gtfsId}
+        pattern={exampleDeparture.pattern.code}
+        vehicles={null}
+        realtime={false}
+        distance={321}
+        stoptime={exampleDeparture}
+        currentTime={exampleCurrentTime}
+        selectedVehicle={false}
+      />
+    </ComponentUsageExample>
+    <ComponentUsageExample description="With caution:">
+      <TripRouteStop
+        key={exampleDeparture.stop.gtfsId}
+        stop={{
+          ...exampleDeparture.stop,
+          alerts: [
+            {
+              alertSeverityLevel: AlertSeverityLevelType.Warning,
+            },
+          ],
+        }}
+        mode={exampleDeparture.pattern.route.mode}
+        route={exampleDeparture.pattern.route.gtfsId}
+        pattern={exampleDeparture.pattern.code}
+        vehicles={null}
+        realtime={false}
+        distance={321}
+        currentTime={exampleCurrentTime}
+        selectedVehicle={false}
+      />
+    </ComponentUsageExample>
+    <ComponentUsageExample description="With cancelation:">
+      <TripRouteStop
+        key={exampleDeparture.stop.gtfsId}
+        stop={exampleDeparture.stop}
+        mode={exampleDeparture.pattern.route.mode}
+        route={exampleDeparture.pattern.route.gtfsId}
+        pattern={exampleDeparture.pattern.code}
+        vehicles={null}
+        realtime={false}
+        distance={321}
+        stoptime={{
+          ...exampleDeparture,
+          realtimeState: RealtimeStateType.Canceled,
+          scheduledDeparture: 69900,
+        }}
+        currentTime={exampleCurrentTime}
+        selectedVehicle={false}
       />
     </ComponentUsageExample>
   </div>

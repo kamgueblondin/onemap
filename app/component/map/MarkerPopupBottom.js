@@ -3,6 +3,8 @@ import React from 'react';
 import get from 'lodash/get';
 import { routerShape, locationShape } from 'react-router';
 import { FormattedMessage } from 'react-intl';
+import { withLeaflet } from 'react-leaflet/es/context';
+
 import {
   PREFIX_ROUTES,
   PREFIX_STOPS,
@@ -18,13 +20,17 @@ class MarkerPopupBottom extends React.Component {
 
   static propTypes = {
     location: dtLocationShape.isRequired,
+    leaflet: PropTypes.shape({
+      map: PropTypes.shape({
+        closePopup: PropTypes.func.isRequired,
+      }).isRequired,
+    }).isRequired,
   };
 
   static contextTypes = {
     router: routerShape.isRequired,
     location: locationShape.isRequired,
     getStore: PropTypes.func.isRequired,
-    map: PropTypes.object.isRequired,
   };
 
   routeFrom = () => {
@@ -49,13 +55,14 @@ class MarkerPopupBottom extends React.Component {
       const [, , destinationString] = pathName.split('/');
       destination = parseLocation(destinationString);
     }
-    this.context.map.closePopup();
+    this.props.leaflet.map.closePopup();
     navigateTo({
       origin: { ...this.props.location, ready: true },
       destination,
       context,
       router: this.context.router,
       base: locationWithTime,
+      resetIndex: true,
     });
   };
 
@@ -81,13 +88,14 @@ class MarkerPopupBottom extends React.Component {
       const [, originString] = pathName.split('/');
       origin = parseLocation(originString);
     }
-    this.context.map.closePopup();
+    this.props.leaflet.map.closePopup();
     navigateTo({
       origin,
       destination: { ...this.props.location, ready: true },
       context,
       router: this.context.router,
       base: locationWithTime,
+      resetIndex: true,
     });
   };
 
@@ -109,4 +117,4 @@ class MarkerPopupBottom extends React.Component {
   }
 }
 
-export default MarkerPopupBottom;
+export default withLeaflet(MarkerPopupBottom);

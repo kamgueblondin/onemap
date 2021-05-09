@@ -35,3 +35,48 @@ export const dateOrEmpty = (momentTime, momentRefTime) => {
 };
 
 export const sameDay = (x, y) => dateOrEmpty(x, y) === '';
+
+/**
+ * The default number of days to include to the service time range from the past.
+ */
+export const RANGE_PAST = 7;
+
+/**
+ * The default number of days to include to the service time range from the future.
+ */
+export const RANGE_FUTURE = 30;
+
+export const validateServiceTimeRange = (serviceTimeRange, now) => {
+  const NOW = now ? moment.unix(now) : moment();
+  const START = NOW.clone()
+    .subtract(RANGE_PAST, 'd')
+    .unix();
+  const END = NOW.clone()
+    .add(RANGE_FUTURE, 'd')
+    .unix();
+  const NOWUX = NOW.unix();
+
+  if (!serviceTimeRange) {
+    // empty param returns a default range
+    return {
+      start: START,
+      end: END,
+    };
+  }
+
+  // always include today!
+  let start = Math.min(Math.max(serviceTimeRange.start, START), NOWUX);
+  // make sure whole day is included, for comparing timestamps
+  start = moment
+    .unix(start)
+    .startOf('day')
+    .unix();
+
+  let end = Math.max(Math.min(serviceTimeRange.end, END), NOWUX);
+  end = moment
+    .unix(end)
+    .endOf('day')
+    .unix();
+
+  return { start, end };
+};

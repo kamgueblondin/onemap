@@ -1,6 +1,5 @@
-
 /* foundation override */
-$menu-slide: "transform 200ms ease";
+$menu-slide: 'transform 200ms ease';
 $offcanvas-background: #333333;
 $offcanvas-background-hover: scale-color($gray, $lightness: -30%);
 $offcanvas-background-active: scale-color($gray, $lightness: -30%);
@@ -30,7 +29,6 @@ $offcanvas-link-text-font-size: 15px;
 /* Content */
 $content-background-color: $background-color;
 
-
 .top-bar {
   position: relative;
   display: flex;
@@ -39,10 +37,11 @@ $content-background-color: $background-color;
   background: $primary-color;
   text-align: center;
   overflow: visible; // Show drawer menu
-  z-index: 1001;
+  z-index: 1008;
 
   // Fixed navbar height for now, as dynamic height leads to Safari issues
-  height: 40px;
+  height: $topbar-height;
+  min-height: $topbar-height;
 
   &.bp-large {
     height: 60px;
@@ -74,39 +73,29 @@ $content-background-color: $background-color;
   .logo {
     height: 100%;
     min-height: 40px;
-    background-image: $nav-logo;
+    min-width: 8em;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: left center;
-    min-width: 8em;
   }
   .navi-logo {
     margin-left: 32px;
     width: $nav-logo-width;
     height: $nav-logo-height;
     min-width: 130px; //for ff
-    background-image: $nav-logo;
-    background-position: left center;
     background-size: contain;
     background-repeat: no-repeat;
+    background-position: left center;
     cursor: pointer;
-  }
-  .hamburger-large {
-    .main-menu-toggle {
-      top: 10px;
-      div.logo {
-        background-image: $nav-logo;
-        background-size: contain;
-        background-repeat: no-repeat;
-        height: $topbar-height;
-        max-width: 170px;
-      }
-    }
   }
 }
 
+#skip-to-content-link {
+  height: 0px;
+}
+
 .flex-horizontal {
-  display:flex;
+  display: flex;
   flex-direction: row;
 }
 
@@ -124,22 +113,23 @@ $content-background-color: $background-color;
     margin: 0px 2px;
     &.selected {
       border-radius: 3px;
-      background-color: rgba($white, 0.15);
+      background-color: hsla(0,0%,100%,.15);
     }
   }
 }
 
-.navi-languages { //desktop
-  #lang-select{
+.navi-languages {
+  //desktop
+  #lang-select {
     border-bottom: 0px;
     .lang.selected {
-        background: rgba(0, 0, 0, 0.15);
+      background: $selected-lang-background;
     }
   }
 }
 
 .right-border {
-  border-right: 1px solid rgba(0,0,0,0.15);
+  border-right: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .navi-icons {
@@ -147,14 +137,20 @@ $content-background-color: $background-color;
     font-size: 1.8em;
     color: $primary-color;
     fill: $top-navigation-icon-color;
+    &.caution-topbar {
+      fill: $caution-icon-color;
+      color: $caution-icon-font-color;
+    }
   }
-  width:50px;
+  width: 50px;
 }
 .main-menu-toggle {
   .icon {
     font-size: $font-size-large;
   }
 
+  align-items: center;
+  display: flex;
   right: 0;
 }
 
@@ -168,7 +164,7 @@ $content-background-color: $background-color;
   padding: 0;
   background: $black;
   color: $offcanvas-link-color;
-  height:100%;
+  height: 100%;
   overflow-y: auto;
   text-align: left;
   @include font-medium;
@@ -187,7 +183,7 @@ $content-background-color: $background-color;
     color: $offcanvas-link-color;
     text-decoration: none;
   }
-  .icon{
+  .icon {
     fill: $offcanvas-link-color;
     &.small {
       width: 10px;
@@ -215,7 +211,7 @@ $content-background-color: $background-color;
   padding: 0.5em $padding-large;
   .footer-item {
     margin: 0px;
-    display:inline-block;
+    display: inline-block;
     font-size: $font-size-normal;
     button {
       font-size: $font-size-normal;
@@ -232,7 +228,6 @@ section.content {
   display: flex;
   flex-direction: column;
   flex: 0 1 100%;
-  height: 100%;
 
   .mobile {
     display: flex;
@@ -255,12 +250,25 @@ section.content {
       height: 100%;
       display: flex;
       flex-direction: column;
-      position: relative;
 
       @media print {
         height: auto;
         width: 100%;
         display: inline;
+      }
+
+      .scrollable-content-wrapper {
+        display: flex;
+        flex-basis: 0px;
+        flex-direction: column;
+        flex-grow: 1;
+        flex-shrink: 0;
+
+        @media print {
+          display: inline;
+          height: auto;
+          width: 100%;
+        }
       }
     }
 
@@ -282,16 +290,15 @@ section.content {
 
 @media print {
   section.content {
-     height: auto;
-     display: block;
+    height: auto;
+    display: block;
 
-     .desktop {
-       height: auto;
-       display: block;
-     }
-   }
+    .desktop {
+      height: auto;
+      display: block;
+    }
+  }
 }
-
 
 .content.bp-large {
   height: calc(100% - 100px);
@@ -304,7 +311,7 @@ section.content {
 }
 
 .desktop-title {
-  background: $primary-color;
+  background: $desktop-title-color;
 
   a {
     color: $primary-font-color;
@@ -324,13 +331,16 @@ section.content {
   .arrow-icon {
     font-size: 0.6em;
     margin: 2px 1em;
-    color: $secondary-color;
+    color: $desktop-title-arrow-icon-color;
   }
 }
 
 .message-bar {
-  position:relative;
-  z-index:802;
+  @media print {
+    display: none;
+  }
+  position: relative;
+  z-index: 802;
   width: 100%;
   display: block;
   @include font-book;
@@ -344,13 +354,15 @@ section.content {
     display: flex;
     max-height: 100%;
 
-    .message-bar-info {
+    .message-bar-content {
+      flex-basis: auto;
+      flex-grow: 1;
       width: 60%;
     }
   }
 
   span {
-    width:45px;
+    width: 45px;
   }
 
   h2 {
@@ -374,12 +386,12 @@ section.content {
 
 #close-message-bar {
   span {
-      padding-right:10px;
-      padding-top:10px;
+    padding-right: 10px;
+    padding-top: 10px;
   }
 }
 .message-bar-fade {
-  mask-image: linear-gradient(rgba(0,0,0,1) 80px, rgba(0, 0, 0, 0));
+  mask-image: linear-gradient(rgba(0, 0, 0, 1) 80px, rgba(0, 0, 0, 0));
 }
 // Need more specific selector to override
 .message-bar .icon {
@@ -424,7 +436,7 @@ section.content {
   font-size: 18px;
   margin: 0px;
   padding: 0px 6px;
-  border: 1px solid rgba(0,0,0,0.15);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
 
   a.external-link {

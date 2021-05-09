@@ -1,29 +1,48 @@
+import cx from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
-import IconMarker from './IconMarker';
-import Icon from '../Icon';
 
-export default function LocationMarker({ position, className, noText }) {
+import Icon from '../Icon';
+import IconMarker from './IconMarker';
+
+const getValidType = type => {
+  switch (type) {
+    case 'from':
+      return 'from';
+    case 'to':
+      return 'to';
+    case 'via':
+    default:
+      return 'via';
+  }
+};
+
+export default function LocationMarker({ position, className, isLarge, type }) {
+  const validType = getValidType(type);
+  const sideLength = isLarge ? 30 : 24;
   return (
     <IconMarker
       position={position}
-      className={className}
+      className={cx(validType, className)}
       icon={{
-        element: (
-          <Icon
-            img={noText ? 'icon-icon_place' : 'icon-icon_mapMarker-point'}
-          />
-        ),
-        iconSize: [24, 24],
-        iconAnchor: [12, 24],
-        className,
+        className: cx(validType, className),
+        element: <Icon img={`icon-icon_mapMarker-${validType}`} />,
+        iconAnchor: [sideLength / 2, sideLength],
+        iconSize: [sideLength, sideLength],
       }}
     />
   );
 }
 
 LocationMarker.propTypes = {
-  position: IconMarker.propTypes.position, // eslint-disable-line react/no-typos
+  position: IconMarker.propTypes.position,
   className: PropTypes.string,
-  noText: PropTypes.bool,
+  isLarge: PropTypes.bool,
+  type: PropTypes.oneOf(['from', 'via', 'to']),
+};
+
+LocationMarker.defaultProps = {
+  className: undefined,
+  isLarge: false,
+  type: 'via',
 };

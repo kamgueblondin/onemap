@@ -1,16 +1,7 @@
 .desktop .summary {
-  flex: 1 0 0px;
-  flex-basis: 0px;
   display: flex;
+  flex: 1 0 auto;
   flex-direction: column;
-  overflow-x: auto;
-}
-
-@media print {
-  .desktop .summary {
-    display: block;
-    height: auto;
-  }
 }
 
 .summary-no-route-found {
@@ -25,26 +16,37 @@
     margin-right: 1em;
     margin-top: 0.5em;
     color: white;
-    fill: $disruption-color;
     width: 2em;
     height: 2em;
+  }
+  .caution {
+    fill: $disruption-color;
+  }
+  .info {
+    fill: $gray-blue;
   }
 }
 
 .time-selectors {
   @include font-book;
   font-size: $font-size-small;
-  background-color: $background-color-darker;
+  background-color: $background-color-lighter;
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  max-height: 2.2em;
+  flex: 0 1 49.6%;
 
-  input[type="date"], input[type="time"].time-selector, input[type="text"], input[type="tel"],select, .time-mui > input {
+  input[type='date'],
+  input[type='time'].time-selector,
+  input[type='text'],
+  input[type='tel'],
+  select,
+  .time-mui > input {
     vertical-align: middle;
     text-align: left;
-    height: 2.6em;
     margin: 0;
-    padding: 0 1rem 0 $padding-small;
+    padding: 0 1rem 0 0.9em;
     font-size: $font-size-xxsmall;
     display: inline-block;
     background-image: none;
@@ -54,6 +56,8 @@
     border-radius: $border-radius;
     appearance: none;
     @include font-book;
+    font-weight: 700;
+    height: 2.6em;
 
     &:hover {
       background-color: $white;
@@ -65,7 +69,8 @@
       //outline: none;
     }
 
-    &.text-time-selector, &.desktop {
+    &.text-time-selector,
+    &.desktop {
       padding: 0 0.5em 0 0.5em;
       margin: 0 -0.5em 0 0;
       text-align: center;
@@ -73,15 +78,14 @@
   }
   .select-wrapper {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    border-radius: $border-radius;
-    background: $background-color-darker;
-    margin-right: 1px;
+    flex: 0 1 14.5em;
 
     > span {
       margin-left: -1rem;
       pointer-events: none;
+    }
+    select {
+      border-radius: 5px;
     }
   }
   .time-box-shadow input {
@@ -92,8 +96,7 @@
   }
 
   .fake-select-arrow {
-    font-size: 0.5rem;
-    width: 2em;
+    font-size: 0.7rem;
     color: $link-color;
   }
 
@@ -102,7 +105,10 @@
     text-align: left;
     font-family: $font-family !important;
     display: flex !important;
-    border: solid 1px $light-gray;
+    border: 1px solid #ddd;
+    &:hover {
+      border: 1px solid #007ac9;
+    }
     input {
       font-size: $font-size-xxsmall !important;
     }
@@ -123,7 +129,9 @@
     text-align: left;
   }
 
-  .arrive, .date, input[type="time"].time-selector {
+  .arrive,
+  .date,
+  input[type='time'].time-selector {
     border: solid 1px $light-gray;
     box-shadow: none;
   }
@@ -134,6 +142,14 @@
     }
   }
 }
+
+.mobile .time-selectors {
+  flex: 0 1 85%;
+  .select-wrapper > span {
+    margin-left: -1.4rem;
+  }
+}
+
 .time-input-container {
   form {
     display: inherit;
@@ -141,9 +157,10 @@
   }
   display: flex;
   background: $white;
-  padding: 0 calc(0.7em + 1.5rem) 0 0.7em;
-  box-shadow: inset 1px 1px 3px 0 rgba(0, 0, 0, 0.43);
-  border-radius: 3px;
+  padding: 0 0.6em 0 0.2em;
+  border-radius: 5px;
+  margin-right: 0.6em;
+  flex: 0 0 3em;
   .time-input-field {
     width: 1.5em;
     padding-right: 0 !important;
@@ -154,145 +171,89 @@
       box-shadow: none !important;
       border-color: none !important;
     }
-    &#inputMinutes{
+    &#inputMinutes {
       text-align: left;
+      padding-bottom: 0.2em;
+      color: rgb(51, 51, 51);
+      font-weight: $font-weight-medium;
     }
-    &#inputHours{
+    &#inputHours {
       text-align: right;
+      padding-bottom: 0.2em;
+      color: rgb(51, 51, 51);
+      font-weight: $font-weight-medium;
     }
   }
-  .digit-separator {
-    margin: 0.35em 3px;
-    color: $link-color;
+  #timeinput-digit-separator {
+    margin: 0.25em 1px 0 1px;
+    color: rgb(51, 51, 51);
   }
 }
 
-.time-button-container {
-  width: 10px;
-  button {
-    width: 12px;
-    background: #fff;
-    border: 1px solid #c3e1ec;
-    text-align: center;
-    height: 18px;
-    padding: 0;
-    cursor: pointer;
-    font-size: 7px;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    margin: 0;
-  }
+.mobile .time-input-container {
+  margin-right: 0;
+}
+
+.quicksettings-separator-line {
+  display: block;
+  width: auto;
+  margin: 0 auto;
+  margin-left: 1em;
+  margin-right: 1em;
+  margin-top: 0.3em;
+  border-top: 1px solid #ddd;
+  background: $background-color-lighter;
+}
+
+.mobile .quicksettings-separator-line {
+  margin-left: 6px;
+  margin-right: 6px;
 }
 
 .time-selector-settings-row {
-  padding: $padding-small 6px;
-  overflow-x: hidden;
-  background-color: $background-color-darker;
+  background-color: $background-color-lighter;
   display: flex;
   justify-content: space-between;
   align-items: stretch;
+  flex-direction: initial;
 
-  &.bp-large {
-    height: 50px;
-  }
-}
-
-.bp-large.time-selector-settings-row {
-  padding: $padding-small 20px;
-
-  .select-wrapper {
-    margin-right: 2px;
-    padding-right: 0.5rem;
-
-    > span {
-      margin-left: -1.5rem;
-      margin-right: 1rem;
-    }
-  }
-
-  .time-mui {
-    padding-left: $padding-medium;
-    max-width: 6.5em;
-  }
-
-  input[type="date"], input[type="time"], input[type="text"], input[type="tel"], select, .time-mui > input {
-    font-size: $font-size-normal !important;
-    padding: 0 calc(#{$padding-medium} + 1.5rem) 0 $padding-medium;
-    height: 35px !important;
-
-    &.text-time-selector, &.desktop {
-      padding: 0 0.5em 0 0.5em;
-    }
-  }
-
-  .right-offcanvas-toggle {
-      span {
-        color: $link-color;
-        font-size: $font-size-small;
-      }
-      border-radius: $border-radius;
-  }
-}
-
-.right-offcanvas-toggle {
-
-  &:hover {
-    background-color: $white;
-    border: solid 1px $link-color;
-    //outline: none;
-    box-shadow: none;
-  }
-
-  &:focus {
-    background-color: $white;
-    //outline: none;
-    box-shadow: none;
-  }
-
-  span {
-    color: $link-color;
-    @include font-bold;
-    font-size: $font-size-xxxsmall;
-    margin-left: $padding-xsmall;
-    text-align: center;
-    text-transform:uppercase;
-  }
-  width: auto;
-  margin: 0;
-  background-color: $white;
-  border: solid 1px $light-gray;
-  border-radius: $border-radius-small;
-  color: $link-color;
-  display: flex;
-  align-items: center;
-  min-height: 30px;
-
-  > button {
-    padding: $padding-small;
-    height: 100%;
-    > div {
-      display: flex;
-    }
-  }
-
-  .icon-holder {
-    display: inline;
+  .button-container {
     position: relative;
-    line-height: 0;
-
-    .icon {
-      font-size: $font-size-large;
-    }
-
-    .super-icon {
-      fill: $hilight-color;
+    margin-top: -3px;
+    .icon-holder {
+      left: 1.4em;
       position: absolute;
-      right: 0;
-      top: -2px;
+      z-index: 2;
+    }
+  }
+
+  button.secondary-button {
+    background: none;
+    border: none;
+    margin-bottom: 0;
+    padding: 0.6em;
+    padding-right: 0.8em;
+    outline: none;
+    span {
+      font-weight: 700;
       font-size: $font-size-xxsmall;
     }
+    &.settings .icon {
+      font-size: 1.7em;
+      margin-top: -0.15em;
+    }
+    &.close {
+      .icon {
+        font-size: $font-size-small;
+      }
+      :first-child {
+        margin-left: 0.4em;
+      }
+    }
   }
+}
+.mobile button.secondary-button.close {
+  padding-right: 0.5em;
 }
 
 .summary-list-container {
@@ -303,14 +264,13 @@
   flex: 1 1 auto;
 }
 
-
 @media print {
   .summary {
-    display:block;
+    display: block;
     height: auto;
     .summary-list-container {
-      display:block;
-      height:auto;
+      display: block;
+      height: auto;
     }
   }
 }
@@ -322,37 +282,15 @@
   }
 }
 
-.via-point-bar {
-  background: $black;
-  color: $white;
-  font-size: $font-size-small;
+.desktop .street-mode-selector-panel-container {
+  padding: 0 $padding-medium;
+}
 
-  &:not(:empty) {
-    padding: 0.4em 10px;
-  }
+.mobile .street-mode-selector-panel-container {
+  padding: 0 $padding-small;
+}
 
-  .via-point {
-    color: $white;
-    > span {
-      padding-bottom: calc(#{$padding-xsmall} + 1px);
-      padding-right: $padding-large;
-      line-height: normal;
-    }
-
-    .link-name {
-      padding-top: 0.4em;
-      margin-right: $padding-medium;
-    }
-  }
-
-  &.bp-large {
-    font-size: $font-size-normal;
-
-    &:not(:empty) {
-      padding: 0.4em 20px;
-    }
-    .icon {
-      font-size: 14px;
-    }
-  }
+.summary-navigation-container {
+  background-color: $background-color-lighter;
+  flex: 0 0 auto;
 }

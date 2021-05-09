@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Relay from 'react-relay/classic';
 import filter from 'lodash/filter';
-import get from 'lodash/get';
 import moment from 'moment';
 import { Link } from 'react-router';
 import cx from 'classnames';
@@ -10,14 +9,25 @@ import Departure from './Departure';
 import { isBrowser } from '../util/browser';
 import { PREFIX_ROUTES } from '../util/path';
 
+const hasActiveDisruption = (t, alerts) =>
+  filter(
+    alerts,
+    alert => alert.effectiveStartDate < t && t < alert.effectiveEndDate,
+  ).length > 0;
+
 const asDepartures = stoptimes =>
   !stoptimes
     ? []
     : stoptimes.map(stoptime => {
         const isArrival = stoptime.pickupType === 'NONE';
+        let isLastStop = false;
+        if (stoptime.trip && stoptime.trip.stops) {
+          const lastStop = stoptime.trip.stops.slice(-1).pop();
+          isLastStop = stoptime.stop.id === lastStop.id;
+        }
         /* OTP returns either scheduled time or realtime prediction in
-       * 'realtimeDeparture' and 'realtimeArrival' fields.
-       * EXCEPT when state is CANCELLED, then it returns -1 for realtime  */
+           * 'realtimeDeparture' and 'realtimeArrival' fields.
+           * EXCEPT when state is CANCELLED, then it returns -1 for realtime  */
         const canceled = stoptime.realtimeState === 'CANCELED';
         const arrivalTime =
           stoptime.serviceDay +
@@ -32,6 +42,7 @@ const asDepartures = stoptimes =>
         return {
           canceled,
           isArrival,
+          isLastStop,
           stoptime: stoptimeTime,
           stop: stoptime.stop,
           realtime: stoptime.realtime,
@@ -53,6 +64,11 @@ class DepartureListContainer extends Component {
     routeLinks: PropTypes.bool,
     className: PropTypes.string,
     isTerminal: PropTypes.bool,
+    showPlatformCodes: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    showPlatformCodes: false,
   };
 
   onScroll = () => {
@@ -102,16 +118,7 @@ class DepartureListContainer extends Component {
       const id = `${departure.pattern.code}:${departure.stoptime}`;
 
       const classes = {
-        disruption:
-          filter(
-            departure.pattern.alerts,
-            alert =>
-              alert.effectiveStartDate <= departure.stoptime &&
-              departure.stoptime <= alert.effectiveEndDate &&
-              (get(alert.trip.gtfsId) === null ||
-                get(alert.trip.gtfsId) === get(departure.trip.gtfsId)),
-          ).length > 0,
-        canceled: departure.canceled,
+        disruption: hasActiveDisruption(departure.stoptime, departure.alerts),
       };
 
       const departureObj = (
@@ -120,10 +127,12 @@ class DepartureListContainer extends Component {
           departure={departure}
           showStop={this.props.showStops}
           currentTime={currentTime}
+          hasDisruption={classes.disruption}
           className={cx(classes, this.props.rowClasses)}
           canceled={departure.canceled}
           isArrival={departure.isArrival}
-          isTerminal={this.props.isTerminal}
+          isLastStop={departure.isLastStop}
+          showPlatformCode={this.props.showPlatformCodes}
         />
       );
 
@@ -168,19 +177,21 @@ export default Relay.createContainer(DepartureListContainer, {
           pickupType
           stopHeadsign
           stop {
+            id
             code
             platformCode
           }
           trip {
+            alerts {
+              effectiveStartDate
+              effectiveEndDate
+            }
             gtfsId
+            tripHeadsign
+            stops {
+              id
+            }
             pattern {
-              alerts {
-                effectiveStartDate
-                effectiveEndDate
-                trip {
-                  gtfsId
-                }
-              }
               route {
                 gtfsId
                 shortName

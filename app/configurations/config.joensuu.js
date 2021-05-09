@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'joensuu';
@@ -21,6 +22,9 @@ export default configMerger(walttiConfig, {
   appBarLink: { name: 'Joensuun kaupunki', href: 'http://www.joensuu.fi/' },
 
   title: APP_TITLE,
+
+  // Navbar logo
+  logo: 'joensuu/jojo-logo.png',
 
   colors: {
     primary: '#5c4696',
@@ -89,7 +93,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Joensuun kaupunki joukkoliikenteen reittisuunnittelua varten Joensuun alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan.',
+          'Tämän palvelun tarjoaa Joensuun kaupunki joukkoliikenteen reittisuunnittelua varten Joensuun alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan.',
         ],
       },
     ],

@@ -12,6 +12,9 @@ import PreferencesStore from './store/PreferencesStore';
 import RealTimeInformationStore from './store/RealTimeInformationStore';
 import TimeStore from './store/TimeStore';
 import FavouriteCityBikeStationStore from './store/FavouriteCityBikeStationStore';
+import MapLayerStore from './store/MapLayerStore';
+import GeoJsonStore from './store/GeoJsonStore';
+import CanceledLegsBarStore from './store/CanceledLegsBarStore';
 
 export default config => {
   const app = new Fluxible({
@@ -29,17 +32,18 @@ export default config => {
   app.registerStore(RealTimeInformationStore);
   app.registerStore(TimeStore);
   app.registerStore(FavouriteCityBikeStationStore);
+  app.registerStore(MapLayerStore);
+  app.registerStore(GeoJsonStore);
+  app.registerStore(CanceledLegsBarStore);
 
   app.plug({
     name: 'extra-context-plugin',
     plugContext: options => {
-      let { url, headers } = options;
+      let { headers } = options;
       return {
         plugComponentContext: componentContext => {
           // eslint-disable-next-line no-param-reassign
           componentContext.config = config;
-          // eslint-disable-next-line no-param-reassign
-          componentContext.url = url;
           // eslint-disable-next-line no-param-reassign
           componentContext.headers = headers;
         },
@@ -53,13 +57,12 @@ export default config => {
         },
         dehydrate() {
           return {
-            url,
             headers,
             config,
           };
         },
         rehydrate(state) {
-          ({ config, url, headers } = state); // eslint-disable-line no-param-reassign
+          ({ config, headers } = state); // eslint-disable-line no-param-reassign
         },
       };
     },

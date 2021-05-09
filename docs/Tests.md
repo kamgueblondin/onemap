@@ -16,9 +16,9 @@ Selenium standalone implementation and BrowserStack tunneling software (automati
 
 ## Running tests
 
-Running the tests starts a local dev server (with nowatch and HSL config) to port 8000 (iPhone 6+ on BrowserStack can only use a limited number of ports).
+Running the tests starts a local prod server with HSL config to port 8080 (iPhone 6+ on BrowserStack can only use a limited number of ports).
 
-Using local firefox
+Using local chrome
 ```
 npm run test-local
 ```
@@ -30,7 +30,7 @@ npm run test-browserstack -- YOUR_BROWSERSTACK_USERNAME YOUR_BROWSERSTACK_KEY
 
 ## Running a single test locally
 ```
-PORT=8000 npm run dev
+CONFIG=hsl yarn start
 nightwatch -c ./test/flow/nightwatch.json test/flow/tests/itinerary-search/itinerary-search.js
 ```
 
@@ -45,7 +45,8 @@ Test output and screenshots will be generated to 'test_output'
 
 ## Writing tests
 
-At top-level use the [suite](../test/api/suite.js) construct to reuse common test setup code. The browser you get is an upgraded version with useful extra methods, such as setCurrentPosition. See other tests for examples.
+At top-level use the [suite](../test/api/suite.js) construct to reuse common test setup code. The browser you get is an upgraded version with useful extra methods,
+such as setCurrentPosition. See other tests for examples.
 
 The basic structure is then this:
 ```js
@@ -93,3 +94,31 @@ If things change, you need to update the images
 
 - run: `BS_USERNAME=user BS_ACCESS_KEY=key npm run test-visual-update`
 - then verify that changed test images are OK and commit the changes
+
+
+# Smoke tests
+
+These tests verify that UI opens and is functional with all configurations in ie11, chrome, firexox and edge.
+
+Run the tests as: `yarn test-smoke BS_USERNAME BS_ACCESS_KEY`
+
+
+# Unit tests
+
+Unit tests can be run locally. This currently uses the ```mocha``` test runner. The pattern being watched is ```'test/unit/**/*.test.js'```.
+
+Using yarn
+```
+yarn run test-unit
+```
+
+Using the continuous watch mode
+```
+yarn run test-unit -- --watch
+```
+
+Generate code coverage report
+```
+yarn run test-coverage
+```
+Report is generated using nyc/Istanbul (config file `.nycrc.json`). HTML report is generated into `coverage` directory.

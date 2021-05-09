@@ -6,20 +6,25 @@ import groupBy from 'lodash/groupBy';
 import values from 'lodash/values';
 import cx from 'classnames';
 
+import { StopAlertsQuery } from '../util/alertQueries';
 import { getDistanceToNearestStop } from '../util/geo-utils';
 import RouteStop from './RouteStop';
+import withBreakpoint from '../util/withBreakpoint';
 
-class RouteStopListContainer extends React.Component {
+class RouteStopListContainer extends React.PureComponent {
   static propTypes = {
     pattern: PropTypes.object.isRequired,
     className: PropTypes.string,
     vehicles: PropTypes.object,
     position: PropTypes.object.isRequired,
     currentTime: PropTypes.object.isRequired,
+    relay: PropTypes.shape({
+      setVariables: PropTypes.func.isRequired,
+    }).isRequired,
+    breakpoint: PropTypes.string.isRequired,
   };
 
   static contextTypes = {
-    breakpoint: PropTypes.string,
     config: PropTypes.object.isRequired,
   };
 
@@ -30,7 +35,11 @@ class RouteStopListContainer extends React.Component {
   }
 
   componentWillReceiveProps({ relay, currentTime }) {
-    relay.setVariables({ currentTime: currentTime.unix() });
+    const currUnix = this.props.currentTime.unix();
+    const nextUnix = currentTime.unix();
+    if (currUnix !== nextUnix) {
+      relay.setVariables({ currentTime: nextUnix });
+    }
   }
 
   setNearestStop = element => {
@@ -64,7 +73,7 @@ class RouteStopListContainer extends React.Component {
       vehicle => `HSL:${vehicle.next_stop}`,
     );
 
-    const rowClassName = `bp-${this.context.breakpoint}`;
+    const rowClassName = `bp-${this.props.breakpoint}`;
 
     return stops.map((stop, i) => {
       const isNearest =
@@ -110,7 +119,7 @@ class RouteStopListContainer extends React.Component {
 
 export default Relay.createContainer(
   connectToStores(
-    RouteStopListContainer,
+    withBreakpoint(RouteStopListContainer),
     ['RealTimeInformationStore', 'PositionStore', 'TimeStore'],
     ({ getStore }) => ({
       vehicles: getStore('RealTimeInformationStore').vehicles,
@@ -132,12 +141,14 @@ export default Relay.createContainer(
             color
           }
           stops {
+            ${StopAlertsQuery}
             stopTimesForPattern(id: $patternId, startTime: $currentTime) {
               realtime
               realtimeState
               realtimeDeparture
               serviceDay
               scheduledDeparture
+              pickupType
             }
             gtfsId
             lat

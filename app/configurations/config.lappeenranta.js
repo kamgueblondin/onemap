@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'lappeenranta';
@@ -24,7 +25,7 @@ export default configMerger(walttiConfig, {
 
   textLogo: true, // title text instead of logo img
 
-  favicon: './sass/themes/lappeenranta/bussi_fin.jpeg',
+  favicon: './app/configurations/images/lappeenranta/bussi_fin.jpeg',
 
   feedIds: ['Lappeenranta'],
 
@@ -87,7 +88,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Lappeenrannan kaupungin joukkoliikenne joukkoliikenteen reittisuunnittelua varten Lappeenrannan paikallisliikenteen alueella. Palvelu perustuu Digitransit palvelualustaan.',
+          'Tämän palvelun tarjoaa Lappeenrannan kaupungin joukkoliikenne joukkoliikenteen reittisuunnittelua varten Lappeenrannan paikallisliikenteen alueella. Palvelu perustuu Digitransit-palvelualustaan.',
         ],
       },
     ],

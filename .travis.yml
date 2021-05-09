@@ -2,38 +2,38 @@ sudo: required
 
 branches:
   only:
-  - master
-  - index-page
-  - /201[7-9][0-1][0-9][0-3][0-9]/
+    - master
+    - index-page
+    - /201[7-9][0-1][0-9][0-3][0-9]/
 
 cache: yarn
 
 language: node_js
+
+before_install:
+  - export TZ=Europe/Helsinki
+
 install: true
+
 services:
   - docker
 
 jobs:
   include:
-    - stage: build container
-      node_js: "8"
-      script: test/build.sh
     - stage: test
-      env: VISUAL=chrome50
-      node_js: "8"
-      script: test/visual.sh
+      env: LINT,UNIT,FLOW
+      node_js: '10'
+      script: yarn install && yarn lint && yarn test-coverage && yarn test-report && test/flow.sh
     - stage: test
-      env: VISUAL=ie11
-      node_js: "8"
+      env: _SMOKE=1
+      node_js: '10'
+      script: test/smoke.sh
+
+    - stage: visual
+      env: VISUAL=chrome
+      node_js: '10'
       script: test/visual.sh
-    - stage: test
-      env: VISUAL=safari10
-      node_js: "8"
-      script: test/visual.sh
-    - stage: test
-      env: VISUAL=edge15
-      node_js: "8"
-      script: test/visual.sh
-    - stage: deploy
-      node_js: "8"
+
+    - stage: build and deploy container
+      node_js: '10'
       script: test/deploy.sh

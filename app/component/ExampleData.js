@@ -28,6 +28,10 @@ export const realtimeDeparture = {
     code: 'HSL:4611:1:01',
     headsign: 'Rautatientori',
   },
+
+  trip: {
+    gtfsId: 'HSL:1006T_20160613_La_1_2136',
+  },
 };
 
 export const departure = {
@@ -37,6 +41,7 @@ export const departure = {
     name: 'Kellosilta',
     desc: 'Ratamestarinkatu 9',
     gtfsId: 'JOLI:1007',
+    platformCode: '1-6',
   },
 
   stoptime: 1444185960,
@@ -70,7 +75,7 @@ export const vehicle = {
   route: 'HSL:4611',
   direction: 1,
   tripStartTime: '1323',
-  operatingDay: '20160601',
+  operatingDay: '2016-06-01',
   mode: 'bus',
   delay: 44,
   next_stop: '1401152',
@@ -88,6 +93,7 @@ export const station = {
   name: 'Fredrikinkatu 27',
   lon: 24.939603788199364,
   lat: 60.1626075196532,
+  state: 'Station on',
 };
 
 export const favouriteLocation = {
@@ -147,6 +153,7 @@ export const plan = {
           type: 'regular',
           cents: 320,
           currency: 'EUR',
+          components: [{ fareId: 'HSL:hki' }],
         },
       ],
       legs: [
@@ -178,7 +185,7 @@ export const plan = {
             points:
               'ktlnJabfwC[NMDDj@?H@L@H@PFfADhC@TT|DBh@?BFdAJvADp@Dt@HtA?DDr@@H@FJrB@D???B?DBVB\\D|@FfATI',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: false,
           rentedBike: false,
@@ -223,7 +230,7 @@ export const plan = {
             length: 2,
             points: 'splnJgydwC|iDyp@',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: true,
           rentedBike: false,
@@ -268,7 +275,7 @@ export const plan = {
             length: 4,
             points: 'segnJekfwCKo@TCRA',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: false,
           rentedBike: false,
@@ -315,7 +322,7 @@ export const plan = {
             points:
               'ktlnJabfwC[NMDDj@?H@L@H@PFfADhC@TT|DBh@?BFdAJvADp@Dt@HtA?DDr@@H@FJrB@D???B?DBVB\\D|@FfATI',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: false,
           rentedBike: false,
@@ -360,7 +367,7 @@ export const plan = {
             length: 2,
             points: 'splnJgydwC|iDyp@',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: true,
           rentedBike: false,
@@ -405,7 +412,7 @@ export const plan = {
             length: 4,
             points: 'segnJekfwCKo@TCRA',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: false,
           rentedBike: false,
@@ -452,7 +459,7 @@ export const plan = {
             points:
               'ktlnJabfwC[NMDDj@?H@L@H@PFfADhC@TT|DBh@?BFdAJvADp@Dt@HtA?DDr@@H@FJrB@D???B?DBVB\\D|@FfATI',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: false,
           rentedBike: false,
@@ -497,7 +504,7 @@ export const plan = {
             length: 2,
             points: 'splnJgydwC|iDyp@',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: true,
           rentedBike: false,
@@ -542,7 +549,7 @@ export const plan = {
             length: 4,
             points: 'segnJekfwCKo@TCRA',
           },
-          intermediateStops: [],
+          intermediatePlaces: [],
           realTime: false,
           transitLeg: false,
           rentedBike: false,
@@ -572,6 +579,7 @@ export const routeScheduleHeaderStops = [
   { name: 'Sörnäinen(M)' },
 ];
 
+/*
 export const routePatterns = {
   pattern: {
     code: 'HSL:1007A:1:03',
@@ -594,4 +602,200 @@ export const routePatterns = {
       mode: 'TRAM',
     },
   },
+};
+*/
+
+export const routePatterns = {
+  patterns: [
+    {
+      code: 'HSL:1010:1:02',
+      headsign: 'Kirurgi',
+      stops: [
+        {
+          name: 'Korppaanmäki',
+        },
+        {
+          name: 'Johanneksenkirkko',
+        },
+        {
+          name: 'Tarkk´ampujankatu',
+        },
+      ],
+      tripsForDate: [
+        {
+          stoptimes: [
+            {
+              scheduledArrival: 56100,
+              scheduledDeparture: 56100,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
+              },
+            },
+            {
+              scheduledArrival: 56220,
+              scheduledDeparture: 56220,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: 'HSL:1010:0:01',
+      headsign: 'Pikku Huopalahti',
+      stops: [
+        {
+          name: 'Korppaanmäki',
+        },
+        {
+          name: 'Johanneksenkirkko',
+        },
+        {
+          name: 'Tarkk´ampujankatu',
+        },
+      ],
+      tripsForDate: [
+        {
+          stoptimes: [
+            {
+              scheduledArrival: 56100,
+              scheduledDeparture: 56100,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
+              },
+            },
+            {
+              scheduledArrival: 56220,
+              scheduledDeparture: 56220,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: 'HSL:1010:0:01',
+      headsign: 'Kirurgi',
+      stops: [
+        {
+          name: 'Korppaanmäki',
+        },
+        {
+          name: 'Johanneksenkirkko',
+        },
+        {
+          name: 'Tarkk´ampujankatu',
+        },
+      ],
+      tripsForDate: [
+        {
+          stoptimes: [
+            {
+              scheduledArrival: 56100,
+              scheduledDeparture: 56100,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
+              },
+            },
+            {
+              scheduledArrival: 56220,
+              scheduledDeparture: 56220,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const twoRoutePatterns = {
+  patterns: [
+    {
+      code: 'HSL:1010:1:02',
+      headsign: 'Kirurgi',
+      stops: [
+        {
+          name: 'Korppaanmäki',
+        },
+        {
+          name: 'Johanneksenkirkko',
+        },
+        {
+          name: 'Tarkk´ampujankatu',
+        },
+      ],
+      tripsForDate: [
+        {
+          stoptimes: [
+            {
+              scheduledArrival: 56100,
+              scheduledDeparture: 56100,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
+              },
+            },
+            {
+              scheduledArrival: 56220,
+              scheduledDeparture: 56220,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      code: 'HSL:1010:0:01',
+      headsign: 'Pikku Huopalahti',
+      stops: [
+        {
+          name: 'Korppaanmäki',
+        },
+        {
+          name: 'Johanneksenkirkko',
+        },
+        {
+          name: 'Tarkk´ampujankatu',
+        },
+      ],
+      tripsForDate: [
+        {
+          stoptimes: [
+            {
+              scheduledArrival: 56100,
+              scheduledDeparture: 56100,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
+              },
+            },
+            {
+              scheduledArrival: 56220,
+              scheduledDeparture: 56220,
+              serviceDay: 1551996000,
+              stop: {
+                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ],
 };

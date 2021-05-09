@@ -3,6 +3,7 @@ import React from 'react';
 import get from 'lodash/get';
 import some from 'lodash/some';
 import polyline from 'polyline-encoded';
+import { routerShape, locationShape } from 'react-router';
 
 import LocationMarker from './map/LocationMarker';
 import ItineraryLine from './map/ItineraryLine';
@@ -20,20 +21,21 @@ if (isBrowser) {
 
 let timeout;
 
-export default function ItineraryPageMap(
-  { itinerary, params, from, to, routes, center },
-  { breakpoint, router, location },
+function ItineraryPageMap(
+  { itinerary, params, from, to, routes, center, breakpoint },
+  { router, location },
 ) {
   const leafletObjs = [
     <LocationMarker
       key="fromMarker"
       position={from || otpToLocation(params.from)}
-      className="from"
+      type="from"
     />,
     <LocationMarker
+      isLarge
       key="toMarker"
       position={to || otpToLocation(params.to)}
-      className="to"
+      type="to"
     />,
   ];
 
@@ -46,8 +48,6 @@ export default function ItineraryPageMap(
             <LocationMarker
               key={`via_${i}`} // eslint-disable-line react/no-array-index-key
               position={markerLocation}
-              className="via"
-              noText
             />,
           );
         });
@@ -56,8 +56,6 @@ export default function ItineraryPageMap(
         <LocationMarker
           key="via"
           position={otpToLocation(location.query.intermediatePlaces)}
-          className="via"
-          noText
         />,
       );
     }
@@ -163,4 +161,12 @@ ItineraryPageMap.propTypes = {
       fullscreenMap: PropTypes.bool,
     }).isRequired,
   ).isRequired,
+  breakpoint: PropTypes.string.isRequired,
 };
+
+ItineraryPageMap.contextTypes = {
+  location: locationShape.isRequired,
+  router: routerShape.isRequired,
+};
+
+export default ItineraryPageMap;

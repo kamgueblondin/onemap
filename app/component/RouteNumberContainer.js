@@ -8,7 +8,8 @@ const getText = (route, config) => {
   const showAgency = get(config, 'agency.show', false);
   if (route.shortName) {
     return route.shortName;
-  } else if (showAgency && route.agency) {
+  }
+  if (showAgency && route.agency) {
     return route.agency.name;
   }
   return '';
@@ -23,6 +24,7 @@ const RouteNumberContainer = (
       className={className}
       isCallAgency={isCallAgency || route.type === 715}
       color={route.color ? `#${route.color}` : null}
+      hasDisruption={props.hasDisruption}
       mode={route.mode}
       text={getText(route, config)}
       {...props}

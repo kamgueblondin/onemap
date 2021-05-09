@@ -1,7 +1,11 @@
+/* eslint-disable prefer-template */
 const CONFIG = 'matka';
-const APP_DESCRIPTION = 'Liikenneviraston Matka.fi–palvelu.';
+const APP_DESCRIPTION = 'Matka.fi–palvelu.';
 const APP_TITLE = 'Matka.fi';
 const YEAR = 1900 + new Date().getYear();
+
+// route timetable data needs to be up-to-date before this is enabled
+// const HSLRouteTimetable = require('./timetableConfigUtils').default.HSLRoutes;
 
 export default {
   CONFIG,
@@ -17,9 +21,8 @@ export default {
   defaultLanguage: 'fi',
 
   appBarLink: {
-    name: 'Liikennevirasto',
-    href:
-      'http://www.liikennevirasto.fi/liikennejarjestelma/henkiloliikenne/joukkoliikenteen-palvelut/informaatiopalvelut/liikkujan-infopalvelut',
+    name: 'Traficom',
+    href: 'https://www.traficom.fi/fi/joukkoliikenteen-informaatiopalvelut',
   },
 
   socialMedia: {
@@ -30,7 +33,10 @@ export default {
 
   title: APP_TITLE,
 
-  favicon: './sass/themes/hsl/icon_favicon-matkafi.svg',
+  // Navbar logo
+  logo: 'matka/matka-logo.png',
+
+  favicon: './app/configurations/images/hsl/icon_favicon-matkafi.svg',
 
   feedIds: ['MATKA', 'HSL', 'tampere', 'LINKKI', 'lautta', 'OULU'],
 
@@ -39,9 +45,14 @@ export default {
     keywords: 'reitti,reitit,opas,reittiopas,joukkoliikenne',
   },
 
+  routeTimetables: {
+    // route timetable data needs to be up-to-date before this is enabled
+    //  HSL: HSLRouteTimetable,
+  },
+
   footer: {
     content: [
-      { label: `© Liikennevirasto ${YEAR}` },
+      { label: `© Traficom ${YEAR}` },
       {},
       {
         name: 'footer-feedback',
@@ -53,8 +64,7 @@ export default {
       {
         name: 'about-this-service',
         nameEn: 'About this service',
-        href:
-          'http://www.liikennevirasto.fi/liikennejarjestelma/henkiloliikenne/joukkoliikenteen-palvelut/informaatiopalvelut/liikkujan-infopalvelut/tietoja-matka.fi-palvelusta',
+        href: 'https://www.traficom.fi/fi/joukkoliikenteen-informaatiopalvelut',
         icon: 'icon-icon_info',
       },
     ],
@@ -67,7 +77,7 @@ export default {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Liikennevirasto joukkoliikenteen reittisuunnittelua varten koko Suomen alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan. Reittiehdotukset perustuvat arvioituihin ajoaikoihin. Ehdotetun yhteyden toteutumista ei voida kuitenkaan taata. Liikennevirasto ei korvaa kulkuyhteyden toteutumatta jäämisestä mahdollisesti aiheutuvia vahinkoja.',
+          'Tämän palvelun tarjoaa Traficomin joukkoliikenteen reittisuunnittelua varten koko Suomen alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan. Reittiehdotukset perustuvat arvioituihin ajoaikoihin. Ehdotetun yhteyden toteutumista ei voida kuitenkaan taata. Kulkuyhteyden toteutumatta jäämisestä mahdollisesti aiheutuvia vahinkoja ei korvata.',
         ],
       },
     ],
@@ -76,7 +86,7 @@ export default {
       {
         header: 'Om tjänsten',
         paragraphs: [
-          'Den här tjänsten erbjuds av Trafikverket för reseplanering inom hela Finland. Reseplaneraren täcker med vissa begränsningar kollektivtrafik, promenad, cykling samt privatbilism. Tjänsten baserar sig på Digitransit-plattformen.',
+          'Den här tjänsten erbjuds av Traficom för reseplanering inom hela Finland. Reseplaneraren täcker med vissa begränsningar kollektivtrafik, promenad, cykling samt privatbilism. Tjänsten baserar sig på Digitransit-plattformen.',
         ],
       },
     ],
@@ -85,11 +95,10 @@ export default {
       {
         header: 'About this service',
         paragraphs: [
-          'This service is provided by Finnish Transport Agency for journey planning and information in Finland. The service covers public transport, walking, cycling, and some private car use. Service is built on Digitransit platform.',
+          'This service is provided by Traficom for journey planning and information in Finland. The service covers public transport, walking, cycling, and some private car use. Service is built on Digitransit platform.',
         ],
       },
     ],
   },
-  staticMessagesUrl:
-    'https://beta.liikennevirasto.fi/joukkoliikenne/yleisviesti/',
+  staticMessagesUrl: 'https://beta.vayla.fi/joukkoliikenne/yleisviesti/',
 };

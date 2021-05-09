@@ -10,15 +10,43 @@ import { displayDistance } from '../util/geo-utils';
 import { durationToString } from '../util/timeUtils';
 import ItineraryCircleLine from './ItineraryCircleLine';
 
+const getDescription = (mode, distance, duration) => {
+  if (mode === 'BICYCLE_WALK') {
+    return (
+      <FormattedMessage
+        id="cyclewalk-distance-duration"
+        values={{ distance, duration }}
+        defaultMessage="Walk your bike {distance} ({duration})"
+      />
+    );
+  }
+
+  if (mode === 'BICYCLE') {
+    return (
+      <FormattedMessage
+        id="cycle-distance-duration"
+        values={{ distance, duration }}
+        defaultMessage="Cycle {distance} ({duration})"
+      />
+    );
+  }
+
+  return (
+    <FormattedMessage
+      id="walk-distance-duration"
+      values={{ distance, duration }}
+      defaultMessage="Walk {distance} ({duration})"
+    />
+  );
+};
+
 function ViaLeg(props, context) {
   const distance = displayDistance(
     parseInt(props.leg.distance, 10),
     context.config,
   );
   const duration = durationToString(props.leg.duration * 1000);
-  const stayDuration = durationToString(
-    props.leg.startTime - props.arrivalTime,
-  );
+  const stayDuration = props.leg.startTime - props.arrivalTime;
 
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
   return (
@@ -47,23 +75,21 @@ function ViaLeg(props, context) {
         <div className="itinerary-leg-first-row">
           <div>
             {props.leg.from.name}
-            <div className="itinerary-via-leg-duration">
-              <FormattedMessage
-                id="via-leg-stop-duration"
-                values={{ stayDuration }}
-                defaultMessage="At via point {stayDuration}"
-              />
-            </div>
+            {stayDuration > 0 && (
+              <div className="itinerary-via-leg-duration">
+                <FormattedMessage
+                  id="via-leg-stop-duration"
+                  values={{ stayDuration: durationToString(stayDuration) }}
+                  defaultMessage="At via point {stayDuration}"
+                />
+              </div>
+            )}
             {props.children}
           </div>
           <Icon img="icon-icon_search-plus" className="itinerary-search-icon" />
         </div>
         <div className="itinerary-leg-action">
-          <FormattedMessage
-            id="walk-distance-duration"
-            values={{ distance, duration }}
-            defaultMessage="Walk {distance} ({duration})"
-          />
+          {getDescription(props.leg.mode, distance, duration)}
         </div>
       </div>
     </div>

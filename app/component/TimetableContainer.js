@@ -9,7 +9,8 @@ export default Relay.createContainer(Timetable, {
         gtfsId
         name
         url
-        stoptimesForServiceDate(date:$date) {
+        locationType
+        stoptimesForServiceDate(date:$date omitCanceled:false) {
           pattern {
             headsign
             code
@@ -25,6 +26,7 @@ export default Relay.createContainer(Timetable, {
             }
           }
           stoptimes {
+            realtimeState
             scheduledDeparture
             serviceDay
             headsign

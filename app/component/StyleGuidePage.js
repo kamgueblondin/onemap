@@ -35,6 +35,7 @@ import SelectStopRow from './map/tile-layer/SelectStopRow';
 import SelectTerminalRow from './map/tile-layer/SelectTerminalRow';
 import TicketInformation from './TicketInformation';
 import DateSelect from './DateSelect';
+import { Component as RoutePatternSelect } from './RoutePatternSelect';
 import RouteScheduleHeader from './RouteScheduleHeader';
 import RouteScheduleStopSelect from './RouteScheduleStopSelect';
 import RouteScheduleTripRow from './RouteScheduleTripRow';
@@ -52,8 +53,6 @@ import { BicycleRentalStationRow } from './BicycleRentalStationRowContainer';
 import StopPageHeader from './StopPageHeader';
 import StopCardHeader from './StopCardHeader';
 import SplitBars from './SplitBars';
-import Labeled from './Labeled';
-import Centered from './Centered';
 import InfoIcon from './InfoIcon';
 import Favourite from './Favourite';
 import NoFavouriteLocations from './NoFavouriteLocations';
@@ -74,6 +73,8 @@ import BicycleLeg from './BicycleLeg';
 import EndLeg from './EndLeg';
 import AirportCheckInLeg from './AirportCheckInLeg';
 import AirportCollectLuggageLeg from './AirportCollectLuggageLeg';
+import { Component as ItineraryLegs } from './ItineraryLegs';
+import { component as CanceledLegsBar } from './CanceledLegsBar';
 import BusLeg from './BusLeg';
 import AirplaneLeg from './AirplaneLeg';
 import SubwayLeg from './SubwayLeg';
@@ -85,6 +86,16 @@ import ViaLeg from './ViaLeg';
 import CallAgencyLeg from './CallAgencyLeg';
 import CallAgencyWarning from './CallAgencyWarning';
 import Timetable from './Timetable';
+import Error404 from './404';
+import StopMarkerPopup from './map/popups/StopMarkerPopup';
+import SelectStreetModeDialog from './SelectStreetModeDialog';
+import SelectMapLayersDialog from './SelectMapLayersDialog';
+import MainMenuContainer from './MainMenuContainer';
+import OriginDestinationBar from './OriginDestinationBar';
+import { Component as IndexPage } from './IndexPage';
+import { Component as AlertList } from './AlertList';
+import { Component as SummaryPage } from './SummaryPage';
+import { Component as ItineraryTab } from './ItineraryTab';
 
 const components = {
   Icon,
@@ -123,6 +134,7 @@ const components = {
   SelectTerminalRow,
   TicketInformation,
   DateSelect,
+  RoutePatternSelect,
   RouteScheduleHeader,
   RouteScheduleStopSelect,
   RouteScheduleTripRow,
@@ -133,13 +145,12 @@ const components = {
   BicycleRentalStationRow,
   AppBarSmall,
   AppBarLarge,
+  CanceledLegsBar,
   FrontPagePanelLarge,
   FrontPagePanelSmall,
   StopPageHeader,
   StopCardHeader,
   SplitBars,
-  Labeled,
-  Centered,
   InfoIcon,
   Favourite,
   DepartureListHeader,
@@ -153,6 +164,7 @@ const components = {
   PageFooter,
   FooterItem,
   DateWarning,
+  ItineraryLegs,
   WalkLeg,
   WaitLeg,
   BicycleLeg,
@@ -170,6 +182,19 @@ const components = {
   CallAgencyLeg,
   CallAgencyWarning,
   Timetable,
+  Error404,
+  StopMarkerPopup,
+  SelectStreetModeDialog,
+  AlertList,
+  ItineraryTab,
+};
+
+const fullscreenComponents = {
+  SelectMapLayersDialog,
+  MainMenuContainer,
+  OriginDestinationBar,
+  IndexPage,
+  SummaryPage,
 };
 
 function getColors() {
@@ -515,7 +540,10 @@ function StyleGuidePage(props) {
     return (
       <ComponentDocumentation
         mode="examples-only"
-        component={components[props.params.componentName]}
+        component={
+          components[props.params.componentName] ||
+          fullscreenComponents[props.params.componentName]
+        }
       />
     );
   }

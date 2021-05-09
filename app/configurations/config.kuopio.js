@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'kuopio';
@@ -9,10 +10,10 @@ const walttiConfig = require('./waltti').default;
 export default configMerger(walttiConfig, {
   CONFIG,
 
-  appBarLink: { name: 'Kuopio', href: 'http://joukkoliikenne.kuopio.fi/' },
+  appBarLink: { name: 'Kuopio', href: 'https://vilkku.kuopio.fi/' },
 
   colors: {
-    primary: '#0077C9',
+    primary: '#0ab1c8',
   },
 
   socialMedia: {
@@ -24,7 +25,10 @@ export default configMerger(walttiConfig, {
 
   textLogo: false, // title text instead of logo img
 
-  favicon: './sass/themes/kuopio/favicon.png',
+  favicon: './app/configurations/images/kuopio/favicon.png',
+
+  // Navbar logo
+  logo: 'kuopio/logo.png',
 
   feedIds: ['Kuopio', 'KuopioEly'],
 
@@ -69,6 +73,8 @@ export default configMerger(walttiConfig, {
     },
   ],
 
+  showTicketInformation: true,
+
   footer: {
     content: [
       { label: `© Kuopio ${walttiConfig.YEAR}` },
@@ -93,7 +99,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Kuopion seudun joukkoliikenne reittisuunnittelua varten Kuopion ja Siilinjärven alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan.',
+          'Tämän palvelun tarjoaa Kuopion seudun joukkoliikenne reittisuunnittelua varten Kuopion ja Siilinjärven alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan.',
         ],
       },
       {

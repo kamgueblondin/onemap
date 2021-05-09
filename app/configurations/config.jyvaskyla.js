@@ -1,3 +1,4 @@
+/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'jyvaskyla';
@@ -73,6 +74,9 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
+  // Navbar logo
+  logo: 'jyvaskyla/favicon.png',
+
   textLogo: false,
 
   footer: {
@@ -82,7 +86,7 @@ export default configMerger(walttiConfig, {
       {
         name: 'footer-feedback',
         nameEn: 'Submit feedback',
-        href: 'https://s-asiointi.jkl.fi/eFeedback/fi/Feedback/24/113',
+        href: 'https://s-asiointi.jkl.fi/eFeedback/fi/Feedback/38',
         icon: 'icon-icon_speech-bubble',
       },
       {
@@ -99,7 +103,8 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Jyväskylän seudun joukkoliikenne reittisuunnittelua varten Jyväskylän, Laukaan ja Muuramen alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan.',
+          'Tämän palvelun tarjoaa Jyväskylän seudun joukkoliikenne reittisuunnittelua varten Jyväskylän, Laukaan ja Muuramen alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan.',
+          'Pysäkkiajat palvelussa ovat aina arvioita lukuun ottamatta linjojen lähtö- ja päätepysäkkejä sekä eräitä kiinteäaikaisia välipysäkkejä. Ruuhkattomaan aikaan auto voi edetä pysäkille ehdotettua aikaa nopeammin ja ruuhka-aikoina myöhemmin. Pysäkillä kannattaa kyydin varmistamiseksi olla aina riittävän ajoissa.',
         ],
       },
     ],

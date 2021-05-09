@@ -1,107 +1,116 @@
+import cx from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { intlShape } from 'react-intl';
 import { routerShape } from 'react-router';
-import without from 'lodash/without';
-import cx from 'classnames';
-import { dtLocationShape } from '../util/shapes';
-import Icon from './Icon';
+
+import ComponentUsageExample from './ComponentUsageExample';
 import DTAutosuggestPanel from './DTAutosuggestPanel';
 import { PREFIX_ITINERARY_SUMMARY, navigateTo } from '../util/path';
+import {
+  getIntermediatePlaces,
+  setIntermediatePlaces,
+} from '../util/queryUtils';
+import { dtLocationShape } from '../util/shapes';
 
-export default class OriginDestinationBar extends React.Component {
+const locationToOtp = location =>
+  `${location.address}::${location.lat},${location.lon}${
+    location.locationSlack ? `::${location.locationSlack}` : ''
+  }`;
+
+class OriginDestinationBar extends React.Component {
   static propTypes = {
     className: PropTypes.string,
-    origin: dtLocationShape,
     destination: dtLocationShape,
+    location: PropTypes.object,
+    origin: dtLocationShape,
   };
 
   static contextTypes = {
     intl: intlShape.isRequired,
     router: routerShape.isRequired,
-    location: PropTypes.object.isRequired,
   };
 
-  state = {
-    isViaPoint: this.context.location.query.intermediatePlaces && true,
-    viaPointName: this.context.location.query.intermediatePlaces
-      ? this.context.location.query.intermediatePlaces.split('::')[0]
-      : '',
+  static defaultProps = {
+    className: undefined,
+    location: undefined,
   };
 
-  setViaPointName = name => {
-    this.setState({
-      viaPointName: name,
-    });
-  };
+  get location() {
+    return this.props.location || this.context.router.getCurrentLocation();
+  }
+
+  updateViaPoints = newViaPoints =>
+    setIntermediatePlaces(this.context.router, newViaPoints.map(locationToOtp));
 
   swapEndpoints = () => {
+    const { location } = this;
+    const intermediatePlaces = getIntermediatePlaces(location.query);
+    if (intermediatePlaces.length > 1) {
+      location.query.intermediatePlaces.reverse();
+    }
     navigateTo({
-      base: this.context.location,
+      base: location,
       origin: this.props.destination,
       destination: this.props.origin,
       context: PREFIX_ITINERARY_SUMMARY,
       router: this.context.router,
+      resetIndex: true,
     });
   };
 
-  toggleViaPoint = val => {
-    if (val === false) {
-      this.context.router.replace({
-        ...this.context.location,
-        query: without(this.context.location.query, 'intermediatePlaces'),
-      });
-    }
-    this.setState({
-      isViaPoint: val,
-      viaPointName: !val ? '' : this.state.viaPointName,
-    });
-  };
-
-  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
-  render() {
-    return (
-      <div
-        className={cx(
-          'origin-destination-bar',
-          this.props.className,
-          'flex-horizontal',
-        )}
-      >
-        <DTAutosuggestPanel
-          origin={this.props.origin}
-          destination={this.props.destination}
-          isItinerary
-          isViaPoint={this.state.isViaPoint}
-          viaPointName={this.state.viaPointName}
-          setViaPointName={this.setViaPointName}
-        />
-        <div className="itinerary-search-controls">
-          <div className="switch" onClick={() => this.swapEndpoints()}>
-            <span>
-              <Icon img="icon-icon_direction-b" />
-            </span>
-          </div>
-          <div
-            className="addViaPoint"
-            style={{ display: !this.state.isViaPoint ? 'block' : 'none' }}
-            onClick={() => this.toggleViaPoint(true)}
-          >
-            <span>
-              <Icon img="icon-icon_plus" />
-            </span>
-          </div>
-          <div
-            className="removeViaPoint"
-            style={{ display: this.state.isViaPoint ? 'block' : 'none' }}
-            onClick={() => this.toggleViaPoint(false)}
-          >
-            <span>
-              <Icon img="icon-icon_close" />
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  render = () => (
+    <div
+      className={cx(
+        'origin-destination-bar',
+        this.props.className,
+        'flex-horizontal',
+      )}
+    >
+      <DTAutosuggestPanel
+        origin={this.props.origin}
+        destination={this.props.destination}
+        isItinerary
+        initialViaPoints={getIntermediatePlaces(this.location.query)}
+        updateViaPoints={this.updateViaPoints}
+        swapOrder={this.swapEndpoints}
+      />
+    </div>
+  );
 }
+
+OriginDestinationBar.description = (
+  <React.Fragment>
+    <ComponentUsageExample>
+      <OriginDestinationBar
+        destination={{ ready: false, set: false }}
+        origin={{
+          address: 'Messukeskus, Itä-Pasila, Helsinki',
+          lat: 60.201415,
+          lon: 24.936696,
+          ready: true,
+          set: true,
+        }}
+      />
+    </ComponentUsageExample>
+    <ComponentUsageExample description="with-viapoint">
+      <OriginDestinationBar
+        destination={{ ready: false, set: false }}
+        location={{
+          query: {
+            intermediatePlaces: 'Opastinsilta 6, Helsinki::60.199093,24.940536',
+          },
+        }}
+        origin={{
+          address: 'Messukeskus, Itä-Pasila, Helsinki',
+          lat: 60.201415,
+          lon: 24.936696,
+          ready: true,
+          set: true,
+        }}
+      />
+    </ComponentUsageExample>
+  </React.Fragment>
+);
+
+export default OriginDestinationBar;

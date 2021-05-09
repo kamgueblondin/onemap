@@ -24,7 +24,7 @@ function RouteLine(props) {
       <LocationMarker
         key="from"
         position={props.pattern.stops[0]}
-        className="from"
+        type="from"
       />,
     );
 
@@ -32,7 +32,7 @@ function RouteLine(props) {
       <LocationMarker
         key="to"
         position={props.pattern.stops[props.pattern.stops.length - 1]}
-        className="to"
+        type="to"
       />,
     );
   }
