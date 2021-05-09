@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import cx from 'classnames';
 import { Link } from 'react-router';
@@ -7,15 +8,21 @@ import Icon from './Icon';
 import DepartureTime from './DepartureTime';
 import RouteNumber from './RouteNumber';
 import { favouriteLocation as favouriteLocationExample } from './ExampleData';
+import { isStop, isTerminal } from '../util/suggestionUtils';
 
-const FavouriteLocation = ({ favourite, className, currentTime, departureTime,
-  firstTransitLeg, clickFavourite }) => {
+const FavouriteLocation = ({
+  favourite,
+  className,
+  currentTime,
+  departureTime,
+  firstTransitLeg,
+  clickFavourite,
+}) => {
   const { locationName, id, lat, lon, selectedIconId } = favourite;
 
-
   let departureTimeComponent;
-  if (departureTime &&
-      (currentTime < departureTime)) {  // Departure is in the future
+  if (departureTime && currentTime < departureTime) {
+    // Departure is in the future
     departureTimeComponent = (
       <DepartureTime
         departureTime={departureTime}
@@ -25,8 +32,11 @@ const FavouriteLocation = ({ favourite, className, currentTime, departureTime,
       />
     );
   } else {
-    departureTimeComponent =
-      <div className="favourite-location-content-placeholder time--small">--:--</div>;
+    departureTimeComponent = (
+      <div className="favourite-location-content-placeholder time--small">
+        --:--
+      </div>
+    );
   }
 
   // Show either route number and when it departs from nearest stop,
@@ -48,6 +58,11 @@ const FavouriteLocation = ({ favourite, className, currentTime, departureTime,
     info = <Icon img="icon-icon_walk" viewBox="6 0 40 40" />;
   }
 
+  const favouriteType =
+    (isStop(favourite) || isTerminal(favourite)) && favourite.gtfsId
+      ? 'pysakki'
+      : 'sijainti';
+  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
   return (
     <div
       data-swipeable="true"
@@ -61,8 +76,10 @@ const FavouriteLocation = ({ favourite, className, currentTime, departureTime,
 
       {info}
       <Link
-        onClick={(e) => { e.stopPropagation(); }}
-        to={`/suosikki/muokkaa/${id}`}
+        onClick={e => {
+          e.stopPropagation();
+        }}
+        to={`/suosikki/muokkaa/${favouriteType}/${id}`}
         className="cursor-pointer no-decoration"
       >
         <div className="favourite-edit-icon-click-area">
@@ -73,7 +90,7 @@ const FavouriteLocation = ({ favourite, className, currentTime, departureTime,
   );
 };
 
-FavouriteLocation.description = () =>
+FavouriteLocation.description = () => (
   <div>
     <p>Renders a favourite location component</p>
     <ComponentUsageExample description="first leg is with a bus">
@@ -82,16 +99,16 @@ FavouriteLocation.description = () =>
         {...favouriteLocationExample}
       />
     </ComponentUsageExample>
-  </div>;
+  </div>
+);
 
 FavouriteLocation.propTypes = {
-  favourite: React.PropTypes.object,
-  addFavourite: React.PropTypes.func,
-  clickFavourite: React.PropTypes.func,
-  className: React.PropTypes.string,
-  departureTime: React.PropTypes.number,
-  currentTime: React.PropTypes.number,
-  firstTransitLeg: React.PropTypes.object,
+  favourite: PropTypes.object,
+  clickFavourite: PropTypes.func,
+  className: PropTypes.string,
+  departureTime: PropTypes.number,
+  currentTime: PropTypes.number,
+  firstTransitLeg: PropTypes.object,
 };
 
 FavouriteLocation.displayName = 'FavouriteLocation';

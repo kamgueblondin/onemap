@@ -1,9 +1,10 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import cx from 'classnames';
 import ComponentUsageExample from './ComponentUsageExample';
 
 function Availability({ total, available, fewAvailableCount, text }) {
-  let availablepct = (available / total) * 100;
+  let availablepct = available / total * 100;
 
   let availableClass;
 
@@ -46,19 +47,25 @@ function Availability({ total, available, fewAvailableCount, text }) {
 
 Availability.displayName = 'Availability';
 
-Availability.description = () =>
+Availability.description = () => (
   <div>
     <p>Renders information about availability</p>
     <ComponentUsageExample description="">
-      <Availability available={1} total={3} fewAvailableCount={3} text="Bikes available" />
+      <Availability
+        available={1}
+        total={3}
+        fewAvailableCount={3}
+        text="Bikes available"
+      />
     </ComponentUsageExample>
-  </div>;
+  </div>
+);
 
 Availability.propTypes = {
-  available: React.PropTypes.number.isRequired,
-  total: React.PropTypes.number.isRequired,
-  fewAvailableCount: React.PropTypes.number.isRequired,
-  text: React.PropTypes.node.isRequired,
+  available: PropTypes.number.isRequired,
+  total: PropTypes.number.isRequired,
+  fewAvailableCount: PropTypes.number.isRequired,
+  text: PropTypes.node.isRequired,
 };
 
 export default Availability;

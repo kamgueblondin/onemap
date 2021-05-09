@@ -1,22 +1,23 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import cx from 'classnames';
 import Icon from './Icon';
 
 class Modal extends React.Component {
   static propTypes = {
-    allowClicks: React.PropTypes.bool,
-    children: React.PropTypes.node,
-    open: React.PropTypes.bool,
-    title: React.PropTypes.node,
-    toggleVisibility: React.PropTypes.func.isRequired,
+    allowClicks: PropTypes.bool,
+    children: PropTypes.node,
+    open: PropTypes.bool,
+    title: PropTypes.node,
+    toggleVisibility: PropTypes.func.isRequired,
   };
 
-  stopClickPropagation = (e) => {
+  stopClickPropagation = e => {
     if (this.props.allowClicks !== true) {
       e.preventDefault();
       e.stopPropagation();
     }
-  }
+  };
 
   render() {
     const isActive = {
@@ -33,6 +34,7 @@ class Modal extends React.Component {
       zIndex: 1400,
     };
 
+    /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/anchor-is-valid */
     return (
       <div
         className={cx('modal-overlay', 'cursor-pointer', isActive)}
@@ -45,10 +47,12 @@ class Modal extends React.Component {
           onClick={this.stopClickPropagation}
         >
           <div className="row">
-            <h2 className="left">{this.props.title}
-            </h2>
+            <h2 className="left">{this.props.title}</h2>
             <div className="small-1 columns right text-right modal-top-nav">
-              <a onClick={this.props.toggleVisibility} className="close-button cursor-pointer">
+              <a
+                onClick={this.props.toggleVisibility}
+                className="close-button cursor-pointer"
+              >
                 <Icon img="icon-icon_close" />
               </a>
             </div>
@@ -59,7 +63,8 @@ class Modal extends React.Component {
             </div>
           </div>
         </div>
-      </div>);
+      </div>
+    );
   }
 }
 

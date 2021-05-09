@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 
 import { FormattedMessage } from 'react-intl';
@@ -18,24 +19,26 @@ const CityBikeUse = ({ lang }, context) => (
         <FormattedMessage id="use-citybike" defaultMessage="Start using" />
       </button>
     </a>
-  </div>);
+  </div>
+);
 
 CityBikeUse.displayName = 'CityBikeUse';
 
-CityBikeUse.description = () =>
+CityBikeUse.description = () => (
   <div>
     <p>Renders use citybike component</p>
     <ComponentUsageExample description="">
       <CityBikeUse lang={exampleLang} />
     </ComponentUsageExample>
-  </div>;
+  </div>
+);
 
 CityBikeUse.propTypes = {
-  lang: React.PropTypes.string.isRequired,
+  lang: PropTypes.string.isRequired,
 };
 
 CityBikeUse.contextTypes = {
-  config: React.PropTypes.object.isRequired,
+  config: PropTypes.object.isRequired,
 };
 
 export default CityBikeUse;

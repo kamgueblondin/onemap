@@ -1,22 +1,40 @@
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+import React from 'react';
 import cx from 'classnames';
-import { Link, routerShape, locationShape } from 'react-router';
+import { routerShape, locationShape } from 'react-router';
 import { FormattedMessage, intlShape } from 'react-intl';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 import isEmpty from 'lodash/isEmpty';
 import isNumber from 'lodash/isNumber';
-import without from 'lodash/without';
 import Icon from './Icon';
+import BackButton from './BackButton';
 import FavouriteIconTable from './FavouriteIconTable';
-import { addFavouriteLocation, deleteFavouriteLocation } from '../action/FavouriteActions';
-import FakeSearchBar from './FakeSearchBar';
-import OneTabSearchModal from './OneTabSearchModal';
-import { getAllEndpointLayers } from '../util/searchUtils';
+import {
+  addFavouriteLocation,
+  addFavouriteStop,
+  deleteFavouriteLocation,
+  deleteFavouriteStop,
+} from '../action/FavouriteActions';
+import { isStop, isTerminal } from '../util/suggestionUtils';
+import DTEndpointAutosuggest from './DTEndpointAutosuggest';
 
 class AddFavouriteContainer extends React.Component {
-  static FavouriteIconIds = ['icon-icon_place', 'icon-icon_home', 'icon-icon_work', 'icon-icon_sport',
-    'icon-icon_school', 'icon-icon_shopping'];
+  static FavouriteIconIds = [
+    'icon-icon_place',
+    'icon-icon_home',
+    'icon-icon_work',
+    'icon-icon_sport',
+    'icon-icon_school',
+    'icon-icon_shopping',
+  ];
 
+  static FavouriteIconIdToNameMap = {
+    'icon-icon_home': 'home',
+    'icon-icon_work': 'work',
+    'icon-icon_sport': 'sport',
+    'icon-icon_school': 'school',
+    'icon-icon_shopping': 'shopping',
+  };
 
   static contextTypes = {
     intl: intlShape.isRequired,
@@ -27,132 +45,204 @@ class AddFavouriteContainer extends React.Component {
   };
 
   static propTypes = {
-    favourite: PropTypes.object, // if specified edit mode is activated
-  }
-
-  componentWillMount = () => {
-    if (this.isEdit()) {
-      this.setState({ favourite: this.props.favourite });
-    } else {
-      this.setState({
-        favourite: {
-          selectedIconId: undefined,
-          lat: undefined,
-          lon: undefined,
-          locationName: undefined,
-          address: undefined,
-          version: 1,
-        },
-      });
-    }
-  }
-
-  setCoordinatesAndAddress = (name, location) => {
-    let address = name;
-    if (location.type === 'CurrentLocation') {
-      const position = this.context.getStore('PositionStore').getLocationState();
-      if (position.address.length > 0) {
-        address = position.address;
-      }
-    }
-    this.setState({ favourite: { ...this.state.favourite,
-      lat: location.geometry.coordinates[1],
-      lon: location.geometry.coordinates[0],
-      address,
-    } });
+    favourite: PropTypes.shape({
+      address: PropTypes.string,
+      gtfsId: PropTypes.string,
+      id: PropTypes.number,
+      lat: PropTypes.number,
+      locationName: PropTypes.string,
+      lon: PropTypes.number,
+      selectedIconId: PropTypes.string,
+      version: PropTypes.number,
+    }),
   };
 
-  isEdit = () => this.props.favourite !== undefined && this.props.favourite.id !== undefined;
+  static defaultProps = {
+    favourite: {
+      address: undefined,
+      lat: undefined,
+      locationName: '',
+      lon: undefined,
+      selectedIconId: undefined,
+      version: 1,
+    },
+  };
 
-  canSave = () => (
+  state = {
+    favourite: { ...this.props.favourite },
+  };
+
+  setLocationProperties = location => {
+    this.setState(prevState => ({
+      favourite: {
+        ...prevState.favourite,
+        id: prevState.favourite.id,
+        gtfsId: location.id,
+        code: location.code,
+        layer: location.layer,
+        lat: location.lat,
+        lon: location.lon,
+        address: location.address,
+      },
+    }));
+  };
+
+  isEdit = () =>
+    this.props.favourite !== undefined && this.props.favourite.id !== undefined;
+
+  canSave = () =>
     !isEmpty(this.state.favourite.selectedIconId) &&
     isNumber(this.state.favourite.lat) &&
     isNumber(this.state.favourite.lon) &&
-    !isEmpty(this.state.favourite.locationName)
-  );
+    !isEmpty(this.state.favourite.locationName);
 
   save = () => {
     if (this.canSave()) {
-      this.context.executeAction(addFavouriteLocation, this.state.favourite);
+      // Old favourite needs to be removed if location type changes
+      if (
+        this.props.favourite &&
+        this.props.favourite.gtfsId &&
+        !this.state.favourite.gtfsId
+      ) {
+        this.context.executeAction(deleteFavouriteStop, {
+          id: this.state.favourite.id,
+        });
+        delete this.state.favourite.id;
+      } else if (
+        this.props.favourite &&
+        !this.props.favourite.gtfsId &&
+        this.state.favourite.gtfsId
+      ) {
+        this.context.executeAction(deleteFavouriteLocation, {
+          id: this.state.favourite.id,
+        });
+        delete this.state.favourite.id;
+      }
+
+      if (
+        (isStop(this.state.favourite) || isTerminal(this.state.favourite)) &&
+        this.state.favourite.gtfsId
+      ) {
+        this.context.executeAction(addFavouriteStop, this.state.favourite);
+      } else {
+        this.context.executeAction(addFavouriteLocation, this.state.favourite);
+      }
       this.quit();
     }
-  }
+  };
 
   delete = () => {
-    this.context.executeAction(deleteFavouriteLocation, this.state.favourite);
+    if (
+      (isStop(this.state.favourite) || isTerminal(this.state.favourite)) &&
+      this.state.favourite.gtfsId
+    ) {
+      this.context.executeAction(deleteFavouriteStop, this.state.favourite);
+    } else {
+      this.context.executeAction(deleteFavouriteLocation, this.state.favourite);
+    }
     this.quit();
-  }
+  };
 
   quit = () => {
-    this.context.router.replace('/suosikit');
-  }
+    this.context.router.goBack();
+  };
 
-  specifyName = (event) => {
-    this.setState({ favourite: { ...this.state.favourite, locationName: event.target.value } });
-  }
+  specifyName = event => {
+    const locationName = event.target.value;
+    this.setState(prevState => ({
+      favourite: { ...prevState.favourite, locationName },
+    }));
+  };
 
-  selectIcon = (id) => {
-    this.setState({ favourite: { ...this.state.favourite, selectedIconId: id } });
+  selectIcon = id => {
+    this.setState(prevState => {
+      const favourite = { ...prevState.favourite, selectedIconId: id };
+      // If the user hasn't set a location name yet,
+      // let's attempt to autodetermine it based on the icon they chose.
+      if (isEmpty(favourite.locationName)) {
+        let suggestedName = AddFavouriteContainer.FavouriteIconIdToNameMap[id];
+        if (suggestedName) {
+          // If there is a suggested name in the map,
+          // attempt to translate it, then assign it to
+          // the update favourite object.
+          suggestedName = this.context.intl.formatMessage({
+            id: `location-${suggestedName}`,
+            defaultMessage: suggestedName,
+          });
+          favourite.locationName = suggestedName;
+        }
+      }
+      return { favourite };
+    });
   };
 
   render() {
-    const destinationPlaceholder = this.context.intl.formatMessage({
-      id: 'address',
-      defaultMessage: 'Address',
-    });
+    const { favourite } = this.state;
+    const favouriteLayers = [
+      'CurrentPosition',
+      'Geocoding',
+      'OldSearch',
+      'Stops',
+    ];
 
-    const searchTabLabel = this.context.intl.formatMessage({
-      id: 'favourite-target',
-      defaultMessage: 'Favourite location',
-    });
-
-    const favourite = this.state.favourite;
-    const favouriteLayers = without(getAllEndpointLayers(), 'FavouritePlace');
-
-    return (<div className="fullscreen">
-      <div className="add-favourite-container">
-        <Link to="/suosikit" className="right cursor-pointer">
-          <Icon id="add-favourite-close-icon" img="icon-icon_close" />
-        </Link>
-        <row>
+    return (
+      <div className="fullscreen">
+        <div className="add-favourite-container">
+          <div className="button-container">
+            <BackButton
+              icon="icon-icon_close"
+              color="#666"
+              className="add-favourite-close-button"
+            />
+          </div>
           <div className="add-favourite-container__content small-12 small-centered columns">
             <header className="add-favourite-container__header row">
               <div className="cursor-pointer add-favourite-star small-1 columns">
-                <Icon className={cx('add-favourite-star__icon', 'selected')} img="icon-icon_star" />
+                <Icon
+                  className={cx('add-favourite-star__icon', 'selected')}
+                  img="icon-icon_star"
+                />
               </div>
               <div className="add-favourite-container__header-text small-11 columns">
-                <h3>{(!this.isEdit() &&
-                  <FormattedMessage
-                    id="add-location-to-favourites"
-                    defaultMessage="Add an important location to your Favorites"
-                  />) || <FormattedMessage
-                    id="edit-favourites"
-                    defaultMessage="Edit the location in the Favorites"
-                  />}
+                <h3>
+                  {(!this.isEdit() && (
+                    <FormattedMessage
+                      id="add-location-to-favourites"
+                      defaultMessage="Add an important location to your Favorites"
+                    />
+                  )) || (
+                    <FormattedMessage
+                      id="edit-favourites"
+                      defaultMessage="Edit the location in the Favorites"
+                    />
+                  )}
                 </h3>
               </div>
             </header>
             <div className="add-favourite-container__search search-form">
               <h4>
-                <FormattedMessage id="specify-location" defaultMessage="Specify location" />
+                <FormattedMessage
+                  id="specify-location"
+                  defaultMessage="Specify location"
+                />
               </h4>
-              <FakeSearchBar
-                endpointAddress={(this.state != null ? favourite.address : undefined) || ''}
-                placeholder={destinationPlaceholder}
-                onClick={(e) => {
-                  e.preventDefault();
-                  this.context.router.push({
-                    ...this.context.location,
-                    state: {
-                      ...this.context.location.state,
-                      oneTabSearchModalOpen: true,
-                    },
-                  });
-                }} id="destination" className="add-favourite-container__input-placeholder"
+              <DTEndpointAutosuggest
+                id="origin"
+                refPoint={{ lat: 0, lon: 0 }}
+                searchType="endpoint"
+                placeholder="address"
+                value={favourite.address || ''}
+                layers={favouriteLayers}
+                onLocationSelected={this.setLocationProperties}
+                showSpinner
               />
-            </div><div className="add-favourite-container__give-name">
+            </div>
+            <div className="add-favourite-container__give-name">
               <h4>
-                <FormattedMessage id="give-name-to-location" defaultMessage="Give the location a descriptive name" />
+                <FormattedMessage
+                  id="give-name-to-location"
+                  defaultMessage="Give the location a descriptive name"
+                />
               </h4>
               <div className="add-favourite-container__input-placeholder">
                 <input
@@ -161,12 +251,15 @@ class AddFavouriteContainer extends React.Component {
                   placeholder={this.context.intl.formatMessage({
                     id: 'location-examples',
                     defaultMessage: 'e.g. Home, Work, School,...',
-                  })} onChange={this.specifyName}
+                  })}
+                  onChange={this.specifyName}
                 />
               </div>
             </div>
             <div className="add-favourite-container__pick-icon">
-              <h4><FormattedMessage id="pick-icon" defaultMessage="Select icon" /></h4>
+              <h4>
+                <FormattedMessage id="pick-icon" defaultMessage="Select icon" />
+              </h4>
               <FavouriteIconTable
                 selectedIconId={(() => {
                   if (favourite.selectedIconId !== 'undefined' || null) {
@@ -179,50 +272,55 @@ class AddFavouriteContainer extends React.Component {
               />
             </div>
             <div className="add-favourite-container__save">
-              <div
-                className={`add-favourite-container-button ${this.canSave() ? '' : 'disabled'}`}
+              <button
+                className={`add-favourite-container-button ${
+                  this.canSave() ? '' : 'disabled'
+                }`}
                 onClick={this.save}
               >
                 <FormattedMessage id="save" defaultMessage="Save" />
-              </div>
+              </button>
             </div>
-            {this.isEdit() &&
-              [(<div key="delete" className="add-favourite-container__save">
-                <div
-                  className="add-favourite-container-button delete" onClick={this.delete}
+            {this.isEdit() && [
+              <div key="delete" className="add-favourite-container__save">
+                <button
+                  className="add-favourite-container-button delete"
+                  onClick={this.delete}
                 >
                   <FormattedMessage id="delete" defaultMessage="Delete" />
-                </div>
-              </div>), (<div key="cancel" className="add-favourite-container__save">
-                <div
-                  className="add-favourite-container-button cancel" onClick={this.quit}
+                </button>
+              </div>,
+              <div key="cancel" className="add-favourite-container__save">
+                <button
+                  className="add-favourite-container-button cancel"
+                  onClick={this.quit}
                 >
                   <FormattedMessage id="cancel" defaultMessage="Cancel" />
-                </div>
-              </div>)]
-            }
+                </button>
+              </div>,
+            ]}
           </div>
-        </row>
+        </div>
       </div>
-      <OneTabSearchModal
-        customTabLabel={searchTabLabel}
-        layers={favouriteLayers}
-        customOnSuggestionSelected={(name, item) => {
-          this.setCoordinatesAndAddress(name, item);
-          return this.context.router.goBack();
-        }}
-      /></div>);
+    );
   }
 }
 
-const AddFavouriteContainerWithFavourite = connectToStores(AddFavouriteContainer,
-  ['FavouriteLocationStore'],
-  (context, props) => (
-    { favourite:
-      props.params.id !== undefined ? context.getStore('FavouriteLocationStore')
-        .getById(parseInt(props.params.id, 10)) : {},
-    }
-  ),
+const AddFavouriteContainerWithFavourite = connectToStores(
+  AddFavouriteContainer,
+  ['FavouriteLocationStore', 'FavouriteStopsStore'],
+  (context, props) => ({
+    favourite: props.location.pathname.includes('pysakki')
+      ? context
+          .getStore('FavouriteStopsStore')
+          .getById(parseInt(props.params.id, 10))
+      : context
+          .getStore('FavouriteLocationStore')
+          .getById(parseInt(props.params.id, 10)),
+  }),
 );
 
-export default AddFavouriteContainerWithFavourite;
+export {
+  AddFavouriteContainerWithFavourite as default,
+  AddFavouriteContainer as Component,
+};

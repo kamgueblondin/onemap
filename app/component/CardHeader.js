@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import cx from 'classnames';
 import ComponentUsageExample from './ComponentUsageExample';
@@ -8,6 +9,7 @@ import Favourite from './Favourite';
 const CardHeader = ({
   className,
   children,
+  headerIcon,
   headingStyle,
   name,
   description,
@@ -18,38 +20,50 @@ const CardHeader = ({
 }) => (
   <div className={cx('card-header', className)}>
     {children}
-    {icon ? (
-      <div
-        className="left"
-        style={{ fontSize: 32, paddingRight: 10, height: 32 }}
-      >
-        <Icon img={icon} />
+    <div className="card-header-content">
+      {icon ? (
+        <div
+          className="left"
+          style={{ fontSize: 32, paddingRight: 10, height: 32 }}
+        >
+          <Icon img={icon} />
+        </div>
+      ) : null}
+      {className === 'stop-page header' && (
+        <div className="stop-page-header_icon-container">
+          <Icon img="icon-icon_bus-stop" className="stop-page-header_icon" />
+        </div>
+      )}
+      <div className="card-header-wrapper">
+        <span className={headingStyle || 'h4'}>
+          {name}
+          {headerIcon}
+          {unlinked ? null : <span className="link-arrow"> ›</span>}
+        </span>
+        <div className="card-sub-header">
+          {code != null ? <p className="card-code">{code}</p> : null}
+          {description != null && description !== 'null' ? (
+            <p className="sub-header-h4">{description}</p>
+          ) : null}
+        </div>
       </div>
-    ) : null}
-    <div className="card-header-wrapper">
-      <span className={headingStyle || 'h4'}>
-        {name}{unlinked ? null : <span className="link-arrow"> ›</span>}
-      </span>
-      <div className="card-sub-header">
-        {code != null ? <p className="card-code">{code}</p> : null}
-        <p className="sub-header-h4">{description}</p>
-      </div>
+      {icons && icons.length ? <SplitBars>{icons}</SplitBars> : null}
     </div>
-    { icons ? (
-      <SplitBars>{icons}</SplitBars>
-    ) : null}
-  </div>);
+  </div>
+);
 
 const emptyFunction = () => {};
-const exampleIcons = [<Favourite key="favourite" favourite={false} addFavourite={emptyFunction} />];
+const exampleIcons = [
+  <Favourite key="favourite" favourite={false} addFavourite={emptyFunction} />,
+];
 
 CardHeader.displayName = 'CardHeader';
 
-CardHeader.description = () =>
+CardHeader.description = () => (
   <div>
     <p>
-      Generic card header, which displays card name, description,
-      favourite star and optional childs
+      Generic card header, which displays card name, description, favourite star
+      and optional childs
     </p>
     <ComponentUsageExample description="">
       <CardHeader
@@ -60,18 +74,24 @@ CardHeader.description = () =>
         headingStyle="header-primary"
       />
     </ComponentUsageExample>
-  </div>;
+  </div>
+);
 
 CardHeader.propTypes = {
-  className: React.PropTypes.string,
-  headingStyle: React.PropTypes.string,
-  name: React.PropTypes.string.isRequired,
-  description: React.PropTypes.string.isRequired,
-  code: React.PropTypes.string,
-  icon: React.PropTypes.string,
-  icons: React.PropTypes.arrayOf(React.PropTypes.node),
-  children: React.PropTypes.node,
-  unlinked: React.PropTypes.bool,
+  className: PropTypes.string,
+  headerIcon: PropTypes.node,
+  headingStyle: PropTypes.string,
+  name: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  code: PropTypes.string,
+  icon: PropTypes.string,
+  icons: PropTypes.arrayOf(PropTypes.node),
+  children: PropTypes.node,
+  unlinked: PropTypes.bool,
+};
+
+CardHeader.defaultProps = {
+  headerIcon: undefined,
 };
 
 export default CardHeader;

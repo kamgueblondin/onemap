@@ -1,7 +1,10 @@
+import moment from 'moment';
+import PropTypes from 'prop-types';
 import React from 'react';
-import Relay from 'react-relay';
+import Relay from 'react-relay/classic';
 import { FormattedMessage, intlShape } from 'react-intl';
 import cx from 'classnames';
+import { routerShape } from 'react-router';
 
 import Icon from './Icon';
 import CallAgencyWarning from './CallAgencyWarning';
@@ -9,89 +12,197 @@ import FavouriteRouteContainer from './FavouriteRouteContainer';
 import RoutePatternSelect from './RoutePatternSelect';
 import RouteAgencyInfo from './RouteAgencyInfo';
 import RouteNumber from './RouteNumber';
-import { startRealTimeClient, stopRealTimeClient } from '../action/realTimeClientAction';
+import { DATE_FORMAT } from '../constants';
+import {
+  startRealTimeClient,
+  stopRealTimeClient,
+  changeRealTimeClientTopics,
+} from '../action/realTimeClientAction';
+import {
+  getCancelationsForRoute,
+  getServiceAlertsForRoute,
+  getServiceAlertsForRouteStops,
+  isAlertActive,
+} from '../util/alertUtils';
+import { PREFIX_ROUTES } from '../util/path';
+import withBreakpoint from '../util/withBreakpoint';
+import { RouteAlertsQuery, StopAlertsQuery } from '../util/alertQueries';
+
+const Tab = {
+  Disruptions: 'hairiot',
+  Stops: 'pysakit',
+  Timetable: 'aikataulu',
+};
+
+const getActiveTab = pathname => {
+  if (pathname.indexOf(`/${Tab.Disruptions}`) > -1) {
+    return Tab.Disruptions;
+  }
+  if (pathname.indexOf(`/${Tab.Stops}`) > -1) {
+    return Tab.Stops;
+  }
+  if (pathname.indexOf(`/${Tab.Timetable}`) > -1) {
+    return Tab.Timetable;
+  }
+  return undefined;
+};
 
 class RoutePage extends React.Component {
-
   static contextTypes = {
-    getStore: React.PropTypes.func.isRequired,
-    executeAction: React.PropTypes.func.isRequired,
-    router: React.PropTypes.shape({
-      replace: React.PropTypes.func.isRequired,
-    }).isRequired,
+    getStore: PropTypes.func.isRequired,
+    executeAction: PropTypes.func.isRequired,
+    router: routerShape.isRequired,
     intl: intlShape.isRequired,
-    breakpoint: React.PropTypes.string,
+    config: PropTypes.object.isRequired,
   };
 
   static propTypes = {
-    history: React.PropTypes.object.isRequired,
-    route: React.PropTypes.object.isRequired,
-    location: React.PropTypes.shape({
-      pathname: React.PropTypes.string.isRequired,
+    route: PropTypes.object.isRequired,
+    location: PropTypes.shape({
+      pathname: PropTypes.string.isRequired,
     }).isRequired,
-    params: React.PropTypes.shape({
-      patternId: React.PropTypes.string.isRequired,
+    params: PropTypes.shape({
+      patternId: PropTypes.string.isRequired,
     }).isRequired,
+    breakpoint: PropTypes.string.isRequired,
   };
 
+  // gets called if pattern has not been visited before
   componentDidMount() {
-    if (this.props.route == null) { return; }
+    const { realTime } = this.context.config;
+    if (!realTime || this.props.route == null) {
+      return;
+    }
     const route = this.props.route.gtfsId.split(':');
-
-    if (route[0].toLowerCase() === 'hsl') {
+    const agency = route[0];
+    const source = realTime[agency];
+    if (source && source.active) {
+      const { headsign } = this.props.route.patterns.find(
+        pattern => pattern.code === this.props.params.patternId,
+      );
+      const id = source.routeSelector(this.props);
       this.context.executeAction(startRealTimeClient, {
-        route: route[1],
+        ...source,
+        agency,
+        options: [
+          {
+            route: id,
+            // add some information from the context
+            // to compensate potentially missing feed data
+            mode: this.props.route.mode.toLowerCase(),
+            gtfsId: route[1],
+            headsign,
+          },
+        ],
       });
     }
   }
 
   componentWillUnmount() {
     const { client } = this.context.getStore('RealTimeInformationStore');
-
     if (client) {
       this.context.executeAction(stopRealTimeClient, client);
     }
   }
 
-  onPatternChange = (e) => {
-    this.context.router.replace(
-      decodeURIComponent(this.props.location.pathname)
-        .replace(new RegExp(`${this.props.params.patternId}(.*)`), e.target.value),
+  onPatternChange = newPattern => {
+    const { client, topics } = this.context.getStore(
+      'RealTimeInformationStore',
     );
-  }
+    // if config contains mqtt feed and old client has not been removed
+    if (client) {
+      const { realTime } = this.context.config;
+      const route = this.props.route.gtfsId.split(':');
+      const agency = route[0];
+      const source = realTime[agency];
+      const { headsign } = this.props.route.patterns.find(
+        pattern => pattern.code === newPattern,
+      );
+      const id = source.routeSelector(this.props);
+      this.context.executeAction(changeRealTimeClientTopics, {
+        ...source,
+        agency,
+        options: {
+          route: id,
+          mode: this.props.route.mode.toLowerCase(),
+          gtfsId: route[1],
+          headsign,
+        },
+        oldTopics: topics,
+        client,
+      });
+    }
+    this.context.router.replace(
+      decodeURIComponent(this.props.location.pathname).replace(
+        new RegExp(`${this.props.params.patternId}(.*)`),
+        newPattern,
+      ),
+    );
+  };
 
-  changeTab = (path) => {
+  changeTab = tab => {
+    const path = `/${PREFIX_ROUTES}/${this.props.route.gtfsId}/${tab}/${this
+      .props.params.patternId || ''}`;
     this.context.router.replace(path);
-  }
+  };
 
+  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/anchor-is-valid */
   render() {
-    if (this.props.route == null) {
+    const { breakpoint, location, params, route } = this.props;
+    const { patternId } = params;
+    const { config, router } = this.context;
+
+    if (route == null) {
       /* In this case there is little we can do
        * There is no point continuing rendering as it can only
        * confuse user. Therefore redirect to Routes page */
-      this.props.history.replace('/linjat');
+      router.replace(`/${PREFIX_ROUTES}`);
       return null;
     }
 
-    let activeTab;
-    if (this.props.location.pathname.indexOf('/pysakit/') > -1) {
-      activeTab = 'pysakit';
-    } else if (this.props.location.pathname.indexOf('/aikataulu/') > -1) {
-      activeTab = 'aikataulu';
-    } else if (this.props.location.pathname.indexOf('/hairiot') > -1) {
-      activeTab = 'hairiot';
-    }
+    const activeTab = getActiveTab(location.pathname);
+
+    const currentTime = moment().unix();
+    const hasActiveAlert = isAlertActive(
+      getCancelationsForRoute(route, patternId),
+      [
+        ...getServiceAlertsForRoute(route, patternId),
+        ...getServiceAlertsForRouteStops(route, patternId),
+      ],
+      currentTime,
+    );
 
     return (
-      <div>{this.props.route.type === 715 && <CallAgencyWarning route={this.props.route} />}
+      <div>
+        <div className="header-for-printing">
+          <h1>
+            <FormattedMessage
+              id="print-route-app-title"
+              defaultMessage={config.title}
+            />
+            {` - `}
+            <FormattedMessage id="route-guide" defaultMessage="Route guide" />
+          </h1>
+        </div>
+        {route.type === 715 && <CallAgencyWarning route={route} />}
         <div className="tabs route-tabs">
-          <nav className={cx('tabs-navigation', { 'bp-large': this.context.breakpoint === 'large' })}>
-            { this.context.breakpoint === 'large' && (
-            <RouteNumber mode={this.props.route.mode} text={this.props.route.shortName} />
-          )}
+          <nav
+            className={cx('tabs-navigation', {
+              'bp-large': breakpoint === 'large',
+            })}
+          >
+            {breakpoint === 'large' && (
+              <RouteNumber
+                color={route.color ? `#${route.color}` : null}
+                mode={route.mode}
+                text={route.shortName}
+              />
+            )}
             <a
-              className={cx({ 'is-active': activeTab === 'pysakit' })}
-              onClick={() => { this.changeTab(`/linjat/${this.props.route.gtfsId}/pysakit/${this.props.params.patternId || ''}`); }}
+              className={cx({ 'is-active': activeTab === Tab.Stops })}
+              onClick={() => {
+                this.changeTab(Tab.Stops);
+              }}
             >
               <div>
                 <Icon img="icon-icon_bus-stop" />
@@ -99,8 +210,10 @@ class RoutePage extends React.Component {
               </div>
             </a>
             <a
-              className={cx({ 'is-active': activeTab === 'aikataulu' })}
-              onClick={() => { this.changeTab(`/linjat/${this.props.route.gtfsId}/aikataulu/${this.props.params.patternId || ''}`); }}
+              className={cx({ 'is-active': activeTab === Tab.Timetable })}
+              onClick={() => {
+                this.changeTab(Tab.Timetable);
+              }}
             >
               <div>
                 <Icon img="icon-icon_schedule" />
@@ -109,50 +222,83 @@ class RoutePage extends React.Component {
             </a>
             <a
               className={cx({
-                activeAlert: this.props.route.alerts && this.props.route.alerts.length > 0,
-                'is-active': activeTab === 'hairiot',
+                activeAlert: hasActiveAlert,
+                'is-active': activeTab === Tab.Disruptions,
               })}
-              onClick={() => { this.changeTab(`/linjat/${this.props.route.gtfsId}/hairiot`); }}
+              onClick={() => {
+                this.changeTab(Tab.Disruptions);
+              }}
             >
               <div>
-                <Icon img="icon-icon_caution" />
-                <FormattedMessage id="disruptions" defaultMessage="Disruptions" />
+                <Icon
+                  img={hasActiveAlert ? 'icon-icon_caution' : 'icon-icon_info'}
+                />
+                <FormattedMessage
+                  id="disruptions"
+                  defaultMessage="Disruptions"
+                />
               </div>
             </a>
             <FavouriteRouteContainer
               className="route-page-header"
-              gtfsId={this.props.route.gtfsId}
+              gtfsId={route.gtfsId}
             />
           </nav>
-          {this.props.params.patternId && <RoutePatternSelect
-            params={this.props.params}
-            route={this.props.route}
-            onSelectChange={this.onPatternChange}
-            className={cx({ 'bp-large': this.context.breakpoint === 'large' })}
-          />}
-          <RouteAgencyInfo route={this.props.route} />
-        </div></div>
+          {patternId && (
+            <RoutePatternSelect
+              params={params}
+              route={route}
+              onSelectChange={this.onPatternChange}
+              gtfsId={route.gtfsId}
+              activeTab={activeTab}
+              className={cx({ 'bp-large': breakpoint === 'large' })}
+            />
+          )}
+          <RouteAgencyInfo route={route} />
+        </div>
+      </div>
     );
   }
 }
 
-export default Relay.createContainer(RoutePage, {
+const containerComponent = Relay.createContainer(withBreakpoint(RoutePage), {
   fragments: {
     route: () =>
       Relay.QL`
       fragment on Route {
         gtfsId
+        color
         shortName
         longName
         mode
         type
         ${RouteAgencyInfo.getFragment('route')}
         ${RoutePatternSelect.getFragment('route')}
-        alerts
+        ${RouteAlertsQuery}
         agency {
           phone
+        }
+        patterns {
+          headsign
+          code
+          stops {
+            ${StopAlertsQuery}
+          }
+          trips: tripsForDate(serviceDay: $serviceDay) {
+            stoptimes: stoptimesForDate(serviceDay: $serviceDay) {
+              realtimeState
+              scheduledArrival
+              scheduledDeparture
+              serviceDay
+            }
+          }
         }
       }
     `,
   },
+  initialVariables: {
+    serviceDay: moment().format(DATE_FORMAT),
+  },
 });
+
+export { containerComponent as default, RoutePage as Component };

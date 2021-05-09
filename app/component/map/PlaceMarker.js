@@ -1,71 +1,41 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { intlShape } from 'react-intl';
 
-import OriginPopup from './OriginPopup';
 import Icon from '../Icon';
 import { isBrowser } from '../../util/browser';
 
-let L;
-let Marker;
+let IconMarker;
 
 /* eslint-disable global-require */
 if (isBrowser) {
-  L = require('leaflet');
-  Marker = require('react-leaflet/lib/Marker').default;
+  IconMarker = require('./IconMarker').default;
 }
 /* eslint-enable global-require */
 
-export default function PlaceMarker({ displayOriginPopup, position }, { intl }) {
-  let popup;
-
-  if (displayOriginPopup) {
-    popup = (
-      <OriginPopup
-        shouldOpen
-        header={intl.formatMessage({ id: 'origin', defaultMessage: 'From' })}
-        text={position.address}
-        keyboard={false}
-        yOffset={14}
-      />
-    );
-  }
-
+export default function PlaceMarker({ position }) {
   return (
-    <div>
-      <Marker
-        zIndexOffset={10}
-        position={position}
-        keyboard={false}
-        icon={L.divIcon({
-          html: Icon.asString('icon-icon_mapMarker-point'),
-          className: 'place halo',
-          iconAnchor: [12, 24],
-        })}
-      />
-      <Marker
-        keyboard={false}
-        zIndexOffset={10}
-        position={position}
-        icon={L.divIcon({
-          html: Icon.asString('icon-icon_place'),
-          className: 'place',
-          iconAnchor: [12, 24],
-        })}
-      >
-        {popup}
-      </Marker>
-    </div>
+    <IconMarker
+      icon={{
+        className: 'place',
+        element: <Icon img="icon-icon_mapMarker-from" />,
+        iconAnchor: [12, 24],
+        iconSize: [24, 24],
+      }}
+      keyboard={false}
+      position={position}
+      zIndexOffset={10}
+    />
   );
 }
 
 PlaceMarker.contextTypes = {
-  intl: intlShape.isRequired,
+  intl: intlShape.isRequired, // eslint-disable-line react/no-typos
 };
 
 PlaceMarker.propTypes = {
-  displayOriginPopup: React.PropTypes.bool,
-  position: React.PropTypes.shape({
-    lat: React.PropTypes.number.isRequired,
-    lon: React.PropTypes.number.isRequired,
+  position: PropTypes.shape({
+    lat: PropTypes.number.isRequired,
+    lon: PropTypes.number.isRequired,
   }).isRequired,
 };

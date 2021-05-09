@@ -1,13 +1,15 @@
+import PropTypes from 'prop-types';
 /* eslint-disable react/no-array-index-key */
 
 import React from 'react';
-import Relay from 'react-relay';
+import Relay from 'react-relay/classic';
 import polyUtil from 'polyline-encoded';
 import get from 'lodash/get';
 
 import StopMarker from './non-tile-layer/StopMarker';
 import LegMarker from './non-tile-layer/LegMarker';
 import Line from './Line';
+import Icon from '../Icon';
 import CityBikeMarker from './non-tile-layer/CityBikeMarker';
 import { getMiddleOf } from '../../util/geo-utils';
 import { isBrowser } from '../../util/browser';
@@ -15,11 +17,14 @@ import { isCallAgencyPickupType } from '../../util/legUtils';
 import IconMarker from './IconMarker';
 
 const getLegText = (leg, config) => {
-  if (!leg.route) return '';
+  if (!leg.route) {
+    return '';
+  }
   const showAgency = get(config, 'agency.show', false);
   if (leg.transitLeg && leg.route.shortName) {
     return leg.route.shortName;
-  } else if (showAgency && leg.route.agency) {
+  }
+  if (showAgency && leg.route.agency) {
     return leg.route.agency.name;
   }
   return '';
@@ -27,19 +32,23 @@ const getLegText = (leg, config) => {
 
 class ItineraryLine extends React.Component {
   static contextTypes = {
-    getStore: React.PropTypes.func.isRequired,
+    config: PropTypes.object.isRequired,
+  };
+
+  static propTypes = {
+    legs: PropTypes.array,
+    passive: PropTypes.bool,
+    hash: PropTypes.number,
+    showTransferLabels: PropTypes.bool,
+    showIntermediateStops: PropTypes.bool,
   };
 
   render() {
-    if (!isBrowser) { return false; }
+    if (!isBrowser) {
+      return false;
+    }
 
     const objs = [];
-
-    const usingOwnBicycle = (
-      (this.props.legs[0] != null
-        && this.props.legs[0].mode === 'BICYCLE')
-      && !(this.props.legs[0].rentedBike)
-    );
 
     this.props.legs.forEach((leg, i) => {
       if (leg.mode === 'WAIT') {
@@ -52,45 +61,49 @@ class ItineraryLine extends React.Component {
         mode = 'CITYBIKE';
       }
 
-      if (usingOwnBicycle && leg.mode === 'WALK') {
-        mode = 'BICYCLE_WALK';
-      }
-
-
-      const modePlusClass = mode.toLowerCase() + (this.props.passive ? ' passive' : '');
+      const modePlusClass =
+        mode.toLowerCase() + (this.props.passive ? ' passive' : '');
 
       const geometry = polyUtil.decode(leg.legGeometry.points);
       const middle = getMiddleOf(geometry);
 
       objs.push(
         <Line
+          color={leg.route && leg.route.color ? `#${leg.route.color}` : null}
           key={`${this.props.hash}_${i}_${mode}`}
           geometry={geometry}
           mode={isCallAgencyPickupType(leg) ? 'call' : mode.toLowerCase()}
           passive={this.props.passive}
-        />);
+        />,
+      );
 
       if (!this.props.passive) {
-        if (this.props.showIntermediateStops && leg.intermediateStops != null) {
-          leg.intermediateStops.forEach(stop =>
+        if (
+          this.props.showIntermediateStops &&
+          leg.intermediatePlaces != null
+        ) {
+          leg.intermediatePlaces.forEach(place =>
             objs.push(
               <StopMarker
                 disableModeIcons
-                stop={stop}
-                key={`intermediate-${stop.gtfsId}`}
+                stop={place.stop}
+                key={`intermediate-${place.stop.gtfsId}`}
                 mode={modePlusClass}
                 thin
-              />),
-            );
+              />,
+            ),
+          );
         }
 
         if (leg.from.vertexType === 'BIKESHARE') {
           objs.push(
             <CityBikeMarker
               key={leg.from.bikeRentalStation.stationId}
-              transit
+              showBikeAvailability={leg.rentedBike}
               station={leg.from.bikeRentalStation}
-            />);
+              transit
+            />,
+          );
         } else if (leg.transitLeg) {
           const name = getLegText(leg, this.context.config);
           if (isCallAgencyPickupType(leg)) {
@@ -102,14 +115,23 @@ class ItineraryLine extends React.Component {
                   lon: middle.lon,
                 }}
                 className="call"
-                icon="icon-icon_call"
-              />);
+                icon={{
+                  element: <Icon img="icon-icon_call" />,
+                  iconAnchor: [9, 9],
+                  iconSize: [18, 18],
+                  className: 'call',
+                }}
+              />,
+            );
           } else {
             objs.push(
               <LegMarker
                 key={`${i},${leg.mode}legmarker`}
                 disableModeIcons
                 renderName
+                color={
+                  leg.route && leg.route.color ? `#${leg.route.color}` : null
+                }
                 leg={{
                   from: leg.from,
                   to: leg.to,
@@ -121,7 +143,7 @@ class ItineraryLine extends React.Component {
                 }}
                 mode={mode.toLowerCase()}
               />,
-          );
+            );
 
             objs.push(
               <StopMarker
@@ -137,7 +159,7 @@ class ItineraryLine extends React.Component {
                 mode={mode.toLowerCase()}
                 renderText={leg.transitLeg && this.props.showTransferLabels}
               />,
-          );
+            );
             objs.push(
               <StopMarker
                 key={`${i},${leg.mode}marker,to`}
@@ -152,27 +174,15 @@ class ItineraryLine extends React.Component {
                 mode={mode.toLowerCase()}
                 renderText={leg.transitLeg && this.props.showTransferLabels}
               />,
-          );
+            );
           }
         }
       }
     });
 
-    return (<div style={{ display: 'none' }}>{objs}</div>);
+    return <div style={{ display: 'none' }}>{objs}</div>;
   }
 }
-
-ItineraryLine.propTypes = {
-  legs: React.PropTypes.array,
-  passive: React.PropTypes.bool,
-  hash: React.PropTypes.number,
-  showTransferLabels: React.PropTypes.bool,
-  showIntermediateStops: React.PropTypes.bool,
-};
-
-ItineraryLine.contextTypes = {
-  config: React.PropTypes.object.isRequired,
-};
 
 export default Relay.createContainer(ItineraryLine, {
   fragments: {
@@ -186,6 +196,7 @@ export default Relay.createContainer(ItineraryLine, {
         transitLeg
         route {
           shortName
+          color
           agency {
             name
           }
@@ -226,13 +237,16 @@ export default Relay.createContainer(ItineraryLine, {
             pickupType
           }
         }
-        intermediateStops {
-          gtfsId
-          lat
-          lon
-          name
-          code
-          platformCode
+        intermediatePlaces {
+          arrivalTime
+          stop {
+            gtfsId
+            lat
+            lon
+            name
+            code
+            platformCode
+          }
         }
       }
     `,

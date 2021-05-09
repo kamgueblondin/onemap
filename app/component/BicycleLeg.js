@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import moment from 'moment';
 import { FormattedMessage } from 'react-intl';
@@ -8,10 +9,14 @@ import ComponentUsageExample from './ComponentUsageExample';
 import { displayDistance } from '../util/geo-utils';
 import { durationToString } from '../util/timeUtils';
 import ItineraryCircleLine from './ItineraryCircleLine';
+import { getLegBadgeProps } from '../util/legUtils';
 
 function BicycleLeg(props, context) {
   let stopsDescription;
-  const distance = displayDistance(parseInt(props.leg.distance, 10), context.config);
+  const distance = displayDistance(
+    parseInt(props.leg.distance, 10),
+    context.config,
+  );
   const duration = durationToString(props.leg.duration * 1000);
   let { mode } = props.leg;
   let legDescription = <span>{props.leg.from.name}</span>;
@@ -19,6 +24,7 @@ function BicycleLeg(props, context) {
   let modeClassName = 'bicycle';
 
   if (props.leg.mode === 'WALK' || props.leg.mode === 'BICYCLE_WALK') {
+    modeClassName = props.leg.mode.toLowerCase();
     stopsDescription = (
       <FormattedMessage
         id="cyclewalk-distance-duration"
@@ -55,13 +61,18 @@ function BicycleLeg(props, context) {
     }
   }
 
+  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
   return (
     <div key={props.index} className="row itinerary-row">
       <div className="small-2 columns itinerary-time-column">
         <div className="itinerary-time-column-time">
           {moment(props.leg.startTime).format('HH:mm')}
         </div>
-        <RouteNumber mode={mode} vertical />
+        <RouteNumber
+          mode={mode}
+          vertical
+          {...getLegBadgeProps(props.leg, context.config)}
+        />
       </div>
       <ItineraryCircleLine index={props.index} modeClassName={modeClassName} />
       <div
@@ -72,9 +83,7 @@ function BicycleLeg(props, context) {
           {legDescription}
           <Icon img="icon-icon_search-plus" className="itinerary-search-icon" />
         </div>
-        <div className="itinerary-leg-action">
-          {stopsDescription}
-        </div>
+        <div className="itinerary-leg-action">{stopsDescription}</div>
       </div>
     </div>
   );
@@ -117,8 +126,11 @@ const exampleLegCitybikeWalkingBike = t1 => ({
 });
 
 BicycleLeg.description = () => {
-  const today = moment().hour(12).minute(34).second(0)
-                        .valueOf();
+  const today = moment()
+    .hour(12)
+    .minute(34)
+    .second(0)
+    .valueOf();
   return (
     <div>
       <p>Displays an itinerary bicycle leg.</p>
@@ -126,33 +138,48 @@ BicycleLeg.description = () => {
         <BicycleLeg leg={exampleLeg(today)} index={0} focusAction={() => {}} />
       </ComponentUsageExample>
       <ComponentUsageExample description="bicycle-leg-walking-bike">
-        <BicycleLeg leg={exampleLegWalkingBike(today)} index={0} focusAction={() => {}} />
+        <BicycleLeg
+          leg={exampleLegWalkingBike(today)}
+          index={0}
+          focusAction={() => {}}
+        />
       </ComponentUsageExample>
       <ComponentUsageExample description="bicycle-leg-citybike">
-        <BicycleLeg leg={exampleLegCitybike(today)} index={0} focusAction={() => {}} />
+        <BicycleLeg
+          leg={exampleLegCitybike(today)}
+          index={0}
+          focusAction={() => {}}
+        />
       </ComponentUsageExample>
       <ComponentUsageExample description="bicycle-leg-citybike-walking-bike">
-        <BicycleLeg leg={exampleLegCitybikeWalkingBike(today)} index={1} focusAction={() => {}} />
+        <BicycleLeg
+          leg={exampleLegCitybikeWalkingBike(today)}
+          index={1}
+          focusAction={() => {}}
+        />
       </ComponentUsageExample>
     </div>
   );
 };
 
 BicycleLeg.propTypes = {
-  leg: React.PropTypes.shape({
-    duration: React.PropTypes.number.isRequired,
-    startTime: React.PropTypes.number.isRequired,
-    distance: React.PropTypes.number.isRequired,
-    from: React.PropTypes.shape({
-      name: React.PropTypes.string.isRequired,
+  leg: PropTypes.shape({
+    duration: PropTypes.number.isRequired,
+    startTime: PropTypes.number.isRequired,
+    distance: PropTypes.number.isRequired,
+    from: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      bikeRentalStation: PropTypes.shape({
+        bikesAvailable: PropTypes.number.isRequired,
+      }),
     }).isRequired,
-    mode: React.PropTypes.string.isRequired,
-    rentedBike: React.PropTypes.bool.isRequired,
+    mode: PropTypes.string.isRequired,
+    rentedBike: PropTypes.bool.isRequired,
   }).isRequired,
-  index: React.PropTypes.number.isRequired,
-  focusAction: React.PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  focusAction: PropTypes.func.isRequired,
 };
 
-BicycleLeg.contextTypes = { config: React.PropTypes.object.isRequired };
+BicycleLeg.contextTypes = { config: PropTypes.object.isRequired };
 
 export default BicycleLeg;

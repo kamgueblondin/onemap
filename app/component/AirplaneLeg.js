@@ -1,4 +1,5 @@
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { FormattedMessage } from 'react-intl';
 import moment from 'moment';
 
@@ -6,12 +7,7 @@ import TransitLeg from './TransitLeg';
 import ComponentUsageExample from './ComponentUsageExample';
 
 const AirplaneLeg = ({ leg, focusAction, index }) => (
-  <TransitLeg
-    mode="AIRPLANE"
-    leg={leg}
-    focusAction={focusAction}
-    index={index}
-  >
+  <TransitLeg mode="AIRPLANE" leg={leg} focusAction={focusAction} index={index}>
     <FormattedMessage
       id="airplane-with-route-number"
       values={{
@@ -38,15 +34,18 @@ const exampleLeg = t1 => ({
   distance: 586.4621425755712,
   duration: 120,
   rentedBike: false,
-  intermediateStops: [],
+  intermediatePlaces: [],
   route: { gtfsId: '123', shortName: 'AY447', mode: 'AIRPLANE' },
   trip: { tripHeadsign: 'Kittila', pattern: { code: 'AY447' } },
   from: { name: 'Helsingin lentoasema', stop: { code: 'HEL' } },
 });
 
 AirplaneLeg.description = () => {
-  const today = moment().hour(12).minute(34).second(0)
-                        .valueOf();
+  const today = moment()
+    .hour(12)
+    .minute(34)
+    .second(0)
+    .valueOf();
   return (
     <div>
       <p>Displays an itinerary airplane leg.</p>

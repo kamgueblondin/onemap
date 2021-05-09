@@ -1,10 +1,10 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
 
 class ResetCustomizedSettingsButton extends React.Component {
-
   static propTypes = {
-    onReset: React.PropTypes.func.isRequired,
+    onReset: PropTypes.func.isRequired,
   };
 
   resetSettings = () => {
@@ -13,16 +13,14 @@ class ResetCustomizedSettingsButton extends React.Component {
 
   render() {
     return (
-      <section className="offcanvas-section">
-        <button className="reset-settings" onClick={this.resetSettings}>
-          <div className="reset-settings-button">
-            <FormattedMessage
-              defaultMessage="Palauta oletusasetukset"
-              id="settings-reset"
-            />
-          </div>
-        </button>
-      </section>
+      <button className="reset-settings" onClick={this.resetSettings}>
+        <div className="reset-settings-button">
+          <FormattedMessage
+            defaultMessage="Palauta oletusasetukset"
+            id="settings-reset"
+          />
+        </div>
+      </button>
     );
   }
 }

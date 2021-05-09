@@ -1,39 +1,53 @@
+/* eslint-disable prefer-template */
+import safeJsonParse from '../util/safeJsonParser';
+
 const CONFIG = process.env.CONFIG || 'default';
 const API_URL = process.env.API_URL || 'https://dev-api.digitransit.fi';
-const MAP_URL = process.env.MAP_URL || 'https://digitransit-dev-cdn-origin.azureedge.net';
+const GEOCODING_BASE_URL = `${API_URL}/geocoding/v1`;
+const MAP_URL =
+  process.env.MAP_URL || 'https://digitransit-dev-cdn-origin.azureedge.net';
 const APP_PATH = process.env.APP_CONTEXT || '';
-const PIWIK_ADDRESS = process.env.PIWIK_ADDRESS;
-const PIWIK_ID = process.env.PIWIK_ID;
-const SENTRY_DSN = process.env.SENTRY_DSN;
+const { SENTRY_DSN } = process.env;
 const PORT = process.env.PORT || 8080;
 const APP_DESCRIPTION = 'Digitransit journey planning UI';
+const OTP_TIMEOUT = process.env.OTP_TIMEOUT || 10000; // 10k is the current server default
+const YEAR = 1900 + new Date().getYear();
+const realtime = require('./realtimeUtils').default;
+
+const REALTIME_PATCH = safeJsonParse(process.env.REALTIME_PATCH) || {};
 
 export default {
-  PIWIK_ADDRESS,
-  PIWIK_ID,
   SENTRY_DSN,
   PORT,
   CONFIG,
-
+  OTPTimeout: OTP_TIMEOUT,
   URL: {
     API_URL,
-    OTP: `${API_URL}/routing/v1/routers/finland/`,
+    ASSET_URL: process.env.ASSET_URL,
+    MAP_URL,
+    OTP: process.env.OTP_URL || `${API_URL}/routing/v1/routers/finland/`,
     MAP: {
       default: `${MAP_URL}/map/v1/hsl-map/`,
       sv: `${MAP_URL}/map/v1/hsl-map-sv/`,
     },
     STOP_MAP: `${MAP_URL}/map/v1/finland-stop-map/`,
     CITYBIKE_MAP: `${MAP_URL}/map/v1/hsl-citybike-map/`,
-    MQTT: 'wss://dev.hsl.fi/mqtt-proxy',
-    ALERTS: `${API_URL}/realtime/service-alerts/v1`,
-    FONT: 'https://fonts.googleapis.com/css?family=Lato:300,400,900%7CPT+Sans+Narrow:400,700',
-    REALTIME: `${API_URL}/realtime/vehicle-positions/v1`,
-    PELIAS: `${API_URL}/geocoding/v1/search`,
-    PELIAS_REVERSE_GEOCODER: `${API_URL}/geocoding/v1/reverse`,
+    FONT:
+      'https://fonts.googleapis.com/css?family=Lato:300,400,900%7CPT+Sans+Narrow:400,700',
+    PELIAS: `${process.env.GEOCODING_BASE_URL || GEOCODING_BASE_URL}/search`,
+    PELIAS_REVERSE_GEOCODER: `${process.env.GEOCODING_BASE_URL ||
+      GEOCODING_BASE_URL}/reverse`,
+    ROUTE_TIMETABLES: {
+      HSL: `${API_URL}/timetables/v1/hsl/routes/`,
+    },
   },
 
   APP_PATH: `${APP_PATH}`,
   title: 'Reittihaku',
+
+  textLogo: false,
+  // Navbar logo
+  logo: 'default/digitransit-logo.png',
 
   contactName: {
     sv: 'Digitransit',
@@ -46,6 +60,19 @@ export default {
   shortName: 'Digitransit',
 
   searchParams: {},
+  feedIds: [],
+
+  realTime: realtime,
+  realTimePatch: REALTIME_PATCH,
+
+  // Google Tag Manager id
+  GTMid: 'GTM-PZV2S2V',
+
+  /*
+ * by default search endpoints from all but gtfs sources, correct gtfs source
+ * figured based on feedIds config variable
+ */
+  searchSources: ['oa', 'osm', 'nlsfi'],
 
   search: {
     suggestions: {
@@ -53,9 +80,10 @@ export default {
     },
     usePeliasStops: false,
     mapPeliasModality: false,
-    peliasMapping: { },
+    peliasMapping: {},
     peliasLayer: null,
     peliasLocalization: null,
+    minimalRegexp: new RegExp('.{2,}'),
   },
 
   nearbyRoutes: {
@@ -63,26 +91,85 @@ export default {
     bucketSize: 1000,
   },
 
+  defaultSettings: {
+    accessibilityOption: 0,
+    bikeSpeed: 5,
+    minTransferTime: 120,
+    optimize: 'QUICK',
+    preferredRoutes: [],
+    ticketTypes: null,
+    transferPenalty: 0,
+    unpreferredRoutes: [],
+    walkBoardCost: 600,
+    walkReluctance: 2,
+    walkSpeed: 1.2,
+  },
+
+  /**
+   * These are used for dropdown selection of values to override the default
+   * settings. This means that values ought to be relative to the current default.
+   * If not, the selection may not make any sense.
+   */
+  defaultOptions: {
+    walkBoardCost: {
+      least: 3600,
+      less: 1200,
+      more: 360,
+      most: 120,
+    },
+    walkReluctance: {
+      least: 5,
+      less: 3,
+      more: 1,
+      most: 0.2,
+    },
+  },
+
+  quickOptions: {
+    public_transport: {
+      availableOptionSets: [
+        'least-transfers',
+        'least-walking',
+        'public-transport-with-bicycle',
+        'saved-settings',
+      ],
+    },
+    walk: {
+      availableOptionSets: ['prefer-walking-routes', 'saved-settings'],
+    },
+    bicycle: {
+      availableOptionSets: [
+        'least-elevation-changes',
+        'prefer-greenways',
+        'saved-settings',
+      ],
+    },
+    car_park: {
+      availableOptionSets: [
+        'least-transfers',
+        'least-walking',
+        'saved-settings',
+      ],
+    },
+  },
+
   maxWalkDistance: 10000,
   maxBikingDistance: 100000,
+  itineraryFiltering: 1.5, // drops 66% worse routes
+  useUnpreferredRoutesPenalty: 1200, // adds 10 minute (weight) penalty to routes that are unpreferred
   availableLanguages: ['fi', 'sv', 'en', 'fr', 'nb', 'de'],
   defaultLanguage: 'en',
   // This timezone data will expire on 31.12.2020
-  timezoneData: 'Europe/Helsinki|EET EEST|-20 -30|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 ' +
+  timezoneData:
+    'Europe/Helsinki|EET EEST|-20 -30|01010101010101010101010|1BWp0 1qM0 WM0 1qM0 ' +
     'WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00|35e5',
 
   mainMenu: {
     // Whether to show the left menu toggle button at all
     show: true,
     showDisruptions: true,
-    showInquiry: false,
     showLoginCreateAccount: true,
     showOffCanvasList: true,
-  },
-
-  feedback: {
-    // Whether to allow the feedback popup
-    enable: false,
   },
 
   itinerary: {
@@ -96,6 +183,8 @@ export default {
     timeNavigation: {
       enableButtonArrows: false,
     },
+
+    showZoneLimits: false,
   },
 
   nearestStopDistance: {
@@ -108,7 +197,6 @@ export default {
     zoomOffset: -1,
     minZoom: 1,
     maxZoom: 18,
-    useVectorTiles: true,
     controls: {
       zoom: {
         // available controls positions: 'topleft', 'topright', 'bottomleft, 'bottomright'
@@ -139,6 +227,8 @@ export default {
         weight: 5,
         thinWeight: 2,
       },
+
+      passiveColor: '#758993',
     },
 
     useModeIconsInNonTileLayer: false,
@@ -149,6 +239,7 @@ export default {
       showDescription: true,
       showStopCode: true,
       showDistance: true,
+      showZone: false,
     },
   },
 
@@ -158,16 +249,13 @@ export default {
   },
 
   cityBike: {
+    // Config for map features. NOTE: availability for routing is controlled by
+    // transportModes.citybike.availableForSelection
     showCityBikes: true,
+    showStationId: true,
 
     useUrl: {
-      fi: 'https://www.hsl.fi/citybike',
-      sv: 'https://www.hsl.fi/sv/citybike',
-      en: 'https://www.hsl.fi/en/citybike',
-    },
-
-    infoUrl: {
-      fi: 'https://www.hsl.fi/kaupunkipyörät',
+      fi: 'https://www.hsl.fi/kaupunkipyorat',
       sv: 'https://www.hsl.fi/sv/stadscyklar',
       en: 'https://www.hsl.fi/en/citybikes',
     },
@@ -176,7 +264,10 @@ export default {
     cityBikeSmallIconZoom: 14,
     // When should bikeshare availability be rendered in orange rather than green
     fewAvailableCount: 3,
+
+    networks: {},
   },
+
   // Lowest level for stops and terminals are rendered
   stopsMinZoom: 13,
   // Highest level when stops and terminals are still rendered as small markers
@@ -196,6 +287,8 @@ export default {
   colors: {
     primary: '#00AFFF',
   },
+
+  sprites: 'assets/svg-sprite.default.svg',
 
   disruption: {
     showInfoButton: true,
@@ -226,8 +319,10 @@ export default {
     description: APP_DESCRIPTION,
     keywords: 'digitransit',
   },
+
   // Ticket information feature toggle
   showTicketInformation: false,
+  useTicketIcons: false,
   showRouteInformation: false,
 
   modeToOTP: {
@@ -241,7 +336,10 @@ export default {
     walk: 'WALK',
     bicycle: 'BICYCLE',
     car: 'CAR',
+    car_park: 'CAR_PARK',
+    public_transport: 'WALK',
   },
+
   // Control what transport modes that should be possible to select in the UI
   // and whether the transport mode is used in trip planning by default.
   transportModes: {
@@ -265,11 +363,6 @@ export default {
       defaultValue: true,
     },
 
-    citybike: {
-      availableForSelection: true,
-      defaultValue: false,
-    },
-
     airplane: {
       availableForSelection: true,
       defaultValue: true,
@@ -279,48 +372,62 @@ export default {
       availableForSelection: true,
       defaultValue: true,
     },
+
+    citybike: {
+      availableForSelection: true, // TODO: Turn off in autumn
+      defaultValue: false, // always false
+    },
   },
 
   streetModes: {
-    walk: {
+    public_transport: {
       availableForSelection: true,
       defaultValue: true,
+      exclusive: false,
+      icon: 'bus-withoutBox',
+    },
+
+    walk: {
+      availableForSelection: true,
+      defaultValue: false,
+      exclusive: true,
       icon: 'walk',
     },
 
     bicycle: {
       availableForSelection: true,
       defaultValue: false,
+      exclusive: true,
       icon: 'bicycle-withoutBox',
     },
 
     car: {
       availableForSelection: true,
       defaultValue: false,
+      exclusive: true,
       icon: 'car-withoutBox',
     },
 
     car_park: {
       availableForSelection: false,
       defaultValue: false,
+      exclusive: false,
       icon: 'car_park-withoutBox',
     },
   },
 
-  ticketOptions: [{
-    displayName: 'Ei lippuvyöhykerajoitusta',
-    value: '0',
-  }],
-
-  accessibilityOptions: [{
-    displayName: 'Ei rajoitusta',
-    value: '0',
-  }, {
-    displayName: 'Liikun pyörätuolilla',
-    value: '1',
-  }],
-
-  showModeFilter: true,
+  accessibilityOptions: [
+    {
+      messageId: 'accessibility-nolimit',
+      displayName: 'Ei rajoitusta',
+      value: '0',
+    },
+    {
+      messageId: 'accessibility-limited',
+      displayName: 'Liikun pyörätuolilla',
+      value: '1',
+    },
+  ],
 
   moment: {
     relativeTimeThreshold: {
@@ -354,6 +461,9 @@ export default {
     },
 
     accessibility: {
+      available: true,
+    },
+    transferpenalty: {
       available: true,
     },
   },
@@ -406,12 +516,31 @@ export default {
     [18.776, 60.3316],
   ],
 
+  // Minimun distance between from and to locations in meters. User is noticed
+  // if distance is less than this.
+  minDistanceBetweenFromAndTo: 20,
+
+  // If certain mode(s) only exist in limited number of areas, listing the areas as a list of polygons for
+  // selected mode key will remove the mode(s) from queries if no coordinates in the query are within the polygon(s).
+  // This reduces complexity in finding routes for the query.
+  modePolygons: {},
+
   footer: {
     content: [
-      { label: (function () { return `© HSL, Liikennevirasto ${(1900 + new Date().getYear())}`; }()) },
+      { label: `© HSL, Traficom ${YEAR}` },
       {},
-      { name: 'footer-feedback', nameEn: 'Submit feedback', href: 'https://github.com/HSLdevcom/digitransit-ui/issues', icon: 'icon-icon_speech-bubble' },
-      { name: 'about-this-service', nameEn: 'About this service', route: '/tietoja-palvelusta', icon: 'icon-icon_info' },
+      {
+        name: 'footer-feedback',
+        nameEn: 'Submit feedback',
+        href: 'https://github.com/HSLdevcom/digitransit-ui/issues',
+        icon: 'icon-icon_speech-bubble',
+      },
+      {
+        name: 'about-this-service',
+        nameEn: 'About this service',
+        route: '/tietoja-palvelusta',
+        icon: 'icon-icon_info',
+      },
     ],
   },
 
@@ -422,54 +551,91 @@ export default {
     lon: 24.9690395,
   },
   defaultOrigins: [
-    { icon: 'icon-icon_airplane', label: 'Helsinki-Vantaan lentoasema', lat: 60.317429, lon: 24.9690395 },
-    { icon: 'icon-icon_ferry', label: 'Turun satama', lat: 60.436363, lon: 22.220002 },
-    { icon: 'icon-icon_airplane', label: 'Rovaniemen lentoasema', lat: 66.557326, lon: 25.828135 },
+    {
+      icon: 'icon-icon_airplane',
+      label: 'Helsinki-Vantaan lentoasema',
+      lat: 60.317429,
+      lon: 24.9690395,
+    },
+    {
+      icon: 'icon-icon_ferry',
+      label: 'Turun satama',
+      lat: 60.436363,
+      lon: 22.220002,
+    },
+    {
+      icon: 'icon-icon_airplane',
+      label: 'Rovaniemen lentoasema',
+      lat: 66.557326,
+      lon: 25.828135,
+    },
   ],
+
+  availableRouteTimetables: {},
+
+  routeTimetableUrlResolver: {},
 
   aboutThisService: {
     fi: [
       {
         header: 'Tietoja palvelusta',
-        paragraphs: ['Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan.'],
+        paragraphs: [
+          'Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan.',
+        ],
       },
       {
-        header: 'Digitransit palvelualusta',
-        paragraphs: ['Digitransit-palvelualusta on HSL:n ja Liikenneviraston kehittämä avoimen lähdekoodin reititystuote.'],
+        header: 'Digitransit-palvelualusta',
+        paragraphs: [
+          'Digitransit-palvelualusta on HSL:n ja Traficomin kehittämä avoimen lähdekoodin reititystuote.',
+        ],
       },
       {
         header: 'Tietolähteet',
-        paragraphs: ['Kartat, tiedot kaduista, rakennuksista, pysäkkien sijainnista ynnä muusta tarjoaa © OpenStreetMap contributors. Osoitetiedot tuodaan Väestörekisterikeskuksen rakennustietorekisteristä. Joukkoliikenteen reitit ja aikataulut ladataan Liikenneviraston valtakunnallisesta joukkoliikenteen tietokannasta.'],
+        paragraphs: [
+          'Kartat, tiedot kaduista, rakennuksista, pysäkkien sijainnista ynnä muusta tarjoaa © OpenStreetMap contributors. Osoitetiedot tuodaan Väestörekisterikeskuksen rakennustietorekisteristä. Joukkoliikenteen reitit ja aikataulut ladataan Traficomin valtakunnallisesta joukkoliikenteen tietokannasta.',
+        ],
       },
     ],
 
     sv: [
       {
         header: 'Om tjänsten',
-        paragraphs: ['Reseplaneraren täcker med vissa begränsningar kollektivtrafik, promenad, cykling samt privatbilism. Tjänsten baserar sig på Digitransit-plattformen.'],
+        paragraphs: [
+          'Reseplaneraren täcker med vissa begränsningar kollektivtrafik, promenad, cykling samt privatbilism. Tjänsten baserar sig på Digitransit-plattformen.',
+        ],
       },
       {
         header: 'Digitransit-plattformen',
-        paragraphs: ['Digitransit-plattformen är en öppen programvara utvecklad av HRT och Trafikverket.'],
+        paragraphs: [
+          'Digitransit-plattformen är en öppen programvara utvecklad av HRT och Traficom.',
+        ],
       },
       {
         header: 'Datakällor',
-        paragraphs: ['Kartor, gator, byggnader, hållplatser och dylik information erbjuds av © OpenStreetMap contributors. Addressinformation hämtas från BRC:s byggnadsinformationsregister. Kollektivtrafikens rutter och tidtabeller hämtas från Trafikverkets landsomfattande kollektivtrafiksdatabas.'],
+        paragraphs: [
+          'Kartor, gator, byggnader, hållplatser och dylik information erbjuds av © OpenStreetMap contributors. Addressinformation hämtas från BRC:s byggnadsinformationsregister. Kollektivtrafikens rutter och tidtabeller hämtas från Traficoms landsomfattande kollektivtrafiksdatabas.',
+        ],
       },
     ],
 
     en: [
       {
         header: 'About this service',
-        paragraphs: ['The service covers public transport, walking, cycling, and some private car use. Service is built on Digitransit platform.'],
+        paragraphs: [
+          'The service covers public transport, walking, cycling, and some private car use. Service is built on Digitransit platform.',
+        ],
       },
       {
         header: 'Digitransit platform',
-        paragraphs: ['The Digitransit service platform is an open source routing platform developed by HSL and The Finnish Transport Agency.'],
+        paragraphs: [
+          'The Digitransit service platform is an open source routing platform developed by HSL and Traficom.',
+        ],
       },
       {
         header: 'Data sources',
-        paragraphs: ["Maps, streets, buildings, stop locations etc. are provided by © OpenStreetMap contributors. Address data is retrieved from the Building and Dwelling Register of the Finnish Population Register Center. Public transport routes and timetables are downloaded from Finnish Transport Agency's national public transit database."],
+        paragraphs: [
+          "Maps, streets, buildings, stop locations etc. are provided by © OpenStreetMap contributors. Address data is retrieved from the Building and Dwelling Register of the Finnish Population Register Center. Public transport routes and timetables are downloaded from Traficom's national public transit database.",
+        ],
       },
     ],
     nb: {},
@@ -480,35 +646,33 @@ export default {
   staticMessages: [],
 
   themeMap: {
-    turku: 'turku',
     hsl: 'reittiopas',
+    turku: '(turku|foli)',
     lappeenranta: 'lappeenranta',
     joensuu: 'joensuu',
     oulu: 'oulu',
     hameenlinna: 'hameenlinna',
     matka: 'matka',
+    rovaniemi: 'rovaniemi',
+    kouvola: 'kouvola',
+    tampere: 'tampere',
+    mikkeli: 'mikkeli',
+    kotka: 'kotka',
     jyvaskyla: 'jyvaskyla',
     lahti: 'lahti',
     kuopio: 'kuopio',
   },
 
-  piwikMap: [ // in priority order. 1st match stops
-    { id: '10', expr: 'dev-joensuu' },
-    { id: '11', expr: 'joensuu' },
-    { id: '12', expr: 'dev-turku' },
-    { id: '13', expr: 'turku' },
-    // put generic expressions last so that they do not match waltti cities
-    // e.g. reittiopas.hameenlinna.fi or turku.digitransit.fi
-    { id: '5', expr: 'dev.reittiopas' },
-    { id: '4', expr: 'reittiopas' },
-    { id: '7', expr: 'dev.matka' },
-    { id: '6', expr: 'matka' },
-    { id: '7', expr: 'dev.digitransit' },
-    { id: '6', expr: 'digitransit' },
-  ],
-
   minutesToDepartureLimit: 9,
 
   imperialEnabled: false,
   // this flag when true enables imperial measurements  'feet/miles system'
+
+  mapLayers: {
+    featureMapping: {
+      ticketSales: {},
+    },
+  },
+
+  routeTimetables: {},
 };

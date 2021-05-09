@@ -1,15 +1,17 @@
+import PropTypes from 'prop-types';
 import React from 'react';
-import Relay from 'react-relay';
-import provideContext from 'fluxible-addons-react/provideContext';
-import { intlShape } from 'react-intl';
-import { routerShape, locationShape } from 'react-router';
+import Relay from 'react-relay/classic';
 import cx from 'classnames';
 
 import StopRoute from '../../../route/StopRoute';
 import StopMarkerPopup from '../popups/StopMarkerPopup';
 import GenericMarker from '../GenericMarker';
 import Icon from '../../Icon';
-import { getCaseRadius, getStopRadius, getHubRadius } from '../../../util/mapIconUtils';
+import {
+  getCaseRadius,
+  getStopRadius,
+  getHubRadius,
+} from '../../../util/mapIconUtils';
 import { isBrowser } from '../../../util/browser';
 import Loading from '../../Loading';
 
@@ -24,35 +26,21 @@ if (isBrowser) {
 }
 /* eslint-enable global-require */
 
-const StopMarkerPopupWithContext = provideContext(StopMarkerPopup, {
-  intl: intlShape.isRequired,
-  router: routerShape.isRequired,
-  location: locationShape.isRequired,
-  route: React.PropTypes.object.isRequired,
-  config: React.PropTypes.object.isRequired,
-});
-
 class StopMarker extends React.Component {
   static propTypes = {
-    stop: React.PropTypes.object.isRequired,
-    mode: React.PropTypes.string.isRequired,
-    renderName: React.PropTypes.bool,
-    disableModeIcons: React.PropTypes.bool,
-    selected: React.PropTypes.bool,
+    stop: PropTypes.object.isRequired,
+    mode: PropTypes.string.isRequired,
+    renderName: PropTypes.bool,
+    disableModeIcons: PropTypes.bool,
+    selected: PropTypes.bool,
   };
 
   static contextTypes = {
-    getStore: React.PropTypes.func.isRequired,
-    executeAction: React.PropTypes.func.isRequired,
-    router: routerShape.isRequired,
-    location: locationShape.isRequired,
-    route: React.PropTypes.object.isRequired,
-    intl: intlShape.isRequired,
-    config: React.PropTypes.object.isRequired,
+    getStore: PropTypes.func.isRequired,
+    config: PropTypes.object.isRequired,
   };
 
-
-  getModeIcon = (zoom) => {
+  getModeIcon = zoom => {
     const iconId = `icon-icon_${this.props.mode}`;
     const icon = Icon.asString(iconId, 'mode-icon');
     let size;
@@ -72,15 +60,18 @@ class StopMarker extends React.Component {
         selected: this.props.selected,
       }),
     });
-  }
+  };
 
-  getIcon = (zoom) => {
+  getIcon = zoom => {
     const scale = this.props.stop.transfer || this.props.selected ? 1.5 : 1;
-    const calcZoom = this.props.stop.transfer || this.props.selected ? Math.max(zoom, 15) : zoom;
+    const calcZoom =
+      this.props.stop.transfer || this.props.selected
+        ? Math.max(zoom, 15)
+        : zoom;
 
-    const radius = getCaseRadius({ $zoom: calcZoom }) * scale;
-    const stopRadius = getStopRadius({ $zoom: calcZoom }) * scale;
-    const hubRadius = getHubRadius({ $zoom: calcZoom }) * scale;
+    const radius = getCaseRadius(calcZoom) * scale;
+    const stopRadius = getStopRadius(calcZoom) * scale;
+    const hubRadius = getHubRadius(calcZoom) * scale;
 
     const inner = (stopRadius + hubRadius) / 2;
     const stroke = stopRadius - hubRadius;
@@ -90,12 +81,14 @@ class StopMarker extends React.Component {
       <svg viewBox="0 0 ${radius * 2} ${radius * 2}">
         <circle class="stop-halo" cx="${radius}" cy="${radius}" r="${radius}"/>
         <circle class="stop" cx="${radius}" cy="${radius}" r="${inner}" stroke-width="${stroke}"/>
-        ${inner > 7 && this.props.stop.platformCode ?
-          `<text x="${radius}" y="${radius}" text-anchor="middle" dominant-baseline="central"
+        ${
+          inner > 7 && this.props.stop.platformCode
+            ? `<text x="${radius}" y="${radius}" text-anchor="middle" dominant-baseline="central"
             fill="#333" font-size="${1.2 * inner}px"
             font-family="Gotham XNarrow SSm A, Gotham XNarrow SSm B, Arial, sans-serif"
             >${this.props.stop.platformCode}</text>`
-          : ''}
+            : ''
+        }
       </svg>
     `;
 
@@ -108,7 +101,7 @@ class StopMarker extends React.Component {
       iconSize: [radius * 2, radius * 2],
       className: `${this.props.mode} cursor-pointer`,
     });
-  }
+  };
 
   render() {
     if (!isBrowser) {
@@ -122,8 +115,10 @@ class StopMarker extends React.Component {
           lon: this.props.stop.lon,
         }}
         getIcon={
-          this.context.config.map.useModeIconsInNonTileLayer && !this.props.disableModeIcons ?
-          this.getModeIcon : this.getIcon
+          this.context.config.map.useModeIconsInNonTileLayer &&
+          !this.props.disableModeIcons
+            ? this.getModeIcon
+            : this.getIcon
         }
         id={this.props.stop.gtfsId}
         renderName={this.props.renderName}
@@ -131,17 +126,25 @@ class StopMarker extends React.Component {
       >
         <Relay.RootContainer
           Component={StopMarkerPopup}
-          route={new StopRoute({
-            stopId: this.props.stop.gtfsId,
-            date: this.context.getStore('TimeStore').getCurrentTime().format('YYYYMMDD'),
-            currentTime: this.context.getStore('TimeStore').getCurrentTime().unix(),
-          })}
-          renderLoading={() =>
-            <div className="card" style={{ height: '12rem' }}><Loading /></div>
+          route={
+            new StopRoute({
+              stopId: this.props.stop.gtfsId,
+              date: this.context
+                .getStore('TimeStore')
+                .getCurrentTime()
+                .format('YYYYMMDD'),
+              currentTime: this.context
+                .getStore('TimeStore')
+                .getCurrentTime()
+                .unix(),
+            })
           }
-          renderFetched={data =>
-            <StopMarkerPopupWithContext {...data} context={this.context} />
-          }
+          renderLoading={() => (
+            <div className="card" style={{ height: '12rem' }}>
+              <Loading />
+            </div>
+          )}
+          renderFetched={data => <StopMarkerPopup {...data} />}
         />
       </GenericMarker>
     );

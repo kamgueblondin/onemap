@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import get from 'lodash/get';
 
@@ -7,28 +8,35 @@ const getText = (route, config) => {
   const showAgency = get(config, 'agency.show', false);
   if (route.shortName) {
     return route.shortName;
-  } else if (showAgency && route.agency) {
+  }
+  if (showAgency && route.agency) {
     return route.agency.name;
   }
   return '';
 };
 
-const RouteNumberContainer = ({ className, route, isCallAgency, ...props }, { config }) =>
-(route && <RouteNumber
-  className={className}
-  isCallAgency={isCallAgency || route.type === 715}
-  mode={route.mode}
-  text={getText(route, config)}
-  {...props}
-/>);
-
+const RouteNumberContainer = (
+  { className, route, isCallAgency, ...props },
+  { config },
+) =>
+  route && (
+    <RouteNumber
+      className={className}
+      isCallAgency={isCallAgency || route.type === 715}
+      color={route.color ? `#${route.color}` : null}
+      hasDisruption={props.hasDisruption}
+      mode={route.mode}
+      text={getText(route, config)}
+      {...props}
+    />
+  );
 
 RouteNumberContainer.propTypes = {
-  route: React.PropTypes.object.isRequired,
-  vertical: React.PropTypes.bool,
-  className: React.PropTypes.string,
-  hasDisruption: React.PropTypes.bool,
-  fadeLong: React.PropTypes.bool,
+  route: PropTypes.object.isRequired,
+  vertical: PropTypes.bool,
+  className: PropTypes.string,
+  hasDisruption: PropTypes.bool,
+  fadeLong: PropTypes.bool,
 };
 
 RouteNumberContainer.defaultProps = {
@@ -36,7 +44,7 @@ RouteNumberContainer.defaultProps = {
 };
 
 RouteNumberContainer.contextTypes = {
-  config: React.PropTypes.object.isRequired,
+  config: PropTypes.object.isRequired,
 };
 
 RouteNumberContainer.displayName = 'RouteNumberContainer';

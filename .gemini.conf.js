@@ -1,56 +1,82 @@
 module.exports = {
-  "rootUrl": "http://localhost:8080",
-  "screenshotsDir": "./test/visual-images/",
-  "httpTimeout": 40000,
-  "sessionRequestTimeout": 120000,
-  "sessionsPerBrowser": 1,
-  "suitesPerSession": 10,
-  "retry": 1,
-  "system": {
-    "plugins": { "browserstack": { "localIdentifier": process.env.IDENTIFIER } },
-    "parallelLimit": 3
+  rootUrl: 'http://localhost:8080',
+  screenshotsDir: './test/visual-images/',
+  httpTimeout: 40000,
+  sessionRequestTimeout: 120000,
+  sessionsPerBrowser: 1,
+  suitesPerSession: 50,
+  retry: 10,
+  tolerance: 10,
+  antialiasingTolerance: 10,
+  compositeImage: true,
+  system: {
+    plugins: {
+      browserstack: { localIdentifier: process.env.IDENTIFIER },
+      'html-reporter': { enabled: true },
+    },
+    parallelLimit: 3,
   },
-  "browsers": {
-    "ie11": {
-      "windowSize": "600x1024",
-      "desiredCapabilities": {
-        "os": "Windows",
-        "os_version": "8.1",
-        "browserName": "internet explorer",
-        "browser": "IE",
-        "browser_version": "11",
-        "locationContextEnabled": false
-      }
+  browsers: {
+    ie11: {
+      windowSize: '600x1024',
+      desiredCapabilities: {
+        os: 'Windows',
+        os_version: '10',
+        browserName: 'internet explorer',
+        browser: 'IE',
+        browser_version: '11',
+        locationContextEnabled: false,
+        'browserstack.timezone': 'Europe/Helsinki',
+        'browserstack.video': false,
+      },
     },
-    "chrome50": {
-      "windowSize": "600x1024",
-      "desiredCapabilities": {
-        "os": "OS X",
-        "os_version": "El Capitan",
-        "browserName": "chrome",
-        "version": "50",
-        "locationContextEnabled": false
-      }
+    chrome: {
+      windowSize: '600x1024',
+      desiredCapabilities: {
+        os: 'OS X',
+        os_version: 'El Capitan',
+        browserName: 'chrome',
+        version: '64',
+        locationContextEnabled: false,
+        'browserstack.timezone': 'Europe/Helsinki',
+        'browserstack.video': false,
+      },
     },
-    "safari10": {
-      "windowSize": "600x1024",
-      "desiredCapabilities": {
-        "os": "OS X",
-        "os_version": "Sierra",
-        "browserName": "safari",
-        "version": "10",
-        "locationContextEnabled": false
-      }
+    safari11: {
+      windowSize: '600x1024',
+      desiredCapabilities: {
+        os: 'OS X',
+        os_version: 'High Sierra',
+        browserName: 'safari',
+        version: '11.1',
+        locationContextEnabled: false,
+        'browserstack.timezone': 'Europe/Helsinki',
+        'browserstack.video': false,
+      },
     },
-    "edge13": {
-      "windowSize": "600x1024",
-      "desiredCapabilities": {
-        "os": "Windows",
-        "os_version": "10",
-        "browserName": "edge",
-        "version": "13",
-        "locationContextEnabled": false
-      }
-    }
-  }
-}
+    edge17: {
+      windowSize: '600x1024',
+      desiredCapabilities: {
+        os: 'Windows',
+        os_version: '10',
+        browserName: 'edge',
+        version: '17.0',
+        locationContextEnabled: false,
+        'browserstack.timezone': 'Europe/Helsinki',
+        'browserstack.video': false,
+      },
+    },
+    firefox: {
+      windowSize: '600x1024',
+      desiredCapabilities: {
+        os: 'Windows',
+        os_version: '10',
+        browserName: 'firefox',
+        version: '47',
+        locationContextEnabled: false,
+        'browserstack.timezone': 'Europe/Helsinki',
+        'browserstack.video': false,
+      },
+    },
+  },
+};

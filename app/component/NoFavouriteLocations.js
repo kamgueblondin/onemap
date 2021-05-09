@@ -17,15 +17,13 @@ const NoFavouriteLocations = () => (
 
 NoFavouriteLocations.displayName = 'NoFavouriteLocations';
 
-
-NoFavouriteLocations.description = () =>
+NoFavouriteLocations.description = () => (
   <div>
-    <p>Display usage hint for users with no favourites saved
-    </p>
+    <p>Display usage hint for users with no favourites saved</p>
     <ComponentUsageExample>
       <NoFavouriteLocations />
     </ComponentUsageExample>
-  </div>;
-
+  </div>
+);
 
 export default NoFavouriteLocations;

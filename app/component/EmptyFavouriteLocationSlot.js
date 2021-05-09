@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { Link } from 'react-router';
 import { FormattedMessage } from 'react-intl';
@@ -17,21 +18,22 @@ const EmptyFavouriteLocationSlot = ({ index }) => (
         <FormattedMessage id="add-location" defaultMessage="Add location" />
       </p>
     </div>
-  </Link>);
+  </Link>
+);
 
 EmptyFavouriteLocationSlot.displayName = 'EmptyFavouriteLocationSlot';
 
-EmptyFavouriteLocationSlot.description = () =>
+EmptyFavouriteLocationSlot.description = () => (
   <div>
     <p>Renders a empty favourite location slot component</p>
     <ComponentUsageExample description="none">
       <EmptyFavouriteLocationSlot />
     </ComponentUsageExample>
-  </div>;
+  </div>
+);
 
 EmptyFavouriteLocationSlot.propTypes = {
-  index: React.PropTypes.number.isRequired,
+  index: PropTypes.number.isRequired,
 };
-
 
 export default EmptyFavouriteLocationSlot;

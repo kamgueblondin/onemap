@@ -1,111 +1,124 @@
+import PropTypes from 'prop-types';
 import React from 'react';
-import Relay from 'react-relay';
-import { Link } from 'react-router';
-import filter from 'lodash/filter';
+import Relay from 'react-relay/classic';
+import { routerShape } from 'react-router';
 
 import RouteNumberContainer from './RouteNumberContainer';
 import Distance from './Distance';
 import RouteDestination from './RouteDestination';
 import DepartureTime from './DepartureTime';
 import ComponentUsageExample from './ComponentUsageExample';
+import { RouteAlertsQuery, StopAlertsQuery } from '../util/alertQueries';
+import {
+  getServiceAlertsForRoute,
+  getServiceAlertsForStop,
+  isAlertActive,
+  stoptimeHasCancelation,
+} from '../util/alertUtils';
 import { isCallAgencyDeparture } from '../util/legUtils';
+import { PREFIX_ROUTES } from '../util/path';
 
-const departureRowContainerFragment = () => Relay.QL`
-  fragment on DepartureRow {
-    pattern {
-      route {
-        gtfsId
-        shortName
-        longName
-        mode
-        color
-        alerts {
-          id
-          effectiveStartDate
-          effectiveEndDate
-        }
-        agency {
-          name
-        }
-      }
-      code
-    }
-    stoptimes (startTime:$currentTime, timeRange:$timeRange, numberOfDepartures:2) {
-      realtimeState
-      realtimeDeparture
-      scheduledDeparture
-      realtimeArrival
-      scheduledArrival
-      pickupType
-      realtime
-      serviceDay
-      stopHeadsign
-      stop {
-        code
-        platformCode
-      }
-      trip {
-        gtfsId
-      }
-    }
-  }
-`;
-
-const hasActiveDisruption = (t, alerts) =>
-  filter(alerts, alert => alert.effectiveStartDate < t && t < alert.effectiveEndDate).length > 0;
-
-const DepartureRow = (props) => {
-  const departure = props.departure;
+const DepartureRow = ({ departure, currentTime, distance }, context) => {
   let departureTimes;
+  let stopAlerts = [];
   let headsign;
   if (departure.stoptimes) {
-    departureTimes = departure.stoptimes.map((departureTime) => {
+    departureTimes = departure.stoptimes.map(departureTime => {
+      stopAlerts = getServiceAlertsForStop(departureTime.stop);
       headsign = departureTime.stopHeadsign;
       const canceled = departureTime.realtimeState === 'CANCELED';
-      const key = `${departure.pattern.route.gtfsId}:${departure.pattern.headsign}:
-        ${departureTime.realtimeDeparture}`;
-
+      const key = `${departure.pattern.route.gtfsId}:${
+        departure.pattern.headsign
+      }:${departureTime.realtimeDeparture}`;
       return (
-        <DepartureTime
-          key={key}
-          departureTime={departureTime.serviceDay + departureTime.realtimeDeparture}
-          realtime={departureTime.realtime}
-          currentTime={props.currentTime}
-          canceled={canceled}
-        />
+        <td key={`${key}-td`} className="td-departure-times">
+          <DepartureTime
+            key={key}
+            departureTime={
+              departureTime.serviceDay + departureTime.realtimeDeparture
+            }
+            realtime={departureTime.realtime}
+            currentTime={currentTime}
+            canceled={canceled}
+          />
+        </td>
       );
     });
   }
 
+  const getDeparture = val => {
+    context.router.push(val);
+  };
+
+  const departureLinkUrl = `/${PREFIX_ROUTES}/${
+    departure.pattern.route.gtfsId
+  }/pysakit/${departure.pattern.code}`;
+
+  // In case there's only one departure for the route,
+  // add a dummy cell to keep the table layout from breaking
+  const departureTimesChecked =
+    departureTimes.length < 2
+      ? [
+          departureTimes[0],
+          <td
+            key={`${departureTimes[0].key}-empty`}
+            className="td-departure-times"
+          />,
+        ]
+      : departureTimes;
+
+  const hasActiveAlert = isAlertActive(
+    departure.stoptimes.filter(stoptimeHasCancelation),
+    [
+      ...getServiceAlertsForRoute(
+        departure.pattern.route,
+        departure.pattern.code,
+      ),
+      ...stopAlerts,
+    ],
+    currentTime,
+  );
   return (
-    <div className="next-departure-row padding-vertical-normal border-bottom">
-      <Link
-        to={`/linjat/${departure.pattern.route.gtfsId}/pysakit/${departure.pattern.code}`}
-        key={departure.pattern.code}
-      >
-        <Distance distance={props.distance} />
+    <tr
+      className="next-departure-row-tr"
+      onClick={() => getDeparture(departureLinkUrl)}
+      style={{ cursor: 'pointer' }}
+    >
+      <td className="td-distance">
+        <Distance distance={distance} />
+      </td>
+      <td className="td-route-number">
         <RouteNumberContainer
           route={departure.pattern.route}
-          hasDisruption={hasActiveDisruption(props.currentTime, departure.pattern.route.alerts)}
+          hasDisruption={hasActiveAlert}
           isCallAgency={isCallAgencyDeparture(departure.stoptimes[0])}
         />
+      </td>
+      <td className="td-destination">
         <RouteDestination
           mode={departure.pattern.route.mode}
-          destination={headsign || departure.pattern.route.longName}
+          destination={
+            headsign ||
+            departure.pattern.headsign ||
+            departure.pattern.route.longName
+          }
         />
-        {departureTimes}
-      </Link>
-    </div>
+      </td>
+      {departureTimesChecked}
+    </tr>
   );
 };
 
 DepartureRow.displayName = 'DepartureRow';
 
 DepartureRow.propTypes = {
-  departure: React.PropTypes.object.isRequired,
-  distance: React.PropTypes.number.isRequired,
-  currentTime: React.PropTypes.number.isRequired,
-  timeRange: React.PropTypes.number.isRequired,
+  departure: PropTypes.object.isRequired,
+  distance: PropTypes.number.isRequired,
+  currentTime: PropTypes.number.isRequired,
+};
+
+DepartureRow.contextTypes = {
+  router: routerShape,
 };
 
 const exampleDeparture1 = {
@@ -157,7 +170,7 @@ const exampleDeparture2 = {
   ],
 };
 
-DepartureRow.description = () =>
+DepartureRow.description = () => (
   <div>
     <ComponentUsageExample description="example">
       <DepartureRow
@@ -173,14 +186,54 @@ DepartureRow.description = () =>
         currentTime={1473676196}
       />
     </ComponentUsageExample>
-  </div>;
-
+  </div>
+);
 
 export { DepartureRow };
 
 export default Relay.createContainer(DepartureRow, {
   fragments: {
-    departure: departureRowContainerFragment,
+    departure: () => Relay.QL`
+      fragment on DepartureRow {
+        pattern {
+          route {
+            gtfsId
+            shortName
+            longName
+            mode
+            color
+            alerts {
+              id
+            }
+            ${RouteAlertsQuery}
+            agency {
+              name
+            }
+          }
+          code
+          headsign
+        }
+        stoptimes (startTime:$currentTime, timeRange:$timeRange, numberOfDepartures:2) {
+          realtimeState
+          realtimeDeparture
+          scheduledDeparture
+          realtimeArrival
+          scheduledArrival
+          pickupType
+          realtime
+          serviceDay
+          stopHeadsign
+          stop {
+            code
+            platformCode
+            ${StopAlertsQuery}
+          }
+          trip {
+            gtfsId
+          }
+        }
+      }
+    `,
   },
 
   initialVariables: {

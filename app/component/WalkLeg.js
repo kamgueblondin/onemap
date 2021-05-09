@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import moment from 'moment';
 import { FormattedMessage } from 'react-intl';
@@ -10,12 +11,18 @@ import { durationToString } from '../util/timeUtils';
 import ItineraryCircleLine from './ItineraryCircleLine';
 
 function WalkLeg(props, context) {
-  const distance = displayDistance(parseInt(props.leg.distance, 10), context.config);
+  const distance = displayDistance(
+    parseInt(props.leg.distance, 10),
+    context.config,
+  );
   const duration = durationToString(props.leg.duration * 1000);
   const modeClassName = 'walk';
 
+  const { previousLeg } = props;
+
+  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
   return (
-    <div key={props.index} className="row itinerary-row" >
+    <div key={props.index} className="row itinerary-row">
       <div className="small-2 columns itinerary-time-column">
         <div className="itinerary-time-column-time">
           {moment(props.leg.startTime).format('HH:mm')}
@@ -29,7 +36,15 @@ function WalkLeg(props, context) {
       >
         <div className="itinerary-leg-first-row">
           <div>
-            {props.leg.from.name}
+            {previousLeg && previousLeg.rentedBike ? (
+              <FormattedMessage
+                id="return-cycle-to"
+                values={{ station: props.leg.from.name }}
+                defaultMessage="Return the bike to {station} station"
+              />
+            ) : (
+              props.leg.from.name
+            )}
             {props.children}
           </div>
           <Icon img="icon-icon_search-plus" className="itinerary-search-icon" />
@@ -55,8 +70,11 @@ const exampleLeg = t1 => ({
 });
 
 WalkLeg.description = () => {
-  const today = moment().hour(12).minute(34).second(0)
-                        .valueOf();
+  const today = moment()
+    .hour(12)
+    .minute(34)
+    .second(0)
+    .valueOf();
   return (
     <div>
       <p>Displays an itinerary walk leg.</p>
@@ -70,24 +88,32 @@ WalkLeg.description = () => {
   );
 };
 
-WalkLeg.propTypes = {
-  leg: React.PropTypes.shape({
-    duration: React.PropTypes.number.isRequired,
-    startTime: React.PropTypes.number.isRequired,
-    distance: React.PropTypes.number.isRequired,
-    mode: React.PropTypes.string.isRequired,
-    from: React.PropTypes.shape({
-      name: React.PropTypes.string.isRequired,
-      stop: React.PropTypes.shape({
-        code: React.PropTypes.string,
-      }),
-    }).isRequired,
+const walkLegShape = PropTypes.shape({
+  distance: PropTypes.number.isRequired,
+  duration: PropTypes.number.isRequired,
+  from: PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    stop: PropTypes.shape({
+      code: PropTypes.string,
+    }),
   }).isRequired,
-  index: React.PropTypes.number.isRequired,
-  focusAction: React.PropTypes.func.isRequired,
-  children: React.PropTypes.node,
+  mode: PropTypes.string.isRequired,
+  rentedBike: PropTypes.bool,
+  startTime: PropTypes.number.isRequired,
+});
+
+WalkLeg.propTypes = {
+  children: PropTypes.node,
+  focusAction: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  leg: walkLegShape.isRequired,
+  previousLeg: walkLegShape,
 };
 
-WalkLeg.contextTypes = { config: React.PropTypes.object.isRequired };
+WalkLeg.defaultProps = {
+  previousLeg: undefined,
+};
+
+WalkLeg.contextTypes = { config: PropTypes.object.isRequired };
 
 export default WalkLeg;

@@ -58,8 +58,11 @@ body {
 
 #app {
   height: 100%;
+  display: flex;
+  flex-direction: column;
 
   @media print {
+    display: block;
     height: auto;
   }
 }
@@ -209,7 +212,11 @@ body select  {
 
 .subicon-caution {
   .icon {
-    fill: red;
+    fill: #dc0451;
     color: white;
+    display: block;
+    overflow: visible;
+    width: 13px;
+    height: 13px;
   }
 }

@@ -1,13 +1,16 @@
+import PropTypes from 'prop-types';
 import React from 'react';
+import get from 'lodash/get';
 import some from 'lodash/some';
 import polyline from 'polyline-encoded';
+import { routerShape, locationShape } from 'react-router';
 
 import LocationMarker from './map/LocationMarker';
 import ItineraryLine from './map/ItineraryLine';
-import Map from './map/Map';
-import Icon from './Icon';
+import MapContainer from './map/MapContainer';
 import { otpToLocation } from '../util/otpStrings';
 import { isBrowser } from '../util/browser';
+import { dtLocationShape } from '../util/shapes';
 
 let L;
 
@@ -16,50 +19,52 @@ if (isBrowser) {
   L = require('leaflet');
 }
 
-export default function ItineraryPageMap(
-  { itinerary, params, from, to, routes, center },
-  { breakpoint, router, location },
+let timeout;
+
+function ItineraryPageMap(
+  { itinerary, params, from, to, routes, center, breakpoint },
+  { router, location },
 ) {
   const leafletObjs = [
     <LocationMarker
       key="fromMarker"
       position={from || otpToLocation(params.from)}
-      className="from"
+      type="from"
     />,
     <LocationMarker
+      isLarge
       key="toMarker"
       position={to || otpToLocation(params.to)}
-      className="to"
-    />];
+      type="to"
+    />,
+  ];
 
   if (location.query && location.query.intermediatePlaces) {
     if (Array.isArray(location.query.intermediatePlaces)) {
-      location.query.intermediatePlaces.map(otpToLocation).forEach((markerLocation, i) => {
-        leafletObjs.push(
-          <LocationMarker
-            key={`via_${i}`} // eslint-disable-line react/no-array-index-key
-            position={markerLocation}
-            className="via"
-            noText
-          />,
+      location.query.intermediatePlaces
+        .map(otpToLocation)
+        .forEach((markerLocation, i) => {
+          leafletObjs.push(
+            <LocationMarker
+              key={`via_${i}`} // eslint-disable-line react/no-array-index-key
+              position={markerLocation}
+            />,
           );
-      });
+        });
     } else {
       leafletObjs.push(
         <LocationMarker
-          key={'via'}
+          key="via"
           position={otpToLocation(location.query.intermediatePlaces)}
-          className="via"
-          noText
         />,
-        );
+      );
     }
   }
 
   if (itinerary) {
     leafletObjs.push(
       <ItineraryLine
-        key={'line'}
+        key="line"
         legs={itinerary.legs}
         showTransferLabels
         showIntermediateStops
@@ -68,18 +73,20 @@ export default function ItineraryPageMap(
   }
   const fullscreen = some(routes.map(route => route.fullscreenMap));
 
-  const toggleFullscreenMap = fullscreen ?
-    router.goBack :
-        () => router.push({
+  const toggleFullscreenMap = fullscreen
+    ? router.goBack
+    : () =>
+        router.push({
           ...location,
           pathname: `${location.pathname}/kartta`,
         });
 
-  const overlay = fullscreen ? undefined : (
-    <div
-      className="map-click-prevent-overlay"
-      onClick={toggleFullscreenMap}
-    />);
+  const overlay = fullscreen ? (
+    undefined
+  ) : (
+    /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+    <div className="map-click-prevent-overlay" onClick={toggleFullscreenMap} />
+  );
 
   let bounds;
 
@@ -89,29 +96,40 @@ export default function ItineraryPageMap(
 
   const showScale = fullscreen || breakpoint === 'large';
 
-// onCenterMap() used to check if the layer has a marker for an itinerary
-// stop, emulate a click on the map to open up the popup
-  const onCenterMap = (element) => {
-    if (!element || !center) {
+  // onCenterMap() used to check if the layer has a marker for an itinerary
+  // stop, emulate a click on the map to open up the popup
+  const onCenterMap = element => {
+    const map = get(element, 'leafletElement', null);
+    if (!map || !center) {
       return;
     }
-    element.map.leafletElement.closePopup();
+    map.closePopup();
+    clearTimeout(timeout);
     if (fullscreen || breakpoint === 'large') {
       const latlngPoint = new L.LatLng(center.lat, center.lon);
-      element.map.leafletElement.eachLayer((layer) => {
-        if (layer instanceof L.Marker && layer.getLatLng().equals(latlngPoint)) {
-          layer.fireEvent('click', {
-            latlng: latlngPoint,
-            layerPoint: element.map.leafletElement.latLngToLayerPoint(latlngPoint),
-            containerPoint: element.map.leafletElement.latLngToContainerPoint(latlngPoint),
-          });
+      map.eachLayer(layer => {
+        if (
+          layer instanceof L.Marker &&
+          layer.getLatLng().equals(latlngPoint)
+        ) {
+          timeout = setTimeout(
+            () =>
+              layer.fireEvent('click', {
+                latlng: latlngPoint,
+                layerPoint: map.latLngToLayerPoint(latlngPoint),
+                containerPoint: map.latLngToContainerPoint(latlngPoint),
+              }),
+            250,
+          );
+          // Timout duration comes from
+          // https://github.com/Leaflet/Leaflet/blob/v1.1.0/src/dom/PosAnimation.js#L35
         }
       });
     }
   };
 
   return (
-    <Map
+    <MapContainer
       className="full itinerary"
       leafletObjs={leafletObjs}
       lat={center ? center.lat : from.lat}
@@ -121,44 +139,34 @@ export default function ItineraryPageMap(
       fitBounds={Boolean(bounds)}
       boundsOptions={{ maxZoom: 16 }}
       showScaleBar={showScale}
-      ref={onCenterMap}
+      mapRef={onCenterMap}
       hideOrigin
     >
       {breakpoint !== 'large' && overlay}
-      {breakpoint !== 'large' && (
-        <div
-          className="fullscreen-toggle"
-          onClick={toggleFullscreenMap}
-        >
-          <Icon
-            img="icon-icon_maximize"
-            className="cursor-pointer"
-          />
-        </div>
-      )}
-    </Map>
+    </MapContainer>
   );
 }
 
 ItineraryPageMap.propTypes = {
-  itinerary: React.PropTypes.object,
-  params: React.PropTypes.shape({
-    from: React.PropTypes.string.isRequired,
-    to: React.PropTypes.string.isRequired,
+  itinerary: PropTypes.object,
+  params: PropTypes.shape({
+    from: PropTypes.string.isRequired,
+    to: PropTypes.string.isRequired,
   }).isRequired,
-  from: React.PropTypes.shape({
-    lat: React.PropTypes.number.isRequired,
-    lon: React.PropTypes.number.isRequired,
-  }),
-  to: React.PropTypes.shape({
-    lat: React.PropTypes.number.isRequired,
-    lon: React.PropTypes.number.isRequired,
-  }),
-  center: React.PropTypes.shape({
-    lat: React.PropTypes.number.isRequired,
-    lon: React.PropTypes.number.isRequired,
-  }),
-  routes: React.PropTypes.arrayOf(React.PropTypes.shape({
-    fullscreenMap: React.PropTypes.bool,
-  }).isRequired).isRequired,
+  from: dtLocationShape,
+  to: dtLocationShape,
+  center: dtLocationShape,
+  routes: PropTypes.arrayOf(
+    PropTypes.shape({
+      fullscreenMap: PropTypes.bool,
+    }).isRequired,
+  ).isRequired,
+  breakpoint: PropTypes.string.isRequired,
 };
+
+ItineraryPageMap.contextTypes = {
+  location: locationShape.isRequired,
+  router: routerShape.isRequired,
+};
+
+export default ItineraryPageMap;

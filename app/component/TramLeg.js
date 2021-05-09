@@ -1,4 +1,5 @@
-import React, { PropTypes } from 'react';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { FormattedMessage } from 'react-intl';
 import moment from 'moment';
 
@@ -6,19 +7,16 @@ import TransitLeg from './TransitLeg';
 import ComponentUsageExample from './ComponentUsageExample';
 
 const TramLeg = ({ leg, focusAction, index }) => (
-  <TransitLeg
-    mode="TRAM"
-    leg={leg}
-    focusAction={focusAction}
-    index={index}
-  >
+  <TransitLeg mode="TRAM" leg={leg} focusAction={focusAction} index={index}>
     <FormattedMessage
       id="tram-with-route-number"
       values={{
         routeNumber: leg.route && leg.route.shortName,
         headSign: leg.trip && leg.trip.tripHeadsign,
-      }} defaultMessage="Tram {routeNumber} {headSign}"
-    /></TransitLeg>
+      }}
+      defaultMessage="Tram {routeNumber} {headSign}"
+    />
+  </TransitLeg>
 );
 
 const exampleLeg = t1 => ({
@@ -31,15 +29,18 @@ const exampleLeg = t1 => ({
   distance: 586.4621425755712,
   duration: 120,
   rentedBike: false,
-  intermediateStops: [],
+  intermediatePlaces: [],
   route: { gtfsId: '123', shortName: '9', mode: 'TRAM' },
   trip: { tripHeadsign: 'Länsiterminaali T2', pattern: { code: '123' } },
   from: { name: 'Simonkatu', stop: { code: '0232' } },
 });
 
 TramLeg.description = () => {
-  const today = moment().hour(12).minute(34).second(0)
-                        .valueOf();
+  const today = moment()
+    .hour(12)
+    .minute(34)
+    .second(0)
+    .valueOf();
   return (
     <div>
       <p>Displays an itinerary tram leg.</p>

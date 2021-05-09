@@ -1,4 +1,4 @@
-FROM node:6
+FROM node:10
 MAINTAINER Reittiopas version: 0.1
 
 EXPOSE 8080
@@ -14,13 +14,17 @@ ENV \
   PORT=8080 \
   API_URL='' \
   MAP_URL='' \
+  OTP_URL='' \
+  VEHICLE_URL='' \
+  GEOCODING_BASE_URL='' \
   APP_PATH='' \
   CONFIG='' \
   PIWIK_ADDRESS='' \
   PIWIK_ID='' \
   NODE_ENV='' \
   NODE_OPTS='' \
-  RELAY_FETCH_TIMEOUT=''
+  RELAY_FETCH_TIMEOUT='' \
+  ASSET_URL=''
 
 WORKDIR ${WORK}
 ADD . ${WORK}
