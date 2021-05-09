@@ -27,8 +27,8 @@
       "silent": true,
       "globals": {
         "pause_ms": 200,
-        "itinerarySearchTimeout": 18000,
-        "elementVisibleTimeout": 15000
+        "itinerarySearchTimeout": 15000,
+        "elementVisibleTimeout": 10000
       },
       "screenshots": {
         "enabled": true,
@@ -142,14 +142,12 @@
         "version": 47,
         "os": "WINDOWS",
         "os_version": "10",
-        "browserstack.video": false,
         "javascriptEnabled": true,
         "acceptSslCerts": true,
         "browserstack.user": "${BROWSERSTACK_USER}",
         "browserstack.key": "${BROWSERSTACK_KEY}",
         "browserstack.local": true,
-        "build": "${BROWSERSTACK_BUILD}",
-        "localIdentifier": "${BROWSERSTACK_ID}"
+        "build": "${BROWSERSTACK_BUILD}"
       }
     },
     "bs-chrome": {
@@ -163,14 +161,12 @@
         "browserName": "chrome",
         "os": "WINDOWS",
         "os_version": "10",
-        "browserstack.video": false,
         "javascriptEnabled": true,
         "acceptSslCerts": true,
         "browserstack.user": "${BROWSERSTACK_USER}",
         "browserstack.key": "${BROWSERSTACK_KEY}",
         "browserstack.local": true,
-        "build": "${BROWSERSTACK_BUILD}",
-        "localIdentifier": "${BROWSERSTACK_ID}"
+        "build": "${BROWSERSTACK_BUILD}"
       }
     },
     "bs-edge": {
@@ -183,17 +179,15 @@
         "resolution": "1280x800",
         "browserName": "edge",
         "browser": "Edge",
-        "browser_version": "17",
+        "browser_version": "13",
         "os": "WINDOWS",
         "os_version": "10",
-        "browserstack.video": false,
         "javascriptEnabled": true,
         "acceptSslCerts": true,
         "browserstack.user": "${BROWSERSTACK_USER}",
         "browserstack.key": "${BROWSERSTACK_KEY}",
         "browserstack.local": true,
-        "build": "${BROWSERSTACK_BUILD}",
-        "localIdentifier": "${BROWSERSTACK_ID}"
+        "build": "${BROWSERSTACK_BUILD}"
       }
     },
     "bs-ie": {
@@ -209,36 +203,12 @@
         "browser_version": "11",
         "os": "WINDOWS",
         "os_version": "8.1",
-        "browserstack.video": false,
         "javascriptEnabled": true,
         "acceptSslCerts": true,
         "browserstack.user": "${BROWSERSTACK_USER}",
         "browserstack.key": "${BROWSERSTACK_KEY}",
         "browserstack.local": true,
-        "build": "${BROWSERSTACK_BUILD}",
-        "localIdentifier": "${BROWSERSTACK_ID}"
-      }
-    },
-    "bs-safari": {
-      "selenium_port": 80,
-      "selenium_host": "hub.browserstack.com",
-      "selenium": {
-        "start_process": false
-      },
-      "desiredCapabilities": {
-        "resolution": "1600x1200",
-        "os": "OS X",
-        "os_version": "High Sierra",
-        "browserName": "safari",
-        "version": "11.1",
-        "browserstack.video": false,
-        "javascriptEnabled": true,
-        "acceptSslCerts": true,
-        "browserstack.user": "${BROWSERSTACK_USER}",
-        "browserstack.key": "${BROWSERSTACK_KEY}",
-        "browserstack.local": true,
-        "build": "${BROWSERSTACK_BUILD}",
-        "localIdentifier": "${BROWSERSTACK_ID}"
+        "build": "${BROWSERSTACK_BUILD}"
       }
     },
     "bs-android": {
@@ -255,8 +225,7 @@
         "browserstack.user": "${BROWSERSTACK_USER}",
         "browserstack.key": "${BROWSERSTACK_KEY}",
         "browserstack.local": true,
-        "build": "${BROWSERSTACK_BUILD}",
-        "localIdentifier": "${BROWSERSTACK_ID}"
+        "build": "${BROWSERSTACK_BUILD}"
       }
     },
     "bs-iphone": {
@@ -274,8 +243,7 @@
         "browserstack.user": "${BROWSERSTACK_USER}",
         "browserstack.key": "${BROWSERSTACK_KEY}",
         "browserstack.local": true,
-        "build": "${BROWSERSTACK_BUILD}",
-        "localIdentifier": "${BROWSERSTACK_ID}"
+        "build": "${BROWSERSTACK_BUILD}"
       }
     },
     "sl-iphone": {

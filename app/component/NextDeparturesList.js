@@ -119,7 +119,7 @@ function NextDeparturesList(props, context) {
     },
   );
 
-  return <React.Fragment>{departureObjs}</React.Fragment>;
+  return <div>{departureObjs}</div>;
 }
 
 NextDeparturesList.propTypes = {

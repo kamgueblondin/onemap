@@ -6,22 +6,14 @@ import connectToStores from 'fluxible-addons-react/connectToStores';
 import { intlShape, FormattedMessage } from 'react-intl';
 import keyBy from 'lodash/keyBy';
 import sortBy from 'lodash/sortBy';
-
 import RouteScheduleHeader from './RouteScheduleHeader';
 import RouteScheduleTripRow from './RouteScheduleTripRow';
 import DateSelect from './DateSelect';
 import SecondaryButton from './SecondaryButton';
 import Loading from './Loading';
 import Icon from './Icon';
-import { RealtimeStateType } from '../constants';
 
 const DATE_FORMAT = 'YYYYMMDD';
-
-const isTripCanceled = trip =>
-  trip.stoptimes &&
-  Object.keys(trip.stoptimes)
-    .map(key => trip.stoptimes[key])
-    .every(st => st.realtimeState === RealtimeStateType.Canceled);
 
 class RouteScheduleContainer extends Component {
   static propTypes = {
@@ -32,7 +24,6 @@ class RouteScheduleContainer extends Component {
 
   static contextTypes = {
     intl: intlShape.isRequired,
-    config: PropTypes.object.isRequired,
   };
 
   static transformTrips(trips, stops) {
@@ -70,15 +61,13 @@ class RouteScheduleContainer extends Component {
 
   onFromSelectChange = event => {
     const from = Number(event.target.value);
-    this.setState(prevState => {
-      const to = prevState.to > from ? prevState.to : from + 1;
-      return { ...prevState.state, from, to };
-    });
+    const to = this.state.to > from ? this.state.to : from + 1;
+    this.setState({ ...this.state, from, to });
   };
 
   onToSelectChange = event => {
     const to = Number(event.target.value);
-    this.setState(prevState => ({ ...prevState.state, to }));
+    this.setState({ ...this.state, to });
   };
 
   getTrips = (from, to) => {
@@ -89,8 +78,7 @@ class RouteScheduleContainer extends Component {
     );
     if (trips == null) {
       return <Loading />;
-    }
-    if (trips.length === 0) {
+    } else if (trips.length === 0) {
       return (
         <div className="text-center">
           {this.context.intl.formatMessage({
@@ -115,11 +103,23 @@ class RouteScheduleContainer extends Component {
           key={trip.id}
           departureTime={departureTime}
           arrivalTime={arrivalTime}
-          isCanceled={isTripCanceled(trip)}
         />
       );
     });
   };
+
+  initState(props, isInitialState) {
+    const state = {
+      from: 0,
+      to: props.pattern.stops.length - 1,
+    };
+
+    if (isInitialState) {
+      this.state = state;
+    } else {
+      this.setState(state);
+    }
+  }
 
   formatTime = timestamp => moment(timestamp * 1000).format('HH:mm');
 
@@ -149,44 +149,12 @@ class RouteScheduleContainer extends Component {
     );
   };
 
-  openRoutePDF = (e, routePDFUrl) => {
-    e.stopPropagation();
-    window.open(routePDFUrl);
-  };
-
   printRouteTimetable = e => {
     e.stopPropagation();
     window.print();
   };
 
-  initState(props, isInitialState) {
-    const state = {
-      from: 0,
-      to: props.pattern.stops.length - 1,
-    };
-
-    if (isInitialState) {
-      this.state = state;
-    } else {
-      this.setState(state);
-    }
-  }
-
   render() {
-    const routeIdSplitted = this.props.pattern.route.gtfsId.split(':');
-
-    const routeTimetableHandler =
-      this.context.config.routeTimetables &&
-      this.context.config.routeTimetables[routeIdSplitted[0]];
-
-    const routeTimetableUrl =
-      routeTimetableHandler &&
-      this.context.config.URL.ROUTE_TIMETABLES[routeIdSplitted[0]] &&
-      routeTimetableHandler.timetableUrlResolver(
-        this.context.config.URL.ROUTE_TIMETABLES[routeIdSplitted[0]],
-        this.props.pattern.route,
-      );
-
     return (
       <div className="route-schedule-content-wrapper">
         <div className="route-page-action-bar">
@@ -197,24 +165,13 @@ class RouteScheduleContainer extends Component {
             onDateChange={this.changeDate}
           />
           {this.dateForPrinting()}
-          <div className="print-button-container">
-            {routeTimetableUrl && (
-              <SecondaryButton
-                ariaLabel="print-timetable"
-                buttonName="print-timetable"
-                buttonClickAction={e => this.openRoutePDF(e, routeTimetableUrl)}
-                buttonIcon="icon-icon_print"
-                smallSize
-              />
-            )}
-            <SecondaryButton
-              ariaLabel="print"
-              buttonName="print"
-              buttonClickAction={e => this.printRouteTimetable(e)}
-              buttonIcon="icon-icon_print"
-              smallSize
-            />
-          </div>
+          <SecondaryButton
+            ariaLabel="print"
+            buttonName="print"
+            buttonClickAction={e => this.printRouteTimetable(e)}
+            buttonIcon="icon-icon_print"
+            smallSize
+          />
         </div>
         <div className="route-schedule-list-wrapper">
           <RouteScheduleHeader
@@ -233,10 +190,10 @@ class RouteScheduleContainer extends Component {
   }
 }
 
-const connectedComponent = connectToStores(
+export default connectToStores(
   Relay.createContainer(RouteScheduleContainer, {
     initialVariables: {
-      serviceDay: moment().format(DATE_FORMAT),
+      serviceDay: '19700101',
     },
     fragments: {
       pattern: () => Relay.QL`
@@ -247,13 +204,10 @@ const connectedComponent = connectToStores(
           }
           route {
             url
-            gtfsId
-            shortName
           }
           tripsForDate(serviceDay: $serviceDay) {
             id
             stoptimes: stoptimesForDate(serviceDay: $serviceDay) {
-              realtimeState
               scheduledArrival
               scheduledDeparture
               serviceDay
@@ -274,5 +228,3 @@ const connectedComponent = connectToStores(
       .format(DATE_FORMAT),
   }),
 );
-
-export { connectedComponent as default, RouteScheduleContainer as Component };

@@ -6,9 +6,6 @@ module.exports = {
   sessionsPerBrowser: 1,
   suitesPerSession: 50,
   retry: 10,
-  tolerance: 10,
-  antialiasingTolerance: 10,
-  compositeImage: true,
   system: {
     plugins: {
       browserstack: { localIdentifier: process.env.IDENTIFIER },
@@ -21,7 +18,7 @@ module.exports = {
       windowSize: '600x1024',
       desiredCapabilities: {
         os: 'Windows',
-        os_version: '10',
+        os_version: '8.1',
         browserName: 'internet explorer',
         browser: 'IE',
         browser_version: '11',
@@ -54,13 +51,13 @@ module.exports = {
         'browserstack.video': false,
       },
     },
-    edge17: {
+    edge15: {
       windowSize: '600x1024',
       desiredCapabilities: {
         os: 'Windows',
         os_version: '10',
         browserName: 'edge',
-        version: '17.0',
+        version: '15',
         locationContextEnabled: false,
         'browserstack.timezone': 'Europe/Helsinki',
         'browserstack.video': false,

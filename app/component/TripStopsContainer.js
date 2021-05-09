@@ -10,16 +10,12 @@ import TripListHeader from './TripListHeader';
 import TripStopListContainer from './TripStopListContainer';
 import withBreakpoint from '../util/withBreakpoint';
 
-function TripStopsContainer({ breakpoint, routes, trip }) {
-  if (!trip) {
-    return null;
-  }
-
+function TripStopsContainer({ breakpoint, ...props }) {
   const tripStartTime = getStartTime(
-    trip.stoptimesForDate[0].scheduledDeparture,
+    props.trip.stoptimesForDate[0].scheduledDeparture,
   );
 
-  const fullscreen = some(routes, route => route.fullscreenMap);
+  const fullscreen = some(props.routes, route => route.fullscreenMap);
 
   if (fullscreen && breakpoint !== 'large') {
     return <div className="route-page-content" />;
@@ -34,7 +30,7 @@ function TripStopsContainer({ breakpoint, routes, trip }) {
       <TripListHeader key="header" className={`bp-${breakpoint}`} />
       <TripStopListContainer
         key="list"
-        trip={trip}
+        trip={props.trip}
         tripStart={tripStartTime}
         fullscreenMap={fullscreen}
       />
@@ -49,7 +45,7 @@ TripStopsContainer.propTypes = {
         scheduledDeparture: PropTypes.number.isRequired,
       }).isRequired,
     ).isRequired,
-  }),
+  }).isRequired,
   routes: PropTypes.arrayOf(
     PropTypes.shape({
       fullscreenMap: PropTypes.bool,
@@ -58,14 +54,10 @@ TripStopsContainer.propTypes = {
   breakpoint: PropTypes.string.isRequired,
 };
 
-TripStopsContainer.defaultProps = {
-  trip: undefined,
-};
-
-const pureComponent = pure(withBreakpoint(TripStopsContainer));
-const containerComponent = Relay.createContainer(pureComponent, {
+export default Relay.createContainer(pure(withBreakpoint(TripStopsContainer)), {
   fragments: {
-    trip: () => Relay.QL`
+    trip: () =>
+      Relay.QL`
       fragment on Trip {
         stoptimesForDate {
           scheduledDeparture
@@ -80,5 +72,3 @@ const containerComponent = Relay.createContainer(pureComponent, {
     `,
   },
 });
-
-export { containerComponent as default, TripStopsContainer as Component };

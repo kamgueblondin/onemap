@@ -3,41 +3,26 @@ import React from 'react';
 
 import { isBrowser } from '../util/browser';
 
-const LogoSmall = (
-  { showLogo, showTitles, logo, title, subTitle, className },
-  { config },
-) => {
+const LogoSmall = ({ showLogo, logo, title }, { config }) => {
   if (config.textLogo || !showLogo) {
     return <span className="title">{title}</span>;
   }
-  return (
-    <div
-      className={className}
-      style={{ backgroundImage: isBrowser && logo ? `url(${logo})` : 'none' }}
-    >
-      {showTitles && title && <span className="logo-title">{title}</span>}
-      {showTitles &&
-        subTitle && <span className="logo-sub-title">{subTitle}</span>}
-    </div>
-  );
+  if (isBrowser && logo) {
+    return <div className="logo" style={{ backgroundImage: `url(${logo})` }} />;
+  }
+  return <div className="logo" style={{ backgroundImage: 'none' }} />;
 };
 
 LogoSmall.propTypes = {
   showLogo: PropTypes.bool,
-  showTitles: PropTypes.bool,
   logo: PropTypes.string,
   title: PropTypes.node,
-  subTitle: PropTypes.string,
-  className: PropTypes.string,
 };
 
 LogoSmall.defaultProps = {
   showLogo: false,
-  showTitles: false,
   logo: undefined,
   title: undefined,
-  subTitle: undefined,
-  className: 'logo',
 };
 
 LogoSmall.contextTypes = {

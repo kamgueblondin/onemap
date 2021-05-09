@@ -1,4 +1,3 @@
-import connectToStores from 'fluxible-addons-react/connectToStores';
 import PropTypes from 'prop-types';
 import React from 'react';
 import Relay from 'react-relay/classic';
@@ -6,10 +5,9 @@ import { intlShape } from 'react-intl';
 import GridLayer from 'react-leaflet/es/GridLayer';
 import SphericalMercator from '@mapbox/sphericalmercator';
 import lodashFilter from 'lodash/filter';
-import isEqual from 'lodash/isEqual';
-import Popup from 'react-leaflet/es/Popup';
-import { withLeaflet } from 'react-leaflet/es/context';
+import L from 'leaflet';
 
+import Popup from '../Popup';
 import StopRoute from '../../../route/StopRoute';
 import TerminalRoute from '../../../route/TerminalRoute';
 import CityBikeRoute from '../../../route/CityBikeRoute';
@@ -24,8 +22,6 @@ import TicketSalesPopup from '../popups/TicketSalesPopup';
 import LocationPopup from '../popups/LocationPopup';
 import TileContainer from './TileContainer';
 import Loading from '../../Loading';
-import { isFeatureLayerEnabled } from '../../../util/mapLayerUtils';
-import MapLayerStore, { mapLayerShape } from '../../../store/MapLayerStore';
 
 const initialState = {
   selectableTargets: undefined,
@@ -41,65 +37,31 @@ class TileLayerContainer extends GridLayer {
     tileSize: PropTypes.number.isRequired,
     zoomOffset: PropTypes.number.isRequired,
     disableMapTracking: PropTypes.func,
-    mapLayers: mapLayerShape.isRequired,
-    leaflet: PropTypes.shape({
-      map: PropTypes.shape({
-        addLayer: PropTypes.func.isRequired,
-        addEventParent: PropTypes.func.isRequired,
-        removeEventParent: PropTypes.func.isRequired,
-      }).isRequired,
-    }).isRequired,
   };
 
   static contextTypes = {
     getStore: PropTypes.func.isRequired,
     intl: intlShape.isRequired,
+    map: PropTypes.object.isRequired,
     config: PropTypes.object.isRequired,
   };
 
-  PopupOptions = {
-    offset: [110, 16],
-    minWidth: 260,
-    maxWidth: 260,
-    autoPanPaddingTopLeft: [5, 125],
-    className: 'popup',
-    ref: 'popup',
-    onClose: () => this.setState(initialState),
-    autoPan: false,
+  state = {
+    ...initialState,
+    currentTime: this.context
+      .getStore('TimeStore')
+      .getCurrentTime()
+      .unix(),
   };
 
-  merc = new SphericalMercator({
-    size: this.props.tileSize || 256,
-  });
-
-  constructor(props, context) {
-    super(props, context);
-
-    // Required as it is not passed upwards through the whole inherittance chain
-    this.context = context;
-    this.state = {
-      ...initialState,
-      currentTime: context
-        .getStore('TimeStore')
-        .getCurrentTime()
-        .unix(),
-    };
-    this.leafletElement.createTile = this.createTile;
-  }
-
-  componentDidMount() {
-    super.componentDidMount();
+  componentWillMount() {
+    super.componentWillMount();
     this.context.getStore('TimeStore').addChangeListener(this.onTimeChange);
-    this.props.leaflet.map.addEventParent(this.leafletElement);
-    this.leafletElement.on('click contextmenu', this.onClick);
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate() {
     if (this.context.popupContainer != null) {
       this.context.popupContainer.openPopup();
-    }
-    if (!isEqual(prevProps.mapLayers, this.props.mapLayers)) {
-      this.leafletElement.redraw();
     }
   }
 
@@ -149,6 +111,33 @@ class TileLayerContainer extends GridLayer {
     /* eslint-enable no-underscore-dangle */
   };
 
+  onPopupclose = () => this.setState(initialState);
+
+  PopupOptions = {
+    offset: [110, 16],
+    minWidth: 260,
+    maxWidth: 260,
+    autoPanPaddingTopLeft: [5, 125],
+    className: 'popup',
+    ref: 'popup',
+    onClose: this.onPopupclose,
+    autoPan: false,
+  };
+
+  createLeafletElement(props) {
+    const Layer = L.GridLayer.extend({ createTile: this.createTile });
+    const leafletElement = new Layer(this.getOptions(props));
+
+    this.context.map.addEventParent(leafletElement);
+    leafletElement.on('click contextmenu', this.onClick);
+
+    return leafletElement;
+  }
+
+  merc = new SphericalMercator({
+    size: this.props.tileSize || 256,
+  });
+
   createTile = (tileCoords, done) => {
     const tile = new TileContainer(
       tileCoords,
@@ -163,14 +152,7 @@ class TileLayerContainer extends GridLayer {
       }
 
       this.setState({
-        selectableTargets: selectableTargets.filter(target =>
-          isFeatureLayerEnabled(
-            target.feature,
-            target.layer,
-            this.props.mapLayers,
-            this.context.config,
-          ),
-        ),
+        selectableTargets,
         coords,
         showSpinner: true,
       });
@@ -326,10 +308,4 @@ class TileLayerContainer extends GridLayer {
   }
 }
 
-const connectedComponent = withLeaflet(
-  connectToStores(TileLayerContainer, [MapLayerStore], context => ({
-    mapLayers: context.getStore(MapLayerStore).getMapLayers(),
-  })),
-);
-
-export { connectedComponent as default, TileLayerContainer as Component };
+export default TileLayerContainer;

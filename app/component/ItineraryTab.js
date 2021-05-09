@@ -7,7 +7,6 @@ import { FormattedMessage, intlShape } from 'react-intl';
 
 import TicketInformation from './TicketInformation';
 import RouteInformation from './RouteInformation';
-import ItineraryProfile from './ItineraryProfile';
 import ItinerarySummary from './ItinerarySummary';
 import TimeFrame from './TimeFrame';
 import DateWarning from './DateWarning';
@@ -15,12 +14,7 @@ import ItineraryLegs from './ItineraryLegs';
 import LegAgencyInfo from './LegAgencyInfo';
 import CityBikeMarker from './map/non-tile-layer/CityBikeMarker';
 import SecondaryButton from './SecondaryButton';
-import { RouteAlertsQuery, StopAlertsQuery } from '../util/alertQueries';
-import { getZones } from '../util/legUtils';
 import { BreakpointConsumer } from '../util/withBreakpoint';
-import ComponentUsageExample from './ComponentUsageExample';
-
-import exampleData from './data/ItineraryTab.exampleData.json';
 
 class ItineraryTab extends React.Component {
   static propTypes = {
@@ -35,6 +29,7 @@ class ItineraryTab extends React.Component {
     router: routerShape.isRequired,
     location: locationShape.isRequired,
     intl: intlShape.isRequired,
+    piwik: PropTypes.object,
   };
 
   state = {
@@ -59,12 +54,13 @@ class ItineraryTab extends React.Component {
   printItinerary = e => {
     e.stopPropagation();
 
-    window.dataLayer.push({
-      event: 'sendMatomoEvent',
-      category: 'ItinerarySettings',
-      action: 'ItineraryPrintButton',
-      name: 'PrintItinerary',
-    });
+    if (this.context.piwik != null) {
+      this.context.piwik.trackEvent(
+        'ItinerarySettings',
+        'ItineraryPrintButton',
+        'PrintItinerary',
+      );
+    }
 
     const printPath = `${this.props.location.pathname}/tulosta`;
     this.context.router.push({
@@ -74,7 +70,6 @@ class ItineraryTab extends React.Component {
   };
 
   render() {
-    const { itinerary, searchTime } = this.props;
     const { config } = this.context;
     const routeInformation = config.showRouteInformation && (
       <RouteInformation />
@@ -85,17 +80,20 @@ class ItineraryTab extends React.Component {
         <BreakpointConsumer>
           {breakpoint => [
             breakpoint !== 'large' ? (
-              <ItinerarySummary itinerary={itinerary} key="summary">
+              <ItinerarySummary itinerary={this.props.itinerary} key="summary">
                 <TimeFrame
-                  startTime={itinerary.startTime}
-                  endTime={itinerary.endTime}
-                  refTime={searchTime}
+                  startTime={this.props.itinerary.startTime}
+                  endTime={this.props.itinerary.endTime}
+                  refTime={this.props.searchTime}
                   className="timeframe--itinerary-summary"
                 />
               </ItinerarySummary>
             ) : (
               <div className="itinerary-timeframe" key="timeframe">
-                <DateWarning date={itinerary.startTime} refTime={searchTime} />
+                <DateWarning
+                  date={this.props.itinerary.startTime}
+                  refTime={this.props.searchTime}
+                />
               </div>
             ),
             <div className="momentum-scroll itinerary-tabs__scroll" key="legs">
@@ -105,18 +103,11 @@ class ItineraryTab extends React.Component {
                 })}
               >
                 <ItineraryLegs
-                  itinerary={itinerary}
+                  itinerary={this.props.itinerary}
                   focusMap={this.handleFocus}
                 />
-                <ItineraryProfile
-                  itinerary={itinerary}
-                  small={breakpoint !== 'large'}
-                />
                 {config.showTicketInformation && (
-                  <TicketInformation
-                    fares={itinerary.fares}
-                    zones={getZones(itinerary.legs)}
-                  />
+                  <TicketInformation fares={this.props.itinerary.fares} />
                 )}
                 {routeInformation}
               </div>
@@ -144,19 +135,7 @@ class ItineraryTab extends React.Component {
   }
 }
 
-ItineraryTab.description = (
-  <ComponentUsageExample description="with disruption">
-    <div style={{ maxWidth: '528px' }}>
-      <ItineraryTab
-        focus={() => {}}
-        itinerary={{ ...exampleData.itinerary }}
-        searchTime={1553845502000}
-      />
-    </div>
-  </ComponentUsageExample>
-);
-
-const withRelay = Relay.createContainer(ItineraryTab, {
+export default Relay.createContainer(ItineraryTab, {
   fragments: {
     searchTime: () => Relay.QL`
       fragment on Plan {
@@ -169,8 +148,6 @@ const withRelay = Relay.createContainer(ItineraryTab, {
         duration
         startTime
         endTime
-        elevationGained
-        elevationLost
         fares {
           type
           currency
@@ -188,15 +165,12 @@ const withRelay = Relay.createContainer(ItineraryTab, {
             name
             vertexType
             bikeRentalStation {
-              bikesAvailable
               ${CityBikeMarker.getFragment('station')}
             }
             stop {
               gtfsId
               code
               platformCode
-              zoneId
-              ${StopAlertsQuery}
             }
           }
           to {
@@ -211,8 +185,6 @@ const withRelay = Relay.createContainer(ItineraryTab, {
               gtfsId
               code
               platformCode
-              zoneId
-              ${StopAlertsQuery}
             }
           }
           legGeometry {
@@ -228,12 +200,9 @@ const withRelay = Relay.createContainer(ItineraryTab, {
               name
               code
               platformCode
-              zoneId
-              ${StopAlertsQuery}
             }
           }
           realTime
-          realtimeState
           transitLeg
           rentedBike
           startTime
@@ -251,7 +220,6 @@ const withRelay = Relay.createContainer(ItineraryTab, {
             agency {
               phone
             }
-            ${RouteAlertsQuery}
           }
           trip {
             gtfsId
@@ -261,7 +229,6 @@ const withRelay = Relay.createContainer(ItineraryTab, {
             }
             stoptimes {
               pickupType
-              realtimeState
               stop {
                 gtfsId
               }
@@ -272,5 +239,3 @@ const withRelay = Relay.createContainer(ItineraryTab, {
     `,
   },
 });
-
-export { ItineraryTab as Component, withRelay as default };

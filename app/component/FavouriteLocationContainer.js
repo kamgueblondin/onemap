@@ -55,6 +55,7 @@ export default Relay.createContainer(FavouriteLocationContainer, {
           disableRemainingWeightHeuristic:
           $disableRemainingWeightHeuristic,
           arriveBy: $arriveBy,
+          preferred: $preferred
         ) {
           itineraries {
             startTime
@@ -83,6 +84,11 @@ export default Relay.createContainer(FavouriteLocationContainer, {
     walkSpeed: 1.2,
     wheelchair: false,
     maxWalkDistance: 0,
+
+    preferred: {
+      agencies: '',
+    },
+
     arriveBy: false,
     disableRemainingWeightHeuristic: false,
   },

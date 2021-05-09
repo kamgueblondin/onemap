@@ -1,17 +1,13 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { intlShape } from 'react-intl';
 import onlyUpdateForKeys from 'recompose/onlyUpdateForKeys';
+import { isMobile } from '../util/browser';
 
 class ItineraryTimePicker extends React.Component {
   static propTypes = {
     changeTime: PropTypes.func.isRequired,
     initHours: PropTypes.string.isRequired,
     initMin: PropTypes.string.isRequired,
-  };
-
-  static contextTypes = {
-    intl: intlShape.isRequired,
   };
 
   static DELTAS = { 38: 1, 40: -1 };
@@ -140,7 +136,11 @@ class ItineraryTimePicker extends React.Component {
   render() {
     const { hour, minute } = this.state;
     return (
-      <div className="time-input-container time-selector">
+      <div
+        className={`time-input-container time-selector ${
+          !isMobile ? 'time-selector' : ''
+        }`}
+      >
         <form id="time" onBlur={this.handleBlur}>
           <input
             type="tel"
@@ -151,13 +151,8 @@ class ItineraryTimePicker extends React.Component {
             onChange={this.onChangeHour}
             onClick={this.setSelectionRange}
             onKeyDown={this.handleKeyDownHour}
-            aria-label={this.context.intl.formatMessage({
-              id: 'time-selector-hours-label',
-            })}
           />
-          <div id="timeinput-digit-separator" aria-hidden="true">
-            :
-          </div>
+          <div id="timeinput-digit-separator">:</div>
           <input
             type="tel"
             ref={el => {
@@ -172,9 +167,6 @@ class ItineraryTimePicker extends React.Component {
             onChange={this.onChangeMinute}
             onClick={this.setSelectionRange}
             onKeyDown={this.handleKeyDownMinute}
-            aria-label={this.context.intl.formatMessage({
-              id: 'time-selector-minutes-label',
-            })}
           />
         </form>
       </div>

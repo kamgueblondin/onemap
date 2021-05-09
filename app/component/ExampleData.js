@@ -28,10 +28,6 @@ export const realtimeDeparture = {
     code: 'HSL:4611:1:01',
     headsign: 'Rautatientori',
   },
-
-  trip: {
-    gtfsId: 'HSL:1006T_20160613_La_1_2136',
-  },
 };
 
 export const departure = {
@@ -75,7 +71,7 @@ export const vehicle = {
   route: 'HSL:4611',
   direction: 1,
   tripStartTime: '1323',
-  operatingDay: '2016-06-01',
+  operatingDay: '20160601',
   mode: 'bus',
   delay: 44,
   next_stop: '1401152',
@@ -153,7 +149,6 @@ export const plan = {
           type: 'regular',
           cents: 320,
           currency: 'EUR',
-          components: [{ fareId: 'HSL:hki' }],
         },
       ],
       legs: [
@@ -579,7 +574,6 @@ export const routeScheduleHeaderStops = [
   { name: 'Sörnäinen(M)' },
 ];
 
-/*
 export const routePatterns = {
   pattern: {
     code: 'HSL:1007A:1:03',
@@ -602,200 +596,4 @@ export const routePatterns = {
       mode: 'TRAM',
     },
   },
-};
-*/
-
-export const routePatterns = {
-  patterns: [
-    {
-      code: 'HSL:1010:1:02',
-      headsign: 'Kirurgi',
-      stops: [
-        {
-          name: 'Korppaanmäki',
-        },
-        {
-          name: 'Johanneksenkirkko',
-        },
-        {
-          name: 'Tarkk´ampujankatu',
-        },
-      ],
-      tripsForDate: [
-        {
-          stoptimes: [
-            {
-              scheduledArrival: 56100,
-              scheduledDeparture: 56100,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
-              },
-            },
-            {
-              scheduledArrival: 56220,
-              scheduledDeparture: 56220,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
-              },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      code: 'HSL:1010:0:01',
-      headsign: 'Pikku Huopalahti',
-      stops: [
-        {
-          name: 'Korppaanmäki',
-        },
-        {
-          name: 'Johanneksenkirkko',
-        },
-        {
-          name: 'Tarkk´ampujankatu',
-        },
-      ],
-      tripsForDate: [
-        {
-          stoptimes: [
-            {
-              scheduledArrival: 56100,
-              scheduledDeparture: 56100,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
-              },
-            },
-            {
-              scheduledArrival: 56220,
-              scheduledDeparture: 56220,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
-              },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      code: 'HSL:1010:0:01',
-      headsign: 'Kirurgi',
-      stops: [
-        {
-          name: 'Korppaanmäki',
-        },
-        {
-          name: 'Johanneksenkirkko',
-        },
-        {
-          name: 'Tarkk´ampujankatu',
-        },
-      ],
-      tripsForDate: [
-        {
-          stoptimes: [
-            {
-              scheduledArrival: 56100,
-              scheduledDeparture: 56100,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
-              },
-            },
-            {
-              scheduledArrival: 56220,
-              scheduledDeparture: 56220,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
-              },
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
-
-export const twoRoutePatterns = {
-  patterns: [
-    {
-      code: 'HSL:1010:1:02',
-      headsign: 'Kirurgi',
-      stops: [
-        {
-          name: 'Korppaanmäki',
-        },
-        {
-          name: 'Johanneksenkirkko',
-        },
-        {
-          name: 'Tarkk´ampujankatu',
-        },
-      ],
-      tripsForDate: [
-        {
-          stoptimes: [
-            {
-              scheduledArrival: 56100,
-              scheduledDeparture: 56100,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
-              },
-            },
-            {
-              scheduledArrival: 56220,
-              scheduledDeparture: 56220,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
-              },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      code: 'HSL:1010:0:01',
-      headsign: 'Pikku Huopalahti',
-      stops: [
-        {
-          name: 'Korppaanmäki',
-        },
-        {
-          name: 'Johanneksenkirkko',
-        },
-        {
-          name: 'Tarkk´ampujankatu',
-        },
-      ],
-      tripsForDate: [
-        {
-          stoptimes: [
-            {
-              scheduledArrival: 56100,
-              scheduledDeparture: 56100,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwNA==',
-              },
-            },
-            {
-              scheduledArrival: 56220,
-              scheduledDeparture: 56220,
-              serviceDay: 1551996000,
-              stop: {
-                id: 'U3RvcDpIU0w6MTI5MTQwMg==',
-              },
-            },
-          ],
-        },
-      ],
-    },
-  ],
 };

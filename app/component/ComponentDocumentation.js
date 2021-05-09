@@ -17,8 +17,7 @@ const getName = component =>
 const getDescription = (component, onlyComponent) => {
   if (isFunction(component.description)) {
     return component.description(onlyComponent);
-  }
-  if (component.description) {
+  } else if (component.description) {
     return component.description;
   }
   return <div>Component {getName(component)} has no description</div>;

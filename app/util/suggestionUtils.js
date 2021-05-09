@@ -76,11 +76,7 @@ export const getNameLabel = memoize(
               </span>,
               suggestion.longName,
             ]
-          : [
-              suggestion.shortName,
-              suggestion.longName,
-              suggestion.agency ? suggestion.agency.name : undefined,
-            ];
+          : [suggestion.shortName, suggestion.longName];
       case 'venue':
       case 'address':
         return [
@@ -107,7 +103,7 @@ export const getNameLabel = memoize(
                 {getStopCode(suggestion) && (
                   <StopCode code={getStopCode(suggestion)} />
                 )}
-                {getLocality(suggestion)}
+                {suggestion.desc}
               </span>,
             ];
       case 'station':

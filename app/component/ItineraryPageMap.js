@@ -29,13 +29,12 @@ function ItineraryPageMap(
     <LocationMarker
       key="fromMarker"
       position={from || otpToLocation(params.from)}
-      type="from"
+      className="from"
     />,
     <LocationMarker
-      isLarge
       key="toMarker"
       position={to || otpToLocation(params.to)}
-      type="to"
+      className="to"
     />,
   ];
 
@@ -48,6 +47,8 @@ function ItineraryPageMap(
             <LocationMarker
               key={`via_${i}`} // eslint-disable-line react/no-array-index-key
               position={markerLocation}
+              className="via"
+              noText
             />,
           );
         });
@@ -56,6 +57,8 @@ function ItineraryPageMap(
         <LocationMarker
           key="via"
           position={otpToLocation(location.query.intermediatePlaces)}
+          className="via"
+          noText
         />,
       );
     }

@@ -9,7 +9,6 @@ const emptyStopData = {
     lon: 24.93424,
     name: 'Pasilan asema',
     stoptimes: [],
-    zoneId: 'A',
   },
   terminal: null,
 };
@@ -86,14 +85,6 @@ const stoptimesData = [
         code: 'HSL:1009:0:02',
         id: 'UGF0dGVybjpIU0w6MTAwOTowOjAy',
       },
-      stops: [
-        {
-          id: 'U3RvcDpIU0w6MTIwMzQxNA==',
-        },
-        {
-          id: 'U3RvcDpIU0w6MTIyMDQzNA==',
-        },
-      ],
       id: 'VHJpcDpIU0w6MTAwOV8yMDE4MDQxNl9Ub18xXzE0MjQ=',
     },
   },
@@ -168,14 +159,6 @@ const stoptimesData = [
         code: 'HSL:1009:0:02',
         id: 'UGF0dGVybjpIU0w6MTAwOTowOjAy',
       },
-      stops: [
-        {
-          id: 'U3RvcDpIU0w6MTIwMzQxNA==',
-        },
-        {
-          id: 'U3RvcDpIU0w6MTIyMDQzNA==',
-        },
-      ],
       id: 'VHJpcDpIU0w6MTAwOV8yMDE4MDQxNl9Ub18xXzE0MzM=',
     },
   },
@@ -226,16 +209,28 @@ basic.stop.stoptimes.forEach(st => {
   st.realtime = false; // eslint-disable-line no-param-reassign
   st.realtimeState = 'SCHEDULED'; // eslint-disable-line no-param-reassign
 });
-basic.stop.stoptimes[1].realtime = true;
-basic.stop.stoptimes[1].realtimeState = 'UPDATED';
-basic.stop.stoptimes[1].stop.platformCode = undefined;
-basic.stop.stoptimes[1].trip.pattern.route.mode = 'BUS';
-basic.stop.stoptimes[1].trip.pattern.route.shortName = '543B';
-basic.stop.stoptimes[2].realtimeState = 'CANCELED';
-basic.stop.stoptimes[4].serviceDay = 1524171600;
+
+const realTime = {
+  ...cloneDeep(emptyStopData),
+};
+realTime.stop.stoptimes = cloneDeep(stoptimesData);
+
+const tomorrow = {
+  ...cloneDeep(basic),
+};
+
+const missingPlatform = {
+  ...cloneDeep(basic),
+};
+missingPlatform.stop.stoptimes[1].stop.platformCode = undefined;
+missingPlatform.stop.stoptimes[1].trip.pattern.route.mode = 'BUS';
+missingPlatform.stop.stoptimes[1].trip.pattern.route.shortName = '543B';
 
 export default {
   currentTime: 1524138999,
   empty: cloneDeep(emptyStopData),
   basic,
+  realTime,
+  tomorrow,
+  missingPlatform,
 };

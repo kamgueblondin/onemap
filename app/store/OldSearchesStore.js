@@ -41,9 +41,11 @@ class OldSearchesStore extends Store {
   saveSearch(destination) {
     const { items } = this.getStorageObject();
 
-    const key = getNameLabel(destination.item.properties, true);
     const found = find(items, oldItem =>
-      isEqual(key, getNameLabel(oldItem.item.properties, true)),
+      isEqual(
+        getNameLabel(destination.item.properties),
+        getNameLabel(oldItem.item.properties),
+      ),
     );
 
     const timestamp = moment().unix();

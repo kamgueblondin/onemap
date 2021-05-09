@@ -9,8 +9,6 @@ export default class PlanRoute extends Relay.Route {
         }
       }`,
   };
-
   static paramDefinitions = {};
-
   static routeName = 'PlanRoute';
 }

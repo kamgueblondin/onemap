@@ -21,7 +21,7 @@ import provideContext from 'fluxible-addons-react/provideContext';
 // Libraries
 import serialize from 'serialize-javascript';
 import { IntlProvider } from 'react-intl';
-import PolyfillLibrary from 'polyfill-library';
+import polyfillLibrary from 'polyfill-library';
 import fs from 'fs';
 import path from 'path';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
@@ -44,7 +44,6 @@ const appRoot = `${process.cwd()}/`;
 
 // cached assets
 const polyfillls = LRU(200);
-const polyfillLibrary = new PolyfillLibrary();
 
 // Disable relay query cache in order tonot leak memory, see facebook/relay#754
 RelayQueryCaching.disable();
@@ -250,11 +249,9 @@ export default function(req, res, next) {
         301,
         redirectLocation.pathname + redirectLocation.search,
       );
-    }
-    if (error) {
+    } else if (error) {
       return next(error);
-    }
-    if (!renderProps) {
+    } else if (!renderProps) {
       return res.status(404).send('Not found');
     }
 
@@ -283,19 +280,6 @@ export default function(req, res, next) {
 
     // Write preload hints before doing anything else
     if (process.env.NODE_ENV !== 'development') {
-      if (config.GTMid) {
-        // Google Tag Manager script
-        res.write(
-          `<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','${
-              config.GTMid
-            }');</script>\n`,
-        );
-      }
-
       const preloads = [
         { as: 'style', href: config.URL.FONT },
         {
@@ -304,7 +288,7 @@ export default function(req, res, next) {
           crossorigin: true,
         },
         ...mainAssets.map(asset => ({
-          as: asset.endsWith('.css') ? 'style' : 'script',
+          as: 'script',
           href: `${ASSET_URL}/${asset}`,
           crossorigin: true,
         })),
@@ -321,6 +305,7 @@ export default function(req, res, next) {
       const preconnects = [
         config.URL.API_URL,
         config.URL.MAP_URL,
+        'https://dev.hsl.fi/',
         config.staticMessagesUrl,
       ];
 
@@ -333,16 +318,10 @@ export default function(req, res, next) {
           assets[`${config.CONFIG}_theme.css`]
         }"/>\n`,
       );
-      mainAssets
-        .filter(asset => asset.endsWith('.css'))
-        .forEach(asset =>
-          res.write(
-            `<link rel="stylesheet" type="text/css" crossorigin href="${ASSET_URL}/${asset}"/>\n`,
-          ),
-        );
     }
 
     res.write(
+      // TODO: Add crossorigin here, when dev.hsl.fi supports it.
       `<link rel="stylesheet" type="text/css" href="${config.URL.FONT}"/>\n`,
     );
 
@@ -419,7 +398,7 @@ export default function(req, res, next) {
     res.write('\n</script>\n');
 
     if (process.env.NODE_ENV === 'development') {
-      res.write('<script async src="/proxy/js/main.js"></script>\n');
+      res.write('<script async src="/proxy/js/bundle.js"></script>\n');
     } else {
       res.write('<script>');
       res.write(
@@ -427,13 +406,11 @@ export default function(req, res, next) {
       );
       res.write('\n</script>\n');
       res.write(`<script>window.ASSET_URL="${ASSET_URL}/"</script>\n`);
-      mainAssets
-        .filter(asset => !asset.endsWith('.css'))
-        .forEach(asset =>
-          res.write(
-            `<script src="${ASSET_URL}/${asset}" crossorigin defer></script>\n`,
-          ),
-        );
+      mainAssets.forEach(asset =>
+        res.write(
+          `<script src="${ASSET_URL}/${asset}" crossorigin defer></script>\n`,
+        ),
+      );
     }
     res.write('</body>\n');
     res.write('</html>\n');

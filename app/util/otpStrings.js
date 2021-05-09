@@ -17,23 +17,14 @@ export const parseLatLon = coords => {
 };
 
 export const otpToLocation = otpString => {
-  const [address, coords, slack] = otpString.split('::');
-  const location = {
-    address,
-  };
-  if (slack) {
-    const parsedSlack = parseInt(slack, 10);
-    if (!Number.isNaN(parsedSlack)) {
-      location.locationSlack = parsedSlack;
-    }
-  }
+  const [address, coords] = otpString.split('::');
   if (coords) {
     return {
-      ...location,
       ...parseLatLon(coords),
+      address,
     };
   }
-  return location;
+  return { address };
 };
 
 export const addressToItinerarySearch = location => {

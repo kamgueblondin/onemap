@@ -9,7 +9,6 @@ import ComponentUsageExample from './ComponentUsageExample';
 import { displayDistance } from '../util/geo-utils';
 import { durationToString } from '../util/timeUtils';
 import ItineraryCircleLine from './ItineraryCircleLine';
-import { getLegBadgeProps } from '../util/legUtils';
 
 function BicycleLeg(props, context) {
   let stopsDescription;
@@ -68,11 +67,7 @@ function BicycleLeg(props, context) {
         <div className="itinerary-time-column-time">
           {moment(props.leg.startTime).format('HH:mm')}
         </div>
-        <RouteNumber
-          mode={mode}
-          vertical
-          {...getLegBadgeProps(props.leg, context.config)}
-        />
+        <RouteNumber mode={mode} vertical />
       </div>
       <ItineraryCircleLine index={props.index} modeClassName={modeClassName} />
       <div
@@ -169,9 +164,6 @@ BicycleLeg.propTypes = {
     distance: PropTypes.number.isRequired,
     from: PropTypes.shape({
       name: PropTypes.string.isRequired,
-      bikeRentalStation: PropTypes.shape({
-        bikesAvailable: PropTypes.number.isRequired,
-      }),
     }).isRequired,
     mode: PropTypes.string.isRequired,
     rentedBike: PropTypes.bool.isRequired,

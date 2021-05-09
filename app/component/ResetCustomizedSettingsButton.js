@@ -13,14 +13,16 @@ class ResetCustomizedSettingsButton extends React.Component {
 
   render() {
     return (
-      <button className="reset-settings" onClick={this.resetSettings}>
-        <div className="reset-settings-button">
-          <FormattedMessage
-            defaultMessage="Palauta oletusasetukset"
-            id="settings-reset"
-          />
-        </div>
-      </button>
+      <section className="offcanvas-section">
+        <button className="reset-settings" onClick={this.resetSettings}>
+          <div className="reset-settings-button">
+            <FormattedMessage
+              defaultMessage="Palauta oletusasetukset"
+              id="settings-reset"
+            />
+          </div>
+        </button>
+      </section>
     );
   }
 }

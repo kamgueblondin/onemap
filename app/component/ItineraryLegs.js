@@ -1,10 +1,7 @@
-/* eslint-disable react/no-array-index-key */
 import PropTypes from 'prop-types';
-import React from 'react';
-import compose from 'recompose/compose';
-import getContext from 'recompose/getContext';
-import mapProps from 'recompose/mapProps';
+/* eslint-disable react/no-array-index-key */
 
+import React from 'react';
 import WalkLeg from './WalkLeg';
 import WaitLeg from './WaitLeg';
 import BicycleLeg from './BicycleLeg';
@@ -21,39 +18,16 @@ import FerryLeg from './FerryLeg';
 import CarLeg from './CarLeg';
 import ViaLeg from './ViaLeg';
 import CallAgencyLeg from './CallAgencyLeg';
-import { itineraryHasCancelation } from '../util/alertUtils';
 import { compressLegs, isCallAgencyPickupType } from '../util/legUtils';
-import updateShowCanceledLegsBannerState from '../action/CanceledLegsBarActions';
-import ComponentUsageExample from './ComponentUsageExample';
-import { exampleData } from './data/ItineraryLegs.ExampleData';
 
 class ItineraryLegs extends React.Component {
   static childContextTypes = {
     focusFunction: PropTypes.func,
   };
 
-  static propTypes = {
-    focusMap: PropTypes.func,
-    itinerary: PropTypes.object,
-    toggleCanceledLegsBanner: PropTypes.func.isRequired,
-    waitThreshold: PropTypes.number.isRequired,
-  };
-
   getChildContext() {
     return { focusFunction: this.focus };
   }
-
-  componentDidMount = () => {
-    const { itinerary, toggleCanceledLegsBanner } = this.props;
-    if (itineraryHasCancelation(itinerary)) {
-      toggleCanceledLegsBanner(true);
-    }
-  };
-
-  componentWillUnmount = () => {
-    const { toggleCanceledLegsBanner } = this.props;
-    toggleCanceledLegsBanner(false);
-  };
 
   focus = position => e => {
     e.stopPropagation();
@@ -67,19 +41,15 @@ class ItineraryLegs extends React.Component {
     let nextLeg;
     const legs = [];
     const compressedLegs = compressLegs(this.props.itinerary.legs);
-    const numberOfLegs = compressedLegs.length;
-    if (numberOfLegs === 0) {
-      return null;
-    }
 
     compressedLegs.forEach((leg, j) => {
       if (j + 1 < compressedLegs.length) {
         nextLeg = compressedLegs[j + 1];
       }
+
       if (j > 0) {
         previousLeg = compressedLegs[j - 1];
       }
-      const startTime = (previousLeg && previousLeg.endTime) || leg.startTime;
 
       if (isCallAgencyPickupType(leg)) {
         legs.push(
@@ -94,9 +64,8 @@ class ItineraryLegs extends React.Component {
         legs.push(
           <ViaLeg
             key={`${j}via`}
-            index={j}
             leg={leg}
-            arrivalTime={startTime}
+            arrivalTime={compressedLegs[j - 1].endTime}
             focusAction={this.focus(leg.from)}
           />,
         );
@@ -146,6 +115,8 @@ class ItineraryLegs extends React.Component {
           />,
         );
       } else if (leg.mode === 'AIRPLANE') {
+        const startTime = (previousLeg && previousLeg.endTime) || leg.startTime;
+
         legs.push(
           <AirportCheckInLeg
             key={`${j}ci`}
@@ -201,7 +172,6 @@ class ItineraryLegs extends React.Component {
             key={j}
             index={j}
             leg={leg}
-            previousLeg={previousLeg}
             focusAction={this.focus(leg.from)}
           >
             {this.stopCode(leg.from.stop)}
@@ -210,7 +180,8 @@ class ItineraryLegs extends React.Component {
       }
 
       if (nextLeg) {
-        const waitThreshold = this.props.waitThreshold * 1000;
+        const waitThreshold =
+          this.context.config.itinerary.waitThreshold * 1000;
         const waitTime = nextLeg.startTime - leg.endTime;
 
         if (
@@ -221,7 +192,6 @@ class ItineraryLegs extends React.Component {
         ) {
           legs.push(
             <WaitLeg
-              index={j}
               key={`${j}w`}
               leg={leg}
               startTime={leg.endTime}
@@ -235,6 +205,7 @@ class ItineraryLegs extends React.Component {
       }
     });
 
+    const numberOfLegs = compressedLegs.length;
     legs.push(
       <EndLeg
         key={numberOfLegs}
@@ -245,40 +216,17 @@ class ItineraryLegs extends React.Component {
       />,
     );
 
-    return <React.Fragment>{legs}</React.Fragment>;
+    return <div>{legs}</div>;
   }
 }
 
-const enhancedComponent = compose(
-  getContext({
-    config: PropTypes.shape({
-      itinerary: PropTypes.shape({
-        waitThreshold: PropTypes.number,
-      }),
-    }),
-    executeAction: PropTypes.func,
-  }),
-  mapProps(({ config, executeAction, ...rest }) => ({
-    toggleCanceledLegsBanner: state => {
-      executeAction(updateShowCanceledLegsBannerState, state);
-    },
-    waitThreshold: config.itinerary.waitThreshold,
-    ...rest,
-  })),
-)(ItineraryLegs);
+ItineraryLegs.propTypes = {
+  itinerary: PropTypes.object,
+  focusMap: PropTypes.func,
+};
 
-ItineraryLegs.description = () => (
-  <div>
-    <p>Legs shown for the itinerary</p>
-    <ComponentUsageExample description="Shows the legs of the itinerary">
-      <ItineraryLegs
-        focusMap={() => {}}
-        itinerary={exampleData}
-        toggleCanceledLegsBanner={() => {}}
-        waitThreshold={180}
-      />
-    </ComponentUsageExample>
-  </div>
-);
+ItineraryLegs.contextTypes = {
+  config: PropTypes.object.isRequired,
+};
 
-export { enhancedComponent as default, ItineraryLegs as Component };
+export default ItineraryLegs;

@@ -23,8 +23,7 @@ const getLegText = (leg, config) => {
   const showAgency = get(config, 'agency.show', false);
   if (leg.transitLeg && leg.route.shortName) {
     return leg.route.shortName;
-  }
-  if (showAgency && leg.route.agency) {
+  } else if (showAgency && leg.route.agency) {
     return leg.route.agency.name;
   }
   return '';
@@ -32,15 +31,7 @@ const getLegText = (leg, config) => {
 
 class ItineraryLine extends React.Component {
   static contextTypes = {
-    config: PropTypes.object.isRequired,
-  };
-
-  static propTypes = {
-    legs: PropTypes.array,
-    passive: PropTypes.bool,
-    hash: PropTypes.number,
-    showTransferLabels: PropTypes.bool,
-    showIntermediateStops: PropTypes.bool,
+    getStore: PropTypes.func.isRequired,
   };
 
   render() {
@@ -99,9 +90,8 @@ class ItineraryLine extends React.Component {
           objs.push(
             <CityBikeMarker
               key={leg.from.bikeRentalStation.stationId}
-              showBikeAvailability={leg.rentedBike}
-              station={leg.from.bikeRentalStation}
               transit
+              station={leg.from.bikeRentalStation}
             />,
           );
         } else if (leg.transitLeg) {
@@ -183,6 +173,18 @@ class ItineraryLine extends React.Component {
     return <div style={{ display: 'none' }}>{objs}</div>;
   }
 }
+
+ItineraryLine.propTypes = {
+  legs: PropTypes.array,
+  passive: PropTypes.bool,
+  hash: PropTypes.number,
+  showTransferLabels: PropTypes.bool,
+  showIntermediateStops: PropTypes.bool,
+};
+
+ItineraryLine.contextTypes = {
+  config: PropTypes.object.isRequired,
+};
 
 export default Relay.createContainer(ItineraryLine, {
   fragments: {

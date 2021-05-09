@@ -20,11 +20,6 @@ const asDepartures = stoptimes =>
     ? []
     : stoptimes.map(stoptime => {
         const isArrival = stoptime.pickupType === 'NONE';
-        let isLastStop = false;
-        if (stoptime.trip && stoptime.trip.stops) {
-          const lastStop = stoptime.trip.stops.slice(-1).pop();
-          isLastStop = stoptime.stop.id === lastStop.id;
-        }
         /* OTP returns either scheduled time or realtime prediction in
            * 'realtimeDeparture' and 'realtimeArrival' fields.
            * EXCEPT when state is CANCELLED, then it returns -1 for realtime  */
@@ -42,7 +37,6 @@ const asDepartures = stoptimes =>
         return {
           canceled,
           isArrival,
-          isLastStop,
           stoptime: stoptimeTime,
           stop: stoptime.stop,
           realtime: stoptime.realtime,
@@ -118,7 +112,11 @@ class DepartureListContainer extends Component {
       const id = `${departure.pattern.code}:${departure.stoptime}`;
 
       const classes = {
-        disruption: hasActiveDisruption(departure.stoptime, departure.alerts),
+        disruption: hasActiveDisruption(
+          departure.stoptime,
+          departure.pattern.route.alerts,
+        ),
+        canceled: departure.canceled,
       };
 
       const departureObj = (
@@ -131,7 +129,6 @@ class DepartureListContainer extends Component {
           className={cx(classes, this.props.rowClasses)}
           canceled={departure.canceled}
           isArrival={departure.isArrival}
-          isLastStop={departure.isLastStop}
           showPlatformCode={this.props.showPlatformCodes}
         />
       );
@@ -177,20 +174,11 @@ export default Relay.createContainer(DepartureListContainer, {
           pickupType
           stopHeadsign
           stop {
-            id
             code
             platformCode
           }
           trip {
-            alerts {
-              effectiveStartDate
-              effectiveEndDate
-            }
             gtfsId
-            tripHeadsign
-            stops {
-              id
-            }
             pattern {
               route {
                 gtfsId
@@ -198,6 +186,11 @@ export default Relay.createContainer(DepartureListContainer, {
                 longName
                 mode
                 color
+                alerts {
+                  id
+                  effectiveStartDate
+                  effectiveEndDate
+                }
                 agency {
                   name
                 }

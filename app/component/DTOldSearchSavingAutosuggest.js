@@ -14,24 +14,22 @@ class DTOldSearchSavingAutosuggest extends React.Component {
   };
 
   static propTypes = {
+    onSelect: PropTypes.func.isRequired,
+    searchType: PropTypes.string.isRequired,
     autoFocus: PropTypes.bool,
+    placeholder: PropTypes.string,
+    value: PropTypes.string,
     className: PropTypes.string,
-    icon: PropTypes.string,
     id: PropTypes.string.isRequired,
     isFocused: PropTypes.func,
-    layers: PropTypes.array.isRequired,
-    onSelect: PropTypes.func.isRequired,
-    placeholder: PropTypes.string,
     refPoint: dtLocationShape.isRequired,
-    searchType: PropTypes.string.isRequired,
-    value: PropTypes.string,
+    layers: PropTypes.array.isRequired,
   };
 
   static defaultProps = {
     autoFocus: false,
-    icon: undefined,
-    className: '',
     placeholder: '',
+    className: '',
   };
 
   onSelect = item => {
@@ -49,41 +47,26 @@ class DTOldSearchSavingAutosuggest extends React.Component {
       default:
     }
 
-    if (item.type.indexOf('Favourite') === -1) {
+    if (item.type !== 'FavouriteStop') {
       this.context.executeAction(saveSearch, { item, type });
     }
     this.props.onSelect(item, type);
   };
 
-  render = () => {
-    const {
-      autoFocus,
-      className,
-      icon,
-      id,
-      isFocused,
-      layers,
-      placeholder,
-      refPoint,
-      searchType,
-      value,
-    } = this.props;
-    return (
-      <DTSearchAutosuggest
-        autoFocus={autoFocus}
-        className={className}
-        icon={icon}
-        id={id}
-        isFocused={isFocused}
-        layers={layers}
-        placeholder={placeholder}
-        refPoint={refPoint}
-        searchType={searchType}
-        selectedFunction={suggestion => this.onSelect(suggestion)}
-        value={value}
-      />
-    );
-  };
+  render = () => (
+    <DTSearchAutosuggest
+      autoFocus={this.props.autoFocus}
+      placeholder={this.props.placeholder}
+      isFocused={this.props.isFocused}
+      searchType={this.props.searchType}
+      value={this.props.value}
+      selectedFunction={suggestion => this.onSelect(suggestion)}
+      id={this.props.id}
+      className={this.props.className}
+      refPoint={this.props.refPoint}
+      layers={this.props.layers}
+    />
+  );
 }
 
 export default DTOldSearchSavingAutosuggest;

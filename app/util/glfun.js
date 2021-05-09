@@ -23,8 +23,7 @@ function findStopLessThanOrEqualTo(stops, input) {
     ) {
       // Search complete
       return currentIndex;
-    }
-    if (currentValue < input) {
+    } else if (currentValue < input) {
       lowerIndex = currentIndex + 1;
     } else if (currentValue > input) {
       upperIndex = currentIndex - 1;
@@ -40,8 +39,7 @@ function interpolationFactor(input, base, lowerValue, upperValue) {
 
   if (difference === 0) {
     return 0;
-  }
-  if (base === 1) {
+  } else if (base === 1) {
     return progress / difference;
   }
   return (base ** progress - 1) / (base ** difference - 1);

@@ -6,48 +6,39 @@ class RealTimeInformationStore extends Store {
   constructor(dispatcher) {
     super(dispatcher);
     this.vehicles = {};
+    this.subscriptions = [];
   }
 
   storeClient(data) {
     this.client = data.client;
-    this.topics = data.topics;
+    this.subscriptions = data.topics;
   }
 
   clearClient() {
     this.client = undefined;
-    this.topics = undefined;
     this.vehicles = {};
+    this.subscriptions = [];
   }
 
-  resetClient() {
-    this.topics = undefined;
+  updateSubscriptions(topics) {
+    this.subscriptions = topics;
     this.vehicles = {};
-    this.emitChange();
   }
 
   handleMessage(message) {
-    if (Array.isArray(message)) {
-      message.forEach(msg => {
-        this.vehicles[msg.id] = msg;
-      });
-    } else {
-      this.vehicles[message.id] = message;
-    }
-    this.emitChange();
-  }
-
-  setTopics(topics) {
-    this.topics = topics;
+    this.vehicles[message.id] = message.message;
+    this.emitChange(message.id);
   }
 
   getVehicle = id => this.vehicles[id];
+
+  getSubscriptions = () => this.subscriptions;
 
   static handlers = {
     RealTimeClientStarted: 'storeClient',
     RealTimeClientStopped: 'clearClient',
     RealTimeClientMessage: 'handleMessage',
-    RealTimeClientReset: 'resetClient',
-    RealTimeClientNewTopics: 'setTopics',
+    RealTimeClientTopicChanged: 'updateSubscriptions',
   };
 }
 

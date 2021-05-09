@@ -99,11 +99,10 @@ $itinerary-tab-switch-height: 48px;
 }
 
 .itinerary-main {
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
   padding-top: 15px;
-  transform: scale(1); // start a new z-index context here
 
   div {
     flex-grow: 1;
@@ -113,68 +112,6 @@ $itinerary-tab-switch-height: 48px;
   div.itinerary-ticket-information {
     flex-grow: 0;
     flex-shrink: 0;
-  }
-
-  .itinerary-leg-container {
-    .zone-dual {
-      min-height: 4em;
-    }
-    .zone-triple {
-      min-height: 6em;
-    }
-    .zone-previous {
-      .leg-before-circle {
-        bottom: 0;
-      }
-
-      .leg-before-line {
-        height: 120%;
-        top: 0;
-      }
-
-      .itinerary-instruction-column {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-
-        > div {
-          flex-grow: 0;
-        }
-      }
-    }
-    .zone-triple.zone-previous {
-      .leg-before-circle {
-        margin-bottom: 2em;
-      }
-
-      .itinerary-instruction-column {
-        justify-content: center;
-      }
-    }
-  }
-
-  .zone-icons-container {
-    left: calc(-100% / 12);
-    padding-top: $padding-xxsmall;
-    position: absolute;
-
-    .zone-icon-container {
-      position: relative;
-
-      &.zone-delimiter::before {
-        border-top: 1px solid $light-gray;
-        content: '';
-        display: block;
-        left: -0.5em;
-        position: absolute;
-        top: -0.5em;
-        width: 2em;
-      }
-
-      & + .zone-icon-container {
-        margin-top: 0.85em;
-      }
-    }
   }
 }
 
@@ -249,8 +186,7 @@ $itinerary-tab-switch-height: 48px;
 }
 
 .duration--itinerary-summary,
-.timeframe--itinerary-summary,
-.biking-distance--itinerary-summary {
+.timeframe--itinerary-summary {
   padding-right: 10px;
 }
 
@@ -327,23 +263,6 @@ $itinerary-tab-switch-height: 48px;
       &.multi-component {
         display: list-item;
         margin-left: 1.5em;
-
-        & + .multi-component {
-          margin-top: $padding-xsmall;
-        }
-      }
-
-      .zone-ticket-multiple-options {
-        display: flex;
-
-        span + span {
-          margin-left: $padding-xsmall;
-        }
-      }
-
-      .zone-ticket-icon {
-        display: block;
-        font-size: 1.25em;
       }
     }
 
@@ -403,7 +322,7 @@ $itinerary-tab-switch-height: 48px;
       &.citybike {
         @include setModeCircles($citybike-color);
       }
-      &.walk {
+      & {
         @include setModeCircles($walk-color);
       }
       &.wait {
@@ -488,9 +407,6 @@ $itinerary-tab-switch-height: 48px;
       }
       font-size: 14pt;
     }
-    .icon-badge {
-      font-size: 12pt;
-    }
     .leg-call {
       .icon {
         font-size: 1.8em;
@@ -512,7 +428,6 @@ $itinerary-tab-switch-height: 48px;
       width: inherit;
     }
   }
-
   .special-icon {
     &.call,
     &.disruption {
@@ -521,11 +436,6 @@ $itinerary-tab-switch-height: 48px;
       margin-left: 1em;
       position: absolute;
       margin-top: -1em;
-    }
-
-    .icon-badge {
-      left: -0.5em;
-      top: -0.75em;
     }
   }
 
@@ -652,7 +562,9 @@ $itinerary-tab-switch-height: 48px;
   .itinerary-time-column {
     @include font-narrow-medium;
     font-size: 10pt;
+  }
 
+  .itinerary-time-column {
     .itinerary-time-column-time {
       font-size: 21px;
     }
@@ -660,12 +572,6 @@ $itinerary-tab-switch-height: 48px;
     .icon {
       font-size: 24px;
     }
-
-    .icon-badge {
-      font-size: 16px;
-      top: -1.25em;
-    }
-
     .vehicle-number {
       font-size: $font-size-normal;
     }
@@ -974,6 +880,7 @@ div.itinerary-container-content {
 }
 
 .vehicle-number-container-v {
+  margin-top: 4px;
   .vehicle-number {
     mask-image: none;
     max-width: none;
@@ -1064,21 +971,17 @@ $font-print-decrease: 0.7;
     }
   }
 
-  .fare-details {
+  .faretype-span {
     background-color: $black;
     color: #fff;
-    display: inline-block;
     border-radius: 10px;
     text-transform: uppercase;
     text-align: center;
+    display: initial;
     padding: 0.1em;
     padding-right: 0.5em;
     padding-left: 0.5em;
-    margin-left: 0.5em;
     -webkit-print-color-adjust: exact;
-    &:first-child {
-      margin-left: 0;
-    }
     span {
       font-size: $font-size-small;
     }
@@ -1304,6 +1207,9 @@ $font-print-decrease: 0.7;
     &.disruption {
       max-width: auto;
     }
+  }
+  .vehicle-number-container-v {
+    margin-top: 0;
   }
   .print-itinerary {
     right: 1em;

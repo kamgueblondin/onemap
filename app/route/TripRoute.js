@@ -6,10 +6,8 @@ export default class TripRoute extends Route {
         trip(id: $id)
     }`,
   };
-
   static paramDefinitions = {
     id: { required: true },
   };
-
   static routeName = 'TripRoute';
 }

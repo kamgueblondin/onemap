@@ -11,28 +11,13 @@ const subIconTemplate = {
   bottom: '-1px',
   left: '-6px',
 };
-
 const IconWithIcon = (
-  {
-    id,
-    className,
-    img,
-    subIcon,
-    subIconClassName,
-    color,
-    badgeFill,
-    badgeText,
-  },
+  { id, className, img, subIcon, subIconClassName, color },
   { intl },
 ) => (
   <span style={{ position: 'relative' }} id={id} className={className}>
     <span>
-      <Icon
-        badgeFill={badgeFill}
-        badgeText={badgeText}
-        color={color}
-        img={img}
-      />
+      <Icon color={color} img={img} />
     </span>
     {subIcon && (
       <span
@@ -88,8 +73,6 @@ IconWithIcon.propTypes = {
   subIcon: PropTypes.string,
   subIconClassName: PropTypes.string,
   color: PropTypes.string,
-  badgeFill: PropTypes.string,
-  badgeText: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 IconWithIcon.contextTypes = {
@@ -102,8 +85,6 @@ IconWithIcon.defaultProps = {
   subIcon: '',
   className: '',
   subIconClassName: '',
-  badgeFill: undefined,
-  badgeText: undefined,
 };
 
 export default IconWithIcon;

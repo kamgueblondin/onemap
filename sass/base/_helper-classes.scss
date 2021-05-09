@@ -138,9 +138,6 @@
   margin: 0 !important;
 }
 /* Appearance */
-.cursor-grab {
-  cursor: grab !important;
-}
 .cursor-pointer {
   cursor: pointer;
 }
@@ -192,7 +189,7 @@ body .large {
   border: 1px dashed $light-gray;
 }
 .collapsed {
-  display: none !important;
+  display: none;
 }
 .hidden {
   visibility: hidden;
@@ -222,18 +219,15 @@ body .large {
 }
 
 .page-not-found {
-  align-items: center;
   display: flex;
-  flex: 1 0 auto;
+  align-items: center;
   flex-direction: column;
   justify-content: center;
+  height: 100%;
 
-  .icon-container {
-    margin-top: 1.25rem;
-    svg {
-      height: 130px;
-      width: 150px;
-    }
+  svg {
+    height: 130px;
+    width: 150px;
   }
 
   p {
@@ -243,9 +237,6 @@ body .large {
       color: $primary-color;
       border-bottom: 1px dotted;
       text-decoration: none;
-    }
-    button {
-      margin: 0;
     }
   }
 }

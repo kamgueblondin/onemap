@@ -1,16 +1,13 @@
-import PropTypes from 'prop-types';
-import Helmet from 'react-helmet';
-import { intlShape } from 'react-intl';
 import Relay from 'react-relay/classic';
-import compose from 'recompose/compose';
-import getContext from 'recompose/getContext';
+import Helmet from 'react-helmet';
 import mapProps from 'recompose/mapProps';
-
-import { generateMetaData } from '../util/metaUtils';
+import getContext from 'recompose/getContext';
+import compose from 'recompose/compose';
+import { intlShape } from 'react-intl';
 
 const RoutePageMeta = compose(
-  getContext({ config: PropTypes.object, intl: intlShape }),
-  mapProps(({ config, intl, route }) => {
+  getContext({ intl: intlShape }),
+  mapProps(({ intl, route }) => {
     if (!route) {
       return false;
     }
@@ -29,13 +26,31 @@ const RoutePageMeta = compose(
       },
       route,
     );
-    return generateMetaData(
-      {
-        description,
-        title,
-      },
-      config,
-    );
+    return {
+      title,
+      meta: [
+        {
+          name: 'description',
+          content: description,
+        },
+        {
+          property: 'og:title',
+          content: title,
+        },
+        {
+          property: 'og:description',
+          content: description,
+        },
+        {
+          property: 'twitter:title',
+          content: title,
+        },
+        {
+          property: 'twitter:description',
+          content: description,
+        },
+      ],
+    };
   }),
 )(Helmet);
 

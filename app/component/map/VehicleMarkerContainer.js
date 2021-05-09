@@ -39,18 +39,17 @@ function getVehicleIcon(mode, heading, useSmallIcon = false) {
 
 if (isBrowser) {
   /* eslint-disable global-require */
-  Popup = require('react-leaflet/es/Popup').default;
+  Popup = require('./Popup').default;
   /* eslint-enable global-require */
 }
 
 // if tripStartTime has been specified,
 // use only the updates for vehicles with matching startTime
-function shouldShowVehicle(message, direction, tripStart, pattern, headsign) {
+function shouldShowVehicle(message, direction, tripStart, pattern) {
   return (
-    !Number.isNaN(parseFloat(message.lat)) &&
-    !Number.isNaN(parseFloat(message.long)) &&
+    message.lat &&
+    message.long &&
     pattern.substr(0, message.route.length) === message.route &&
-    (message.headsign === undefined || headsign === message.headsign) &&
     (direction === undefined || message.direction === direction) &&
     (tripStart === undefined || message.tripStartTime === tripStart)
   );
@@ -64,7 +63,6 @@ function VehicleMarkerContainer(props) {
         props.direction,
         props.tripStart,
         props.pattern,
-        props.headsign,
       ),
     )
     .map(([id, message]) => (
@@ -110,7 +108,6 @@ function VehicleMarkerContainer(props) {
 
 VehicleMarkerContainer.propTypes = {
   tripStart: PropTypes.string,
-  headsign: PropTypes.string,
   direction: PropTypes.number,
   vehicles: PropTypes.objectOf(
     PropTypes.shape({
@@ -129,7 +126,7 @@ VehicleMarkerContainer.defaultProps = {
   direction: undefined,
 };
 
-const connectedComponent = connectToStores(
+export default connectToStores(
   VehicleMarkerContainer,
   ['RealTimeInformationStore'],
   (context, props) => ({
@@ -137,9 +134,3 @@ const connectedComponent = connectToStores(
     vehicles: context.getStore('RealTimeInformationStore').vehicles,
   }),
 );
-
-export {
-  connectedComponent as default,
-  VehicleMarkerContainer as Component,
-  shouldShowVehicle,
-};

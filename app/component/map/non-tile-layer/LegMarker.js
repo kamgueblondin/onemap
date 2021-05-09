@@ -1,8 +1,5 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-
-import { withLeaflet } from 'react-leaflet/es/context';
-
 import { isBrowser } from '../../../util/browser';
 
 /* eslint-disable global-require */
@@ -22,25 +19,21 @@ function fixName(name) {
 
   if (name.length === 1) {
     return `\u00A0${name}\u00A0`;
-  }
-  if (name.length === 2) {
+  } else if (name.length === 2) {
     return `\u202F${name}\u202F`;
   }
   return name;
 }
 
-class LegMarker extends React.Component {
+export default class LegMarker extends React.Component {
+  static contextTypes = {
+    map: PropTypes.object.isRequired,
+  };
+
   static propTypes = {
     leg: PropTypes.object.isRequired,
     mode: PropTypes.string.isRequired,
     color: PropTypes.string,
-    leaflet: PropTypes.shape({
-      map: PropTypes.shape({
-        latLngToLayerPoint: PropTypes.func.isRequired,
-        on: PropTypes.func.isRequired,
-        off: PropTypes.func.isRequired,
-      }).isRequired,
-    }).isRequired,
   };
 
   static defaultProps = {
@@ -48,11 +41,11 @@ class LegMarker extends React.Component {
   };
 
   componentDidMount() {
-    this.props.leaflet.map.on('zoomend', this.onMapZoom);
+    this.context.map.on('zoomend', this.onMapZoom);
   }
 
   componentWillUnmount = () => {
-    this.props.leaflet.map.off('zoomend', this.onMapZoom);
+    this.context.map.off('zoomend', this.onMapZoom);
   };
 
   onMapZoom = () => {
@@ -85,13 +78,11 @@ class LegMarker extends React.Component {
       return '';
     }
 
-    const p1 = this.props.leaflet.map.latLngToLayerPoint(this.props.leg.from);
-    const p2 = this.props.leaflet.map.latLngToLayerPoint(this.props.leg.to);
+    const p1 = this.context.map.latLngToLayerPoint(this.props.leg.from);
+    const p2 = this.context.map.latLngToLayerPoint(this.props.leg.to);
     const distance = p1.distanceTo(p2);
     const minDistanceToShow = 64;
 
     return <div>{distance >= minDistanceToShow && this.getLegMarker()}</div>;
   }
 }
-
-export default withLeaflet(LegMarker);

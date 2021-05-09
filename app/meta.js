@@ -100,6 +100,10 @@ export default function getMetadata(lang, host, url, config) {
     ],
     link: [
       {
+        rel: 'manifest',
+        href: `${iconPath}manifest.json`,
+      },
+      {
         rel: 'yandex-tableaou-widget',
         href: `${iconPath}yandex-browser-manifest.json`,
       },

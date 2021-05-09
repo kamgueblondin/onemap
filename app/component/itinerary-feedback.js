@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import cx from 'classnames';
 import { intlShape, FormattedMessage } from 'react-intl';
@@ -6,7 +7,10 @@ import Icon from './Icon';
 
 export default class ItineraryFeedback extends React.Component {
   static contextTypes = {
+    getStore: PropTypes.func.isRequired,
+    executeAction: PropTypes.func.isRequired,
     intl: intlShape.isRequired,
+    piwik: PropTypes.object,
   };
 
   state = {
@@ -15,8 +19,18 @@ export default class ItineraryFeedback extends React.Component {
   };
 
   sendFeedback = () => {
-    // Handle saving of feedback. Text is available in
-    // this.state.feedbackText,
+    this.context.piwik.setCustomVariable(
+      3,
+      'feedback',
+      this.state.feedbackText,
+      'page',
+    );
+    this.context.piwik.trackEvent(
+      'Feedback',
+      'Itinerary',
+      'Feedback',
+      'submitted',
+    );
     this.setState({ feedbackText: '', feedbackFormOpen: false });
   };
 
@@ -25,9 +39,7 @@ export default class ItineraryFeedback extends React.Component {
   };
 
   toggleFeedbackForm = () => {
-    this.setState(prevState => ({
-      feedbackFormOpen: !prevState.feedbackFormOpen,
-    }));
+    this.setState({ feedbackFormOpen: !this.state.feedbackFormOpen });
   };
 
   render() {

@@ -11,10 +11,28 @@ const modalities = [
 
 function openQuickSettings() {
   this.waitForElementVisible(
-    '@openAdvancedSettings',
+    '@openQuickSettings',
+    this.api.globals.elementVisibleTimeout,
+  );
+  this.api.checkedClick(this.elements.openQuickSettings.selector);
+
+  this.waitForElementVisible(
+    '@closeQuickSettings',
     this.api.globals.elementVisibleTimeout,
   );
   return this;
+}
+
+function closeQuickSettings() {
+  this.waitForElementVisible(
+    '@closeQuickSettings',
+    this.api.globals.elementVisibleTimeout,
+  );
+  this.api.checkedClick(this.elements.closeQuickSettings.selector);
+  this.waitForElementVisible(
+    '@openQuickSettings',
+    this.api.globals.elementVisibleTimeout,
+  );
 }
 
 function exists(selector, callback) {
@@ -71,7 +89,7 @@ function disableAllModalitiesExcept(except) {
     this.api.debug(`iterating ${modality}`);
     if (modality !== except) {
       disableModality.call(this, modality);
-      this.api.pause(5 * this.api.globals.pause_ms);
+      this.api.pause(2 * this.api.globals.pause_ms);
     }
   });
   this.api.debug('all iterated');
@@ -81,6 +99,7 @@ module.exports = {
   commands: [
     {
       openQuickSettings,
+      closeQuickSettings,
       enableModality,
       disableModality,
       disableAllModalitiesExcept,
@@ -88,6 +107,7 @@ module.exports = {
     },
   ],
   elements: {
-    openAdvancedSettings: '.open-advanced-settings',
+    openQuickSettings: 'button.settings',
+    closeQuickSettings: 'button.close',
   },
 };

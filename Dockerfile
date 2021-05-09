@@ -1,4 +1,4 @@
-FROM node:10
+FROM node:8
 MAINTAINER Reittiopas version: 0.1
 
 EXPOSE 8080
@@ -15,6 +15,7 @@ ENV \
   API_URL='' \
   MAP_URL='' \
   OTP_URL='' \
+  ALERTS_URL='' \
   VEHICLE_URL='' \
   GEOCODING_BASE_URL='' \
   APP_PATH='' \

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'kuopio';
@@ -10,7 +9,7 @@ const walttiConfig = require('./waltti').default;
 export default configMerger(walttiConfig, {
   CONFIG,
 
-  appBarLink: { name: 'Kuopio', href: 'https://vilkku.kuopio.fi/' },
+  appBarLink: { name: 'Kuopio', href: 'http://joukkoliikenne.kuopio.fi/' },
 
   colors: {
     primary: '#0ab1c8',
@@ -99,7 +98,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Kuopion seudun joukkoliikenne reittisuunnittelua varten Kuopion ja Siilinjärven alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit-palvelualustaan.',
+          'Tämän palvelun tarjoaa Kuopion seudun joukkoliikenne reittisuunnittelua varten Kuopion ja Siilinjärven alueella. Palvelu kattaa joukkoliikenteen, kävelyn, pyöräilyn ja yksityisautoilun rajatuilta osin. Palvelu perustuu Digitransit palvelualustaan.',
         ],
       },
       {

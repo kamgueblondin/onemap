@@ -8,10 +8,6 @@ import ComponentUsageExample from '../ComponentUsageExample';
 import MapContainer from './MapContainer';
 import ToggleMapTracking from '../ToggleMapTracking';
 import { dtLocationShape } from '../../util/shapes';
-import { isBrowser } from '../../util/browser';
-import MapLayerStore, { mapLayerShape } from '../../store/MapLayerStore';
-import PositionStore from '../../store/PositionStore';
-import GeoJsonStore from '../../store/GeoJsonStore';
 
 const DEFAULT_ZOOM = 12;
 const FOCUS_ZOOM = 16;
@@ -27,21 +23,15 @@ const onlyUpdateCoordChanges = onlyUpdateForKeys([
   'children',
 ]);
 
-const locationMarkerModules = {
-  LocationMarker: () =>
-    importLazy(import(/* webpackChunkName: "map" */ './LocationMarker')),
-};
-
-const jsonModules = {
-  GeoJSON: () => importLazy(import(/* webpackChunkName: "map" */ './GeoJSON')),
+const placeMarkerModules = {
+  PlaceMarker: () =>
+    importLazy(import(/* webpackChunkName: "map" */ './PlaceMarker')),
 };
 
 const Component = onlyUpdateCoordChanges(MapContainer);
 
 class MapWithTrackingStateHandler extends React.Component {
   static propTypes = {
-    getGeoJsonConfig: PropTypes.func.isRequired,
-    getGeoJsonData: PropTypes.func.isRequired,
     origin: dtLocationShape.isRequired,
     position: PropTypes.shape({
       hasLocation: PropTypes.bool.isRequired,
@@ -54,12 +44,6 @@ class MapWithTrackingStateHandler extends React.Component {
       defaultEndpoint: dtLocationShape.isRequired,
     }).isRequired,
     children: PropTypes.array,
-    renderCustomButtons: PropTypes.func,
-    mapLayers: mapLayerShape.isRequired,
-  };
-
-  static defaultProps = {
-    renderCustomButtons: undefined,
   };
 
   constructor(props) {
@@ -67,46 +51,12 @@ class MapWithTrackingStateHandler extends React.Component {
     const hasOriginorPosition =
       props.origin.ready || props.position.hasLocation;
     this.state = {
-      geoJson: {},
       initialZoom: hasOriginorPosition ? FOCUS_ZOOM : DEFAULT_ZOOM,
       mapTracking: props.origin.gps && props.position.hasLocation,
       focusOnOrigin: props.origin.ready,
       origin: props.origin,
       shouldShowDefaultLocation: !hasOriginorPosition,
     };
-  }
-
-  async componentDidMount() {
-    const { config, getGeoJsonData, getGeoJsonConfig } = this.props;
-    if (
-      !isBrowser ||
-      !config.geoJson ||
-      (!Array.isArray(config.geoJson.layers) && !config.geoJson.layerConfigUrl)
-    ) {
-      return;
-    }
-
-    const layers = config.geoJson.layerConfigUrl
-      ? await getGeoJsonConfig(config.geoJson.layerConfigUrl)
-      : config.geoJson.layers;
-    if (!Array.isArray(layers) || layers.length === 0) {
-      return;
-    }
-
-    const json = await Promise.all(
-      layers.map(async ({ url, name, metadata }) => ({
-        url,
-        data: await getGeoJsonData(url, name, metadata),
-      })),
-    );
-    if (this.isCancelled) {
-      return;
-    }
-    const { geoJson } = this.state;
-    json.forEach(({ url, data }) => {
-      geoJson[url] = data;
-    });
-    this.setState(geoJson);
   }
 
   componentWillReceiveProps(newProps) {
@@ -131,29 +81,27 @@ class MapWithTrackingStateHandler extends React.Component {
     }
   }
 
-  componentWillUnmount() {
-    this.isCancelled = true;
+  usePosition(origin) {
+    this.setState({
+      origin,
+      mapTracking: true,
+      focusOnOrigin: false,
+      initialZoom:
+        this.state.initialZoom === DEFAULT_ZOOM ? FOCUS_ZOOM : undefined,
+      shouldShowDefaultLocation: false,
+    });
   }
 
-  updateCurrentBounds = () => {
-    if (!this.mapElement || !this.mapElement.leafletElement) {
-      return;
-    }
-    const newBounds = this.mapElement.leafletElement.getBounds();
-    const { bounds } = this.state;
-    if (bounds && bounds.equals(newBounds)) {
-      return;
-    }
+  useOrigin(origin) {
     this.setState({
-      bounds: newBounds,
+      origin,
+      mapTracking: false,
+      focusOnOrigin: true,
+      initialZoom:
+        this.state.initialZoom === DEFAULT_ZOOM ? FOCUS_ZOOM : undefined,
+      shouldShowDefaultLocation: false,
     });
-  };
-
-  setMapElementRef = element => {
-    if (element && this.mapElement !== element) {
-      this.mapElement = element;
-    }
-  };
+  }
 
   enableMapTracking = () => {
     this.setState({
@@ -169,41 +117,10 @@ class MapWithTrackingStateHandler extends React.Component {
     });
   };
 
-  usePosition(origin) {
-    this.setState(prevState => ({
-      origin,
-      mapTracking: true,
-      focusOnOrigin: false,
-      initialZoom:
-        prevState.initialZoom === DEFAULT_ZOOM ? FOCUS_ZOOM : undefined,
-      shouldShowDefaultLocation: false,
-    }));
-  }
-
-  useOrigin(origin) {
-    this.setState(prevState => ({
-      origin,
-      mapTracking: false,
-      focusOnOrigin: true,
-      initialZoom:
-        prevState.initialZoom === DEFAULT_ZOOM ? FOCUS_ZOOM : undefined,
-      shouldShowDefaultLocation: false,
-    }));
-  }
-
   render() {
-    const {
-      position,
-      origin,
-      config,
-      children,
-      renderCustomButtons,
-      mapLayers,
-      ...rest
-    } = this.props;
-    const { geoJson } = this.state;
-
+    const { position, origin, config, children, ...rest } = this.props;
     let location;
+
     if (
       this.state.focusOnOrigin &&
       !this.state.origin.gps &&
@@ -221,27 +138,12 @@ class MapWithTrackingStateHandler extends React.Component {
 
     if (origin && origin.ready === true && origin.gps !== true) {
       leafletObjs.push(
-        <LazilyLoad modules={locationMarkerModules} key="from">
-          {({ LocationMarker }) => (
-            <LocationMarker position={origin} type="from" />
+        <LazilyLoad modules={placeMarkerModules}>
+          {({ PlaceMarker }) => (
+            <PlaceMarker position={this.props.origin} key="from" />
           )}
         </LazilyLoad>,
       );
-    }
-
-    if (geoJson) {
-      const { bounds } = this.state;
-      Object.keys(geoJson)
-        .filter(key => mapLayers.geoJson[key] !== false)
-        .forEach(key => {
-          leafletObjs.push(
-            <LazilyLoad modules={jsonModules} key={key}>
-              {({ GeoJSON }) => (
-                <GeoJSON bounds={bounds} data={geoJson[key].data} />
-              )}
-            </LazilyLoad>,
-          );
-        });
     }
 
     return (
@@ -251,34 +153,29 @@ class MapWithTrackingStateHandler extends React.Component {
         zoom={this.state.initialZoom}
         mapTracking={this.state.mapTracking}
         className="flex-grow"
-        origin={origin}
+        origin={this.props.origin}
         leafletEvents={{
           onDragstart: this.disableMapTracking,
-          onDragend: this.updateCurrentBounds,
-          onZoomend: this.updateCurrentBounds,
+          onZoomend: null, // this.disableMapTracking,
         }}
         disableMapTracking={this.disableMapTracking}
         {...rest}
         leafletObjs={leafletObjs}
-        mapRef={this.setMapElementRef}
       >
         {children}
-        <div className="map-with-tracking-buttons">
-          {renderCustomButtons && renderCustomButtons()}
-          {position.hasLocation && (
-            <ToggleMapTracking
-              key="toggleMapTracking"
-              handleClick={
-                this.state.mapTracking
-                  ? this.disableMapTracking
-                  : this.enableMapTracking
-              }
-              className={`icon-mapMarker-toggle-positioning-${
-                this.state.mapTracking ? 'online' : 'offline'
-              }`}
-            />
-          )}
-        </div>
+        {this.props.position.hasLocation && (
+          <ToggleMapTracking
+            key="toggleMapTracking"
+            handleClick={
+              this.state.mapTracking
+                ? this.disableMapTracking
+                : this.enableMapTracking
+            }
+            className={`icon-mapMarker-toggle-positioning-${
+              this.state.mapTracking ? 'online' : 'offline'
+            }`}
+          />
+        )}
       </Component>
     );
   }
@@ -288,15 +185,14 @@ class MapWithTrackingStateHandler extends React.Component {
 const MapWithTracking = connectToStores(
   getContext({
     config: PropTypes.shape({
-      defaultMapCenter: dtLocationShape,
+      defaultMapCenter: dtLocationShape.isRequired,
     }),
   })(MapWithTrackingStateHandler),
-  [PositionStore, MapLayerStore, GeoJsonStore],
+  ['PositionStore'],
   ({ getStore }) => {
-    const position = getStore(PositionStore).getLocationState();
-    const mapLayers = getStore(MapLayerStore).getMapLayers();
-    const { getGeoJsonConfig, getGeoJsonData } = getStore(GeoJsonStore);
-    return { position, mapLayers, getGeoJsonConfig, getGeoJsonData };
+    const position = getStore('PositionStore').getLocationState();
+
+    return { position };
   },
 );
 
@@ -309,4 +205,4 @@ MapWithTracking.description = (
   </div>
 );
 
-export { MapWithTracking as default, MapWithTrackingStateHandler as Component };
+export default MapWithTracking;

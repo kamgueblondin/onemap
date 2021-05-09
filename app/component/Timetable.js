@@ -12,7 +12,6 @@ import FilterTimeTableModal from './FilterTimeTableModal';
 import TimeTableOptionsPanel from './TimeTableOptionsPanel';
 import TimetableRow from './TimetableRow';
 import ComponentUsageExample from './ComponentUsageExample';
-import { RealtimeStateType } from '../constants';
 
 class Timetable extends React.Component {
   static propTypes = {
@@ -33,7 +32,6 @@ class Timetable extends React.Component {
           }).isRequired,
           stoptimes: PropTypes.arrayOf(
             PropTypes.shape({
-              realtimeState: PropTypes.string.isRequired,
               scheduledDeparture: PropTypes.number.isRequired,
               serviceDay: PropTypes.number.isRequired,
             }),
@@ -42,9 +40,10 @@ class Timetable extends React.Component {
       ).isRequired,
     }).isRequired,
     propsForStopPageActionBar: PropTypes.shape({
+      printUrl: PropTypes.string.isRequired,
       startDate: PropTypes.string,
       selectedDate: PropTypes.string,
-      onDateChange: PropTypes.func,
+      onDateChange: PropTypes.function,
     }).isRequired,
   };
 
@@ -117,7 +116,6 @@ class Timetable extends React.Component {
           serviceDay: st.serviceDay,
           headsign: stoptime.pattern.headsign,
           longName: stoptime.pattern.route.longName,
-          isCanceled: st.realtimeState === RealtimeStateType.Canceled,
         })),
       )
       .reduce((acc, val) => acc.concat(val), []);
@@ -237,7 +235,11 @@ class Timetable extends React.Component {
 
     const stopPDFURL =
       stopIdSplitted[0] === 'HSL' && this.props.stop.locationType !== 'STATION'
-        ? `${this.context.config.URL.STOP_TIMETABLES}${stopIdSplitted[1]}.pdf`
+        ? `${
+            this.context.config.URL.API_URL
+          }/timetables/v1/${stopIdSplitted[0].toLowerCase()}/stops/${
+            stopIdSplitted[1]
+          }.pdf`
         : null;
 
     return (
@@ -257,6 +259,7 @@ class Timetable extends React.Component {
             stop={this.props.stop}
           />
           <StopPageActionBar
+            printUrl={this.props.propsForStopPageActionBar.printUrl}
             startDate={this.props.propsForStopPageActionBar.startDate}
             selectedDate={this.props.propsForStopPageActionBar.selectedDate}
             onDateChange={this.props.propsForStopPageActionBar.onDateChange}
@@ -359,11 +362,7 @@ Timetable.description = () => (
     <ComponentUsageExample description="">
       <Timetable
         stop={exampleStop}
-        propsForStopPageActionBar={{
-          startDate: '20190110',
-          selectedDate: '20190110',
-          onDateChange: () => {},
-        }}
+        propsForStopPageActionBar={{ printUrl: 'http://www.hsl.fi' }}
       />
     </ComponentUsageExample>
   </div>

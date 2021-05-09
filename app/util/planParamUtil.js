@@ -1,37 +1,24 @@
 import omitBy from 'lodash/omitBy';
-import moment from 'moment';
 
-import { filterModes, getDefaultModes, getModes } from './modeUtils';
-import { otpToLocation } from './otpStrings';
-import { getIntermediatePlaces, getQuerySettings } from './queryUtils';
+import moment from 'moment';
+// Localstorage data
 import {
   getCustomizedSettings,
   getRoutingSettings,
 } from '../store/localStorage';
+import { otpToLocation } from './otpStrings';
 
-/**
- * Retrieves the default settings from the configuration.
- *
- * @param {*} config the configuration for the software installation
- */
-export const getDefaultSettings = config => {
-  if (!config) {
-    return {};
-  }
-  return { ...config.defaultSettings, modes: getDefaultModes(config) };
+export const WALKBOARDCOST_DEFAULT = 600;
+
+export const defaultSettings = {
+  accessibilityOption: 0,
+  minTransferTime: 120,
+  walkBoardCost: WALKBOARDCOST_DEFAULT,
+  transferPenalty: 0,
+  walkReluctance: 2,
+  walkSpeed: 1.2,
+  ticketTypes: 'none',
 };
-
-/**
- * Retrieves the current (customized) settings that are in use.
- *
- * @param {*} config the configuration for the software installation
- * @param {*} query the query part of the current url
- */
-export const getCurrentSettings = (config, query) => ({
-  ...getDefaultSettings(config),
-  ...getCustomizedSettings(),
-  ...getQuerySettings(query),
-});
 
 // These values need to be null so if no values for the variables are defined somewhere else,
 // these variables will be left out from queries
@@ -55,20 +42,32 @@ export const defaultRoutingSettings = {
   modeWeight: null,
 };
 
-function getTicketTypes(ticketType, settingsTicketType, defaultTicketType) {
-  // separator used to be _, map it to : to keep old URLs compatible
-  const remap = str => `${str}`.replace('_', ':');
-  const isRestriction = type => type !== 'none';
+function getIntermediatePlaces(intermediatePlaces) {
+  if (!intermediatePlaces) {
+    return [];
+  } else if (Array.isArray(intermediatePlaces)) {
+    return intermediatePlaces.map(otpToLocation);
+  } else if (typeof intermediatePlaces === 'string') {
+    return [otpToLocation(intermediatePlaces)];
+  }
+  return [];
+}
 
-  if (ticketType) {
-    return isRestriction(ticketType) ? remap(ticketType) : null;
+function setTicketTypes(ticketType, settingsTicketType) {
+  if (ticketType !== undefined && ticketType !== 'none') {
+    return ticketType;
+  } else if (
+    settingsTicketType !== undefined &&
+    settingsTicketType !== 'none' &&
+    ticketType !== 'none'
+  ) {
+    return settingsTicketType;
   }
-  if (settingsTicketType) {
-    return isRestriction(settingsTicketType) ? remap(settingsTicketType) : null;
-  }
-  return defaultTicketType && isRestriction(defaultTicketType)
-    ? remap(defaultTicketType)
-    : null;
+  return null;
+}
+
+function isTrue(val) {
+  return val === 'true';
 }
 
 function nullOrUndefined(val) {
@@ -94,20 +93,9 @@ function getMaxWalkDistance(modes, settings, config) {
   return maxWalkDistance;
 }
 
-function getDisableRemainingWeightHeuristic(
-  modes,
-  settings,
-  intermediatePlaces,
-) {
+function getDisableRemainingWeightHeuristic(modes, settings) {
   let disableRemainingWeightHeuristic;
-  const modesArray = modes ? modes.split(',') : undefined;
-  if (
-    modesArray &&
-    (modesArray.includes('BICYCLE_RENT') ||
-      (modesArray.includes('BICYCLE') &&
-        modesArray.length > 1 &&
-        intermediatePlaces.length > 0))
-  ) {
+  if (modes && modes.split(',').includes('CITYBIKE')) {
     disableRemainingWeightHeuristic = true;
   } else if (nullOrUndefined(settings.disableRemainingWeightHeuristic)) {
     disableRemainingWeightHeuristic = false;
@@ -117,220 +105,253 @@ function getDisableRemainingWeightHeuristic(
   return disableRemainingWeightHeuristic;
 }
 
-function getPreferredorUnpreferredRoutes(
-  queryRoutes,
-  isPreferred,
-  settings,
-  unpreferredPenalty,
-) {
-  const preferenceObject = {};
-  if (!isPreferred) {
-    // adds penalty weight to unpreferred routes, there might be default unpreferred routes even if user has not defined any
-    preferenceObject.useUnpreferredRoutesPenalty = unpreferredPenalty;
-  }
-  // queryRoutes is undefined if query params dont contain routes and empty string if user has removed all routes
-  if (queryRoutes === '') {
-    return preferenceObject;
-  }
-  if (queryRoutes !== undefined && queryRoutes !== '') {
-    // queryRoutes contains routes found in query params
-    return { ...preferenceObject, routes: queryRoutes };
-  }
-  if (isPreferred) {
-    // default or localstorage preferredRoutes
-    return { ...preferenceObject, routes: settings.preferredRoutes };
-  }
-  // default or localstorage unpreferredRoutes
-  return { ...preferenceObject, routes: settings.unpreferredRoutes };
-}
-
-const getNumberValueOrDefault = (value, defaultValue = undefined) =>
-  value !== undefined ? Number(value) : defaultValue;
-const getBooleanValueOrDefault = (value, defaultValue = undefined) =>
-  value !== undefined ? value === 'true' : defaultValue;
-
 export const getSettings = () => {
   const custSettings = getCustomizedSettings();
   const routingSettings = getRoutingSettings();
 
   return {
-    walkSpeed: getNumberValueOrDefault(custSettings.walkSpeed),
-    walkReluctance: getNumberValueOrDefault(custSettings.walkReluctance),
-    walkBoardCost: getNumberValueOrDefault(custSettings.walkBoardCost),
-    modes: undefined,
-    minTransferTime: getNumberValueOrDefault(custSettings.minTransferTime),
-    accessibilityOption: getNumberValueOrDefault(
-      custSettings.accessibilityOption,
-    ),
+    walkSpeed:
+      custSettings.walkSpeed !== undefined
+        ? Number(custSettings.walkSpeed)
+        : undefined,
+    walkReluctance:
+      custSettings.walkReluctance !== undefined
+        ? Number(custSettings.walkReluctance)
+        : undefined,
+    walkBoardCost:
+      custSettings.walkBoardCost !== undefined
+        ? Number(custSettings.walkBoardCost)
+        : undefined,
+    modes: custSettings.modes
+      ? custSettings.modes
+          .toString()
+          .split(',')
+          .map(mode => (mode === 'CITYBIKE' ? 'BICYCLE_RENT' : mode))
+          .sort()
+          .join(',')
+      : undefined,
+    minTransferTime:
+      custSettings.minTransferTime !== undefined
+        ? Number(custSettings.minTransferTime)
+        : undefined,
+    accessibilityOption:
+      custSettings.accessibilityOption !== undefined
+        ? Number(custSettings.accessibilityOption) === 1
+        : undefined,
     ticketTypes: custSettings.ticketTypes,
-    transferPenalty: getNumberValueOrDefault(custSettings.transferPenalty),
-    maxWalkDistance: getNumberValueOrDefault(routingSettings.maxWalkDistance),
-    maxBikingDistance: getNumberValueOrDefault(
-      routingSettings.maxBikingDistance,
-    ),
-    ignoreRealtimeUpdates: getBooleanValueOrDefault(
-      routingSettings.ignoreRealtimeUpdates,
-    ),
-    maxPreTransitTime: getNumberValueOrDefault(
-      routingSettings.maxPreTransitTime,
-    ),
-    walkOnStreetReluctance: getNumberValueOrDefault(
-      routingSettings.walkOnStreetReluctance,
-    ),
-    waitReluctance: getNumberValueOrDefault(routingSettings.waitReluctance),
-    bikeSpeed: getNumberValueOrDefault(
-      custSettings.bikeSpeed,
-      routingSettings.bikeSpeed,
-    ),
-    bikeSwitchTime: getNumberValueOrDefault(routingSettings.bikeSwitchTime),
-    bikeSwitchCost: getNumberValueOrDefault(routingSettings.bikeSwitchCost),
-    bikeBoardCost: getNumberValueOrDefault(routingSettings.bikeBoardCost),
-    optimize: custSettings.optimize || routingSettings.optimize || undefined,
-    safetyFactor: getNumberValueOrDefault(
-      custSettings.safetyFactor,
-      routingSettings.safetyFactor,
-    ),
-    slopeFactor: getNumberValueOrDefault(
-      custSettings.slopeFactor,
-      routingSettings.slopeFactor,
-    ),
-    timeFactor: getNumberValueOrDefault(
-      custSettings.timeFactor,
-      routingSettings.timeFactor,
-    ),
-    carParkCarLegWeight: getNumberValueOrDefault(
-      routingSettings.carParkCarLegWeight,
-    ),
-    maxTransfers: getNumberValueOrDefault(routingSettings.maxTransfers),
-    waitAtBeginningFactor: getNumberValueOrDefault(
-      routingSettings.waitAtBeginningFactor,
-    ),
-    heuristicStepsPerMainStep: getNumberValueOrDefault(
-      routingSettings.heuristicStepsPerMainStep,
-    ),
-    compactLegsByReversedSearch: getBooleanValueOrDefault(
-      routingSettings.compactLegsByReversedSearch,
-    ),
-    disableRemainingWeightHeuristic: getBooleanValueOrDefault(
-      routingSettings.disableRemainingWeightHeuristic,
-    ),
-    itineraryFiltering: getNumberValueOrDefault(
-      routingSettings.itineraryFiltering,
-    ),
-    busWeight: getNumberValueOrDefault(routingSettings.busWeight),
-    railWeight: getNumberValueOrDefault(routingSettings.railWeight),
-    subwayWeight: getNumberValueOrDefault(routingSettings.subwayWeight),
-    tramWeight: getNumberValueOrDefault(routingSettings.tramWeight),
-    ferryWeight: getNumberValueOrDefault(routingSettings.ferryWeight),
-    airplaneWeight: getNumberValueOrDefault(routingSettings.airplaneWeight),
-    preferredRoutes: custSettings.preferredRoutes,
-    unpreferredRoutes: custSettings.unpreferredRoutes,
+    transferPenalty:
+      custSettings.transferPenalty !== undefined
+        ? Number(custSettings.transferPenalty)
+        : undefined,
+    maxWalkDistance:
+      routingSettings.maxWalkDistance !== undefined
+        ? Number(routingSettings.maxWalkDistance)
+        : undefined,
+    maxBikingDistance:
+      routingSettings.maxBikingDistance !== undefined
+        ? Number(routingSettings.maxBikingDistance)
+        : undefined,
+    ignoreRealtimeUpdates:
+      routingSettings.ignoreRealtimeUpdates !== undefined
+        ? isTrue(routingSettings.ignoreRealtimeUpdates)
+        : undefined,
+    maxPreTransitTime:
+      routingSettings.maxPreTransitTime !== undefined
+        ? Number(routingSettings.maxPreTransitTime)
+        : undefined,
+    walkOnStreetReluctance:
+      routingSettings.walkOnStreetReluctance !== undefined
+        ? Number(routingSettings.walkOnStreetReluctance)
+        : undefined,
+    waitReluctance:
+      routingSettings.waitReluctance !== undefined
+        ? Number(routingSettings.waitReluctance)
+        : undefined,
+    bikeSpeed:
+      routingSettings.bikeSpeed !== undefined
+        ? Number(routingSettings.bikeSpeed)
+        : undefined,
+    bikeSwitchTime:
+      routingSettings.bikeSwitchTime !== undefined
+        ? Number(routingSettings.bikeSwitchTime)
+        : undefined,
+    bikeSwitchCost:
+      routingSettings.bikeSwitchCost !== undefined
+        ? Number(routingSettings.bikeSwitchCost)
+        : undefined,
+    bikeBoardCost:
+      routingSettings.bikeBoardCost !== undefined
+        ? Number(routingSettings.bikeBoardCost)
+        : undefined,
+    optimize:
+      routingSettings.optimize !== undefined
+        ? routingSettings.optimize
+        : undefined,
+    safetyFactor:
+      routingSettings.safetyFactor !== undefined
+        ? Number(routingSettings.safetyFactor)
+        : undefined,
+    slopeFactor:
+      routingSettings.slopeFactor !== undefined
+        ? Number(routingSettings.slopeFactor)
+        : undefined,
+    timeFactor:
+      routingSettings.timeFactor !== undefined
+        ? Number(routingSettings.timeFactor)
+        : undefined,
+    carParkCarLegWeight:
+      routingSettings.carParkCarLegWeight !== undefined
+        ? Number(routingSettings.carParkCarLegWeight)
+        : undefined,
+    maxTransfers:
+      routingSettings.maxTransfers !== undefined
+        ? Number(routingSettings.maxTransfers)
+        : undefined,
+    waitAtBeginningFactor:
+      routingSettings.waitAtBeginningFactor !== undefined
+        ? Number(routingSettings.waitAtBeginningFactor)
+        : undefined,
+    heuristicStepsPerMainStep:
+      routingSettings.heuristicStepsPerMainStep !== undefined
+        ? Number(routingSettings.heuristicStepsPerMainStep)
+        : undefined,
+    compactLegsByReversedSearch:
+      routingSettings.compactLegsByReversedSearch !== undefined
+        ? isTrue(routingSettings.compactLegsByReversedSearch)
+        : undefined,
+    disableRemainingWeightHeuristic:
+      routingSettings.disableRemainingWeightHeuristic !== undefined
+        ? isTrue(routingSettings.disableRemainingWeightHeuristic)
+        : undefined,
+    itineraryFiltering:
+      routingSettings.itineraryFiltering !== undefined
+        ? Number(routingSettings.itineraryFiltering)
+        : undefined,
+    busWeight:
+      routingSettings.busWeight !== undefined
+        ? Number(routingSettings.busWeight)
+        : undefined,
+    railWeight:
+      routingSettings.railWeight !== undefined
+        ? Number(routingSettings.railWeight)
+        : undefined,
+    subwayWeight:
+      routingSettings.subwayWeight !== undefined
+        ? Number(routingSettings.subwayWeight)
+        : undefined,
+    tramWeight:
+      routingSettings.tramWeight !== undefined
+        ? Number(routingSettings.tramWeight)
+        : undefined,
+    ferryWeight:
+      routingSettings.ferryWeight !== undefined
+        ? Number(routingSettings.ferryWeight)
+        : undefined,
+    airplaneWeight:
+      routingSettings.airplaneWeight !== undefined
+        ? Number(routingSettings.airplaneWeight)
+        : undefined,
   };
 };
+
+export const getDefaultModes = config => [
+  ...Object.keys(config.transportModes)
+    .filter(mode => config.transportModes[mode].defaultValue)
+    .map(mode => mode.toUpperCase()),
+  ...Object.keys(config.streetModes)
+    .filter(mode => config.streetModes[mode].defaultValue)
+    .map(mode => mode.toUpperCase()),
+];
+
+// all modes except one, citybike, have the same values in UI code and in OTP
+// this is plain madness but hard to change afterwards
+export const getDefaultOTPModes = config =>
+  getDefaultModes(config).map(
+    mode => (mode === 'CITYBIKE' ? 'BICYCLE_RENT' : mode),
+  );
 
 export const preparePlanParams = config => (
   { from, to },
   {
     location: {
       query: {
-        accessibilityOption,
-        arriveBy,
-        bikeSpeed,
         intermediatePlaces,
-        minTransferTime,
-        modes,
         numItineraries,
-        optimize,
-        preferredRoutes,
-        safetyFactor,
-        slopeFactor,
-        timeFactor,
-        ticketTypes,
         time,
-        transferPenalty,
-        unpreferredRoutes,
-        walkBoardCost,
+        arriveBy,
         walkReluctance,
         walkSpeed,
+        walkBoardCost,
+        minTransferTime,
+        modes,
+        accessibilityOption,
+        ticketTypes,
+        transferPenalty,
       },
     },
   },
 ) => {
   const settings = getSettings();
-  const fromLocation = otpToLocation(from);
-  const toLocation = otpToLocation(to);
-  const intermediatePlaceLocations = getIntermediatePlaces({
-    intermediatePlaces,
-  });
-  const modesOrDefault = filterModes(
-    config,
-    getModes({ query: { modes } }, config),
-    fromLocation,
-    toLocation,
-    intermediatePlaceLocations,
-  );
-  const defaultSettings = { ...getDefaultSettings(config) };
 
   return {
     ...defaultSettings,
+    ...config.defaultSettings,
     ...omitBy(
       {
         fromPlace: from,
         toPlace: to,
-        from: fromLocation,
-        to: toLocation,
-        intermediatePlaces: intermediatePlaceLocations,
-        numItineraries: getNumberValueOrDefault(numItineraries),
+        from: otpToLocation(from),
+        to: otpToLocation(to),
+        intermediatePlaces: getIntermediatePlaces(intermediatePlaces),
+        numItineraries: numItineraries ? Number(numItineraries) : undefined,
+        modes: modes
+          ? modes
+              .split(',')
+              .map(mode => (mode === 'CITYBIKE' ? 'BICYCLE_RENT' : mode))
+              .sort()
+              .join(',')
+          : settings.modes,
         date: time ? moment(time * 1000).format('YYYY-MM-DD') : undefined,
         time: time ? moment(time * 1000).format('HH:mm:ss') : undefined,
-        walkReluctance: getNumberValueOrDefault(
-          walkReluctance,
-          settings.walkReluctance,
-        ),
-        walkBoardCost: getNumberValueOrDefault(
-          walkBoardCost,
-          settings.walkBoardCost,
-        ),
-        minTransferTime: getNumberValueOrDefault(
-          minTransferTime,
-          settings.minTransferTime,
-        ),
-        walkSpeed: getNumberValueOrDefault(walkSpeed, settings.walkSpeed),
-        arriveBy: getBooleanValueOrDefault(arriveBy),
-        maxWalkDistance: getMaxWalkDistance(modesOrDefault, settings, config),
+        walkReluctance:
+          walkReluctance !== undefined
+            ? Number(walkReluctance)
+            : settings.walkReluctance,
+        walkBoardCost:
+          walkBoardCost !== undefined
+            ? Number(walkBoardCost)
+            : settings.walkBoardCost,
+        minTransferTime:
+          minTransferTime !== undefined
+            ? Number(minTransferTime)
+            : settings.minTransferTime,
+        walkSpeed:
+          walkSpeed !== undefined ? Number(walkSpeed) : settings.walkSpeed,
+        arriveBy: arriveBy ? arriveBy === 'true' : undefined,
+        maxWalkDistance: getMaxWalkDistance(modes, settings, config),
         wheelchair:
-          getNumberValueOrDefault(
-            accessibilityOption,
-            settings.accessibilityOption,
-          ) === 1,
-        transferPenalty: getNumberValueOrDefault(
-          transferPenalty,
-          settings.transferPenalty,
-        ),
+          accessibilityOption !== undefined
+            ? Number(accessibilityOption) === 1
+            : settings.accessibilityOption,
+        transferPenalty:
+          transferPenalty !== undefined
+            ? Number(transferPenalty)
+            : settings.transferPenalty,
         ignoreRealtimeUpdates: settings.ignoreRealtimeUpdates,
         maxPreTransitTime: settings.maxPreTransitTime,
         walkOnStreetReluctance: settings.walkOnStreetReluctance,
         waitReluctance: settings.waitReluctance,
-        bikeSpeed: getNumberValueOrDefault(bikeSpeed, settings.bikeSpeed),
+        bikeSpeed: settings.bikeSpeed,
         bikeSwitchTime: settings.bikeSwitchTime,
         bikeSwitchCost: settings.bikeSwitchCost,
         bikeBoardCost: settings.bikeBoardCost,
-        optimize: optimize || settings.optimize,
+        optimize: settings.optimize,
         triangle:
-          (optimize || settings.optimize) === 'TRIANGLE'
+          settings.optimize === 'TRIANGLE'
             ? {
-                safetyFactor: getNumberValueOrDefault(
-                  safetyFactor,
-                  settings.safetyFactor,
-                ),
-                slopeFactor: getNumberValueOrDefault(
-                  slopeFactor,
-                  settings.slopeFactor,
-                ),
-                timeFactor: getNumberValueOrDefault(
-                  timeFactor,
-                  settings.timeFactor,
-                ),
+                safetyFactor: settings.safetyFactor,
+                slopeFactor: settings.slopeFactor,
+                timeFactor: settings.timeFactor,
               }
             : null,
         carParkCarLegWeight: settings.carParkCarLegWeight,
@@ -338,10 +359,10 @@ export const preparePlanParams = config => (
         waitAtBeginningFactor: settings.waitAtBeginningFactor,
         heuristicStepsPerMainStep: settings.heuristicStepsPerMainStep,
         compactLegsByReversedSearch: settings.compactLegsByReversedSearch,
-        itineraryFiltering: getNumberValueOrDefault(
-          settings.itineraryFiltering,
-          config.itineraryFiltering,
-        ),
+        itineraryFiltering:
+          settings.itineraryFiltering !== undefined
+            ? settings.itineraryFiltering
+            : config.itineraryFiltering,
         modeWeight:
           settings.busWeight !== undefined ||
           settings.railWeight !== undefined ||
@@ -361,31 +382,14 @@ export const preparePlanParams = config => (
                 nullOrUndefined,
               )
             : null,
-        preferred: getPreferredorUnpreferredRoutes(
-          preferredRoutes,
-          true,
-          settings,
-          config.useUnpreferredRoutesPenalty,
-        ),
-        unpreferred: getPreferredorUnpreferredRoutes(
-          unpreferredRoutes,
-          false,
-          settings,
-          config.useUnpreferredRoutesPenalty,
-        ),
+        preferred: { agencies: config.preferredAgency || '' },
         disableRemainingWeightHeuristic: getDisableRemainingWeightHeuristic(
-          modesOrDefault,
+          modes,
           settings,
-          intermediatePlaceLocations,
         ),
       },
       nullOrUndefined,
     ),
-    modes: modesOrDefault,
-    ticketTypes: getTicketTypes(
-      ticketTypes,
-      settings.ticketTypes,
-      defaultSettings.ticketTypes,
-    ),
+    ticketTypes: setTicketTypes(ticketTypes, settings.ticketTypes),
   };
 };

@@ -1,79 +1,37 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React from 'react';
 import Relay from 'react-relay/classic';
 import { FormattedMessage } from 'react-intl';
 import inside from 'point-in-polygon';
-import cx from 'classnames';
-import startsWith from 'lodash/startsWith';
-
 import ExternalLink from './ExternalLink';
-import Icon from './Icon';
 import SummaryRow from './SummaryRow';
-import { isBrowser } from '../util/browser';
-import { distance } from '../util/geo-utils';
-import { getZones } from '../util/legUtils';
-import CanceledItineraryToggler from './CanceledItineraryToggler';
-import { RouteAlertsQuery, StopAlertsQuery } from '../util/alertQueries';
-import { itineraryHasCancelation } from '../util/alertUtils';
+import Icon from './Icon';
 
-function ItinerarySummaryListContainer(
-  {
-    activeIndex,
-    children,
-    currentTime,
-    error,
-    from,
-    locationState,
-    intermediatePlaces,
-    itineraries,
-    onSelect,
-    onSelectImmediately,
-    open,
-    searchTime,
-    to,
-  },
-  { config },
-) {
-  const [showCancelled, setShowCancelled] = useState(false);
-
-  if (!error && itineraries && itineraries.length > 0) {
-    const openedIndex = open && Number(open);
-    const summaries = itineraries.map((itinerary, i) => (
+function ItinerarySummaryListContainer(props, context) {
+  if (!props.error && props.itineraries && props.itineraries.length > 0) {
+    const open = props.open && Number(props.open);
+    const summaries = props.itineraries.map((itinerary, i) => (
       <SummaryRow
-        refTime={searchTime}
+        refTime={props.searchTime}
         key={i} // eslint-disable-line react/no-array-index-key
         hash={i}
         data={itinerary}
-        passive={i !== activeIndex}
-        currentTime={currentTime}
-        onSelect={onSelect}
-        onSelectImmediately={onSelectImmediately}
-        intermediatePlaces={intermediatePlaces}
-        isCancelled={itineraryHasCancelation(itinerary)}
-        showCancelled={showCancelled}
-        zones={config.stopCard.header.showZone ? getZones(itinerary.legs) : []}
+        passive={i !== props.activeIndex}
+        currentTime={props.currentTime}
+        onSelect={props.onSelect}
+        onSelectImmediately={props.onSelectImmediately}
+        intermediatePlaces={props.relay.route.params.intermediatePlaces}
       >
-        {i === openedIndex && children}
+        {i === open && props.children}
       </SummaryRow>
     ));
 
-    const canceledItinerariesCount = itineraries.filter(itineraryHasCancelation)
-      .length;
     return (
-      <div className="summary-list-container">
-        {isBrowser && summaries}
-        {isBrowser &&
-          canceledItinerariesCount > 0 && (
-            <CanceledItineraryToggler
-              showItineraries={showCancelled}
-              toggleShowCanceled={() => setShowCancelled(!showCancelled)}
-              canceledItinerariesAmount={canceledItinerariesCount}
-            />
-          )}
-      </div>
+      <div className="summary-list-container momentum-scroll">{summaries}</div>
     );
   }
-  if (!error && (!from.lat || !from.lon || !to.lat || !to.lon)) {
+  const { from, to } = props.relay.route.params;
+  if (!props.error && (!from.lat || !from.lon || !to.lat || !to.lon)) {
     return (
       <div className="summary-list-container summary-no-route-found">
         <FormattedMessage
@@ -84,39 +42,21 @@ function ItinerarySummaryListContainer(
     );
   }
 
-  let msgId;
+  let msg;
   let outside;
-  let iconType = 'caution';
-  let iconImg = 'icon-icon_caution';
-  // If error starts with "Error" it's not a message id, it's an error message
-  // from OTP
-  if (error && !startsWith(error, 'Error')) {
-    msgId = error;
-  } else if (!inside([from.lon, from.lat], config.areaPolygon)) {
-    msgId = 'origin-outside-service';
+  if (props.error) {
+    msg = props.error;
+  } else if (!inside([from.lon, from.lat], context.config.areaPolygon)) {
+    msg = 'origin-outside-service';
     outside = true;
-  } else if (!inside([to.lon, to.lat], config.areaPolygon)) {
-    msgId = 'destination-outside-service';
+  } else if (!inside([to.lon, to.lat], context.config.areaPolygon)) {
+    msg = 'destination-outside-service';
     outside = true;
-  } else if (distance(from, to) < config.minDistanceBetweenFromAndTo) {
-    iconType = 'info';
-    iconImg = 'icon-icon_info';
-    if (
-      locationState &&
-      locationState.hasLocation &&
-      ((from.lat === locationState.lat && from.lon === locationState.lon) ||
-        (to.lat === locationState.lat && to.lon === locationState.lon))
-    ) {
-      msgId = 'no-route-already-at-destination';
-    } else {
-      msgId = 'no-route-origin-near-destination';
-    }
   } else {
-    msgId = 'no-route-msg';
+    msg = 'no-route-msg';
   }
-
   let linkPart = null;
-  if (outside && config.nationalServiceLink) {
+  if (outside && context.config.nationalServiceLink) {
     linkPart = (
       <div>
         <FormattedMessage
@@ -125,7 +65,7 @@ function ItinerarySummaryListContainer(
         />
         <ExternalLink
           className="external-no-route"
-          {...config.nationalServiceLink}
+          {...context.config.nationalServiceLink}
         />
       </div>
     );
@@ -134,10 +74,10 @@ function ItinerarySummaryListContainer(
   return (
     <div className="summary-list-container summary-no-route-found">
       <div className="flex-horizontal">
-        <Icon className={cx('no-route-icon', iconType)} img={iconImg} />
+        <Icon className="no-route-icon" img="icon-icon_caution" />
         <div>
           <FormattedMessage
-            id={msgId}
+            id={msg}
             defaultMessage={
               'Unfortunately no routes were found for your journey. ' +
               'Please change your origin or destination address.'
@@ -150,53 +90,48 @@ function ItinerarySummaryListContainer(
   );
 }
 
-const locationShape = PropTypes.shape({
-  lat: PropTypes.number,
-  lon: PropTypes.number,
-  address: PropTypes.string,
-});
-
 ItinerarySummaryListContainer.propTypes = {
+  searchTime: PropTypes.number.isRequired,
+  itineraries: PropTypes.array,
   activeIndex: PropTypes.number.isRequired,
   currentTime: PropTypes.number.isRequired,
-  children: PropTypes.node,
-  error: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.shape({ message: PropTypes.string }),
-  ]),
-  from: locationShape.isRequired,
-  intermediatePlaces: PropTypes.arrayOf(locationShape),
-  itineraries: PropTypes.array,
-  locationState: PropTypes.object,
   onSelect: PropTypes.func.isRequired,
   onSelectImmediately: PropTypes.func.isRequired,
   open: PropTypes.number,
-  searchTime: PropTypes.number.isRequired,
-  to: locationShape.isRequired,
-};
-
-ItinerarySummaryListContainer.defaultProps = {
-  error: undefined,
-  intermediatePlaces: [],
-  itineraries: [],
+  error: PropTypes.string,
+  children: PropTypes.node,
+  relay: PropTypes.shape({
+    route: PropTypes.shape({
+      params: PropTypes.shape({
+        to: PropTypes.shape({
+          lat: PropTypes.number,
+          lon: PropTypes.number,
+          address: PropTypes.string.isRequired,
+        }).isRequired,
+        from: PropTypes.shape({
+          lat: PropTypes.number,
+          lon: PropTypes.number,
+          address: PropTypes.string.isRequired,
+        }).isRequired,
+        intermediatePlaces: PropTypes.array,
+      }).isRequired,
+    }).isRequired,
+  }).isRequired,
 };
 
 ItinerarySummaryListContainer.contextTypes = {
   config: PropTypes.object.isRequired,
 };
 
-const containerComponent = Relay.createContainer(
-  ItinerarySummaryListContainer,
-  {
-    fragments: {
-      itineraries: () => Relay.QL`
+export default Relay.createContainer(ItinerarySummaryListContainer, {
+  fragments: {
+    itineraries: () => Relay.QL`
       fragment on Itinerary @relay(plural:true){
         walkDistance
         startTime
         endTime
         legs {
           realTime
-          realtimeState
           transitLeg
           startTime
           endTime
@@ -205,27 +140,20 @@ const containerComponent = Relay.createContainer(
           duration
           rentedBike
           intermediatePlace
-          intermediatePlaces {
-            stop {
-              zoneId
-              ${StopAlertsQuery}
-            }
-          }
           route {
             mode
             shortName
             color
+            alerts {
+              effectiveStartDate
+              effectiveEndDate
+            }
             agency {
               name
             }
-            ${RouteAlertsQuery}
           }
           trip {
-            pattern {
-              code
-            }
             stoptimes {
-              realtimeState
               stop {
                 gtfsId
               }
@@ -238,28 +166,15 @@ const containerComponent = Relay.createContainer(
             lon
             stop {
               gtfsId
-              zoneId
-              ${StopAlertsQuery}
-            }
-            bikeRentalStation {
-              bikesAvailable
             }
           }
           to {
             stop {
               gtfsId
-              zoneId
-              ${StopAlertsQuery}
             }
           }
         }
       }
     `,
-    },
   },
-);
-
-export {
-  containerComponent as default,
-  ItinerarySummaryListContainer as Component,
-};
+});

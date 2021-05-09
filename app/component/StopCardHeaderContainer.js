@@ -9,10 +9,6 @@ export default Relay.createContainer(StopCardHeader, {
         name
         code
         desc
-        zoneId
-        alerts {
-          alertSeverityLevel
-        }
       }
     `,
   },

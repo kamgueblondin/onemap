@@ -6,7 +6,6 @@ import groupBy from 'lodash/groupBy';
 import values from 'lodash/values';
 import cx from 'classnames';
 
-import { StopAlertsQuery } from '../util/alertQueries';
 import { getDistanceToNearestStop } from '../util/geo-utils';
 import RouteStop from './RouteStop';
 import withBreakpoint from '../util/withBreakpoint';
@@ -141,14 +140,12 @@ export default Relay.createContainer(
             color
           }
           stops {
-            ${StopAlertsQuery}
             stopTimesForPattern(id: $patternId, startTime: $currentTime) {
               realtime
               realtimeState
               realtimeDeparture
               serviceDay
               scheduledDeparture
-              pickupType
             }
             gtfsId
             lat

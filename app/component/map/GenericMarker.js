@@ -1,8 +1,5 @@
-import isFunction from 'lodash/isFunction';
 import PropTypes from 'prop-types';
 import React from 'react';
-
-import { withLeaflet } from 'react-leaflet/es/context';
 
 import ComponentUsageExample from '../ComponentUsageExample';
 import { isBrowser } from '../../util/browser';
@@ -17,12 +14,12 @@ let L;
 //      Perhaps still using the require from webpack?
 if (isBrowser) {
   Marker = require('react-leaflet/es/Marker').default;
-  Popup = require('react-leaflet/es/Popup').default;
+  Popup = require('./Popup').default;
   L = require('leaflet');
 }
 /* eslint-enable global-require */
 
-class GenericMarker extends React.Component {
+export default class GenericMarker extends React.Component {
   static description = (
     <div>
       <p>A base class for markers.</p>
@@ -41,40 +38,29 @@ class GenericMarker extends React.Component {
   static displayName = 'GenericMarker';
 
   static contextTypes = {
+    map: PropTypes.object.isRequired,
     config: PropTypes.object.isRequired,
   };
 
   static propTypes = {
-    shouldRender: PropTypes.func,
     position: PropTypes.object.isRequired,
     getIcon: PropTypes.func.isRequired,
     renderName: PropTypes.bool,
     name: PropTypes.string,
     children: PropTypes.node,
-    leaflet: PropTypes.shape({
-      map: PropTypes.shape({
-        getZoom: PropTypes.func.isRequired,
-        on: PropTypes.func.isRequired,
-        off: PropTypes.func.isRequired,
-      }).isRequired,
-    }).isRequired,
   };
 
-  static defaultProps = {
-    shouldRender: () => true,
-  };
-
-  state = { zoom: this.props.leaflet.map.getZoom() };
+  state = { zoom: this.context.map.getZoom() };
 
   componentDidMount() {
-    this.props.leaflet.map.on('zoomend', this.onMapMove);
+    this.context.map.on('zoomend', this.onMapMove);
   }
 
   componentWillUnmount() {
-    this.props.leaflet.map.off('zoomend', this.onMapMove);
+    this.context.map.off('zoomend', this.onMapMove);
   }
 
-  onMapMove = () => this.setState({ zoom: this.props.leaflet.map.getZoom() });
+  onMapMove = () => this.setState({ zoom: this.context.map.getZoom() });
 
   getMarker = () => (
     <Marker
@@ -95,7 +81,7 @@ class GenericMarker extends React.Component {
   getNameMarker() {
     if (
       !this.props.renderName ||
-      this.props.leaflet.map.getZoom() <
+      this.context.map.getZoom() <
         this.context.config.map.genericMarker.nameMarkerMinZoom
     ) {
       return false;
@@ -124,20 +110,11 @@ class GenericMarker extends React.Component {
       return '';
     }
 
-    const { shouldRender } = this.props;
-    const { zoom } = this.state;
-    if (isFunction(shouldRender) && !shouldRender(zoom)) {
-      return null;
-    }
-
     return (
-      <React.Fragment>
+      <div>
         {this.getMarker()}
         {this.getNameMarker()}
-      </React.Fragment>
+      </div>
     );
   }
 }
-
-const leafletComponent = withLeaflet(GenericMarker);
-export { leafletComponent as default, GenericMarker as Component };

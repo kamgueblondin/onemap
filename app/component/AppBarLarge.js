@@ -8,8 +8,7 @@ import Icon from './Icon';
 import ComponentUsageExample from './ComponentUsageExample';
 import LangSelect from './LangSelect';
 import MessageBar from './MessageBar';
-import CanceledLegsBar from './CanceledLegsBar';
-import LogoSmall from './LogoSmall';
+import { isBrowser } from '../util/browser';
 
 const AppBarLarge = (
   { titleClicked, logo },
@@ -26,14 +25,21 @@ const AppBarLarge = (
   };
 
   let logoElement;
+
   if (config.textLogo) {
     logoElement = (
       <section className="title">
-        <LogoSmall className="navi-logo" title={config.title} />
+        <span className="title">{config.title}</span>
       </section>
     );
+  } else if (isBrowser && logo) {
+    logoElement = (
+      <div className="navi-logo" style={{ backgroundImage: `url(${logo})` }} />
+    );
   } else {
-    logoElement = <LogoSmall className="navi-logo" logo={logo} showLogo />;
+    logoElement = (
+      <div className="navi-logo" style={{ backgroundImage: 'none' }} />
+    );
   }
 
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/anchor-is-valid */
@@ -56,7 +62,7 @@ const AppBarLarge = (
               defaultMessage: 'Disruptions',
             })}
           >
-            <Icon img="icon-icon_caution" className="caution-topbar" />
+            <Icon img="icon-icon_caution" />
           </a>
         </div>
         <div className="padding-horizontal-large navi-margin">
@@ -65,7 +71,6 @@ const AppBarLarge = (
       </div>
       <MessageBar />
       <DisruptionInfo />
-      <CanceledLegsBar />
     </div>
   );
 };

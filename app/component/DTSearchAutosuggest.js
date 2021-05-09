@@ -21,13 +21,12 @@ class DTAutosuggest extends React.Component {
     autoFocus: PropTypes.bool,
     className: PropTypes.string,
     executeSearch: PropTypes.func,
-    icon: PropTypes.string,
     id: PropTypes.string.isRequired,
     isFocused: PropTypes.func,
     layers: PropTypes.arrayOf(PropTypes.string).isRequired,
     placeholder: PropTypes.string.isRequired,
     refPoint: dtLocationShape.isRequired,
-    searchType: PropTypes.oneOf(['all', 'endpoint', 'search']).isRequired,
+    searchType: PropTypes.oneOf(['all', 'endpoint']).isRequired,
     selectedFunction: PropTypes.func.isRequired,
     value: PropTypes.string,
   };
@@ -36,7 +35,6 @@ class DTAutosuggest extends React.Component {
     autoFocus: false,
     className: '',
     executeSearch,
-    icon: undefined,
     isFocused: () => {},
     value: '',
   };
@@ -105,9 +103,9 @@ class DTAutosuggest extends React.Component {
       );
     } else {
       this.setState(
-        prevState => ({
-          pendingSelection: prevState.value,
-        }),
+        {
+          pendingSelection: this.state.value,
+        },
         () => this.checkPendingSelection(), // search may finish during state change
       );
     }
@@ -147,13 +145,7 @@ class DTAutosuggest extends React.Component {
   clearButton = () => {
     const img = this.state.value ? 'icon-icon_close' : 'icon-icon_search';
     return (
-      <button
-        className="noborder clear-input"
-        onClick={this.clearInput}
-        aria-label={this.context.intl.formatMessage({
-          id: this.state.value ? 'clear-button-label' : 'search-button-label',
-        })}
-      >
+      <button className="noborder clear-input" onClick={this.clearInput}>
         <Icon img={img} />
       </button>
     );
@@ -267,11 +259,9 @@ class DTAutosuggest extends React.Component {
 
     return (
       <div className={cx(['autosuggest-input-container', this.props.id])}>
-        {this.props.icon && (
-          <div className={cx(['autosuggest-input-icon', this.props.id])}>
-            <Icon img={`icon-icon_${this.props.icon}`} />
-          </div>
-        )}
+        <div className={cx(['autosuggest-input-icon', this.props.id])}>
+          <Icon img="icon-icon_mapMarker-point" />
+        </div>
         <Autosuggest
           id={this.props.id}
           suggestions={suggestions}
@@ -283,7 +273,10 @@ class DTAutosuggest extends React.Component {
           focusInputOnSuggestionClick={false}
           shouldRenderSuggestions={() => this.state.editing}
           renderInputComponent={p => (
-            <div id={`${this.props.id}-container`} style={{ display: 'flex' }}>
+            <div
+              id={`${this.props.id}-container`}
+              className="autosuggest-input-container"
+            >
               <input id={this.props.id} onClick={this.inputClicked} {...p} />
               {this.clearButton()}
             </div>

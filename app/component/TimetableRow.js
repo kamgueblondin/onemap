@@ -1,4 +1,3 @@
-import cx from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
 import moment from 'moment';
@@ -28,9 +27,7 @@ const TimetableRow = ({ title, stoptimes, showRoutes, timerows }) => (
         )
         .map(time => (
           <div
-            className={cx('timetablerow-linetime', {
-              canceled: time.isCanceled,
-            })}
+            className="timetablerow-linetime"
             key={`${time.id}-${time.name}-${time.scheduledDeparture}`}
           >
             <span>

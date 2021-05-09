@@ -22,28 +22,26 @@ class StopMarkerPopup extends React.PureComponent {
       relay.setVariables({ currentTime: currUnix });
     }
   }
-
   render() {
-    const { relay, stop, terminal } = this.props;
-    const entity = stop || terminal;
-    const isTerminal = terminal !== null;
+    const stop = this.props.stop || this.props.terminal;
+    const terminal = this.props.terminal !== null;
 
     return (
       <div className="card">
         <StopCardContainer
-          stop={entity}
-          numberOfDepartures={(isTerminal ? 3 : 1) * NUMBER_OF_DEPARTURES}
-          startTime={relay.variables.currentTime}
-          isTerminal={isTerminal}
-          timeRange={isTerminal ? TERMINAL_TIME_RANGE : STOP_TIME_RANGE}
+          stop={stop}
+          numberOfDepartures={(terminal ? 3 : 1) * NUMBER_OF_DEPARTURES}
+          startTime={this.props.relay.variables.currentTime}
+          isTerminal={terminal}
+          timeRange={terminal ? TERMINAL_TIME_RANGE : STOP_TIME_RANGE}
           limit={NUMBER_OF_DEPARTURES}
           className="padding-small cursor-pointer"
         />
         <MarkerPopupBottom
           location={{
-            address: entity.name,
-            lat: entity.lat,
-            lon: entity.lon,
+            address: stop.name,
+            lat: stop.lat,
+            lon: stop.lon,
           }}
         />
       </div>
@@ -107,59 +105,47 @@ const StopMarkerPopupContainer = Relay.createContainer(
 
 StopMarkerPopupContainer.displayName = 'StopMarkerPopup';
 
-const getTimeProps = currentTime => ({
-  currentTime,
-  relay: {
-    variables: { currentTime },
-    setVariables: () => {},
-  },
-});
-
 StopMarkerPopupContainer.description = () => (
   <div>
     <ComponentUsageExample description="empty">
       <PopupMock size="small">
-        <StopMarkerPopup
+        <StopMarkerPopupContainer
           {...mockData.empty}
-          {...getTimeProps(moment().unix())}
+          currentTime={moment().unix()}
         />
       </PopupMock>
     </ComponentUsageExample>
     <ComponentUsageExample description="basic">
       <PopupMock>
-        <StopMarkerPopup
+        <StopMarkerPopupContainer
           {...mockData.basic}
-          {...getTimeProps(mockData.currentTime)}
+          currentTime={mockData.currentTime}
         />
       </PopupMock>
     </ComponentUsageExample>
-    <ComponentUsageExample description="withInfo">
-      <PopupMock size="small">
-        <StopMarkerPopup
-          stop={{
-            ...mockData.empty.stop,
-            alerts: [
-              {
-                alertSeverityLevel: 'INFO',
-              },
-            ],
-          }}
-          {...getTimeProps(moment().unix())}
+    <ComponentUsageExample description="realTime">
+      <PopupMock>
+        <StopMarkerPopupContainer
+          {...mockData.realTime}
+          currentTime={mockData.currentTime}
         />
       </PopupMock>
     </ComponentUsageExample>
-    <ComponentUsageExample description="withDisruption">
-      <PopupMock size="small">
-        <StopMarkerPopup
-          stop={{
-            ...mockData.empty.stop,
-            alerts: [
-              {
-                alertSeverityLevel: 'WARNING',
-              },
-            ],
-          }}
-          {...getTimeProps(moment().unix())}
+    <ComponentUsageExample description="tomorrow">
+      <PopupMock size="large">
+        <StopMarkerPopupContainer
+          {...mockData.tomorrow}
+          currentTime={moment(mockData.currentTime)
+            .subtract(1, 'days')
+            .unix()}
+        />
+      </PopupMock>
+    </ComponentUsageExample>
+    <ComponentUsageExample description="missingPlatform">
+      <PopupMock size="large">
+        <StopMarkerPopupContainer
+          {...mockData.missingPlatform}
+          currentTime={mockData.currentTime}
         />
       </PopupMock>
     </ComponentUsageExample>

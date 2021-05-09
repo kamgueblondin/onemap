@@ -1,14 +1,8 @@
 import memoize from 'lodash/memoize';
 import getSelector from './get-selector';
 import glfun from './glfun';
-import { AlertSeverityLevelType } from '../constants';
 
 const FONT_SIZE = 11;
-
-/**
- * Corresponds to an arc forming a full circle (Math.PI * 2).
- */
-const FULL_CIRCLE = Math.PI * 2;
 
 export const getCaseRadius = memoize(
   glfun({
@@ -31,23 +25,10 @@ export const getHubRadius = memoize(
   }),
 );
 
-export const getMapIconScale = memoize(
-  glfun({
-    base: 1,
-    stops: [[13, 0.8], [20, 1.6]],
-  }),
-);
-
-const getStyleOrDefault = (selector, defaultValue = {}) => {
-  const cssRule = selector && getSelector(selector.toLowerCase());
-  return (cssRule && cssRule.style) || defaultValue;
-};
-
-export const getColor = memoize(selector => getStyleOrDefault(selector).color);
-
-export const getFill = memoize(selector => getStyleOrDefault(selector).fill);
-
-export const getModeColor = mode => getColor(`.${mode}`);
+export const getColor = memoize(mode => {
+  const cssRule = mode && getSelector(`.${mode.toLowerCase()}`);
+  return cssRule && cssRule.style.color;
+});
 
 function getImageFromSpriteSync(icon, width, height, fill) {
   if (!document) {
@@ -59,16 +40,17 @@ function getImageFromSpriteSync(icon, width, height, fill) {
   svg.setAttribute('height', height);
   const vb = symbol.viewBox.baseVal;
   svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
-
+  if (fill) {
+    svg.setAttribute('fill', fill);
+  }
   // TODO: Simplify after https://github.com/Financial-Times/polyfill-service/pull/722 is merged
   Array.prototype.forEach.call(symbol.childNodes, node => {
     const child = node.cloneNode(true);
     if (node.style && !child.attributes.fill) {
-      child.style.fill = fill || window.getComputedStyle(node).color;
+      child.style.fill = window.getComputedStyle(node).color;
     }
     svg.appendChild(child);
   });
-
   const image = new Image(width, height);
   image.src = `data:image/svg+xml;base64,${btoa(
     new XMLSerializer().serializeToString(svg),
@@ -137,18 +119,18 @@ export function drawRoundIcon(tile, geom, type, large, platformNumber) {
       geom.y / tile.ratio,
       caseRadius * tile.scaleratio,
       0,
-      FULL_CIRCLE,
+      Math.PI * 2,
     );
     tile.ctx.fill();
 
     tile.ctx.beginPath();
-    tile.ctx.fillStyle = getModeColor(type);
+    tile.ctx.fillStyle = getColor(type);
     tile.ctx.arc(
       geom.x / tile.ratio,
       geom.y / tile.ratio,
       stopRadius * tile.scaleratio,
       0,
-      FULL_CIRCLE,
+      Math.PI * 2,
     );
     tile.ctx.fill();
 
@@ -160,7 +142,7 @@ export function drawRoundIcon(tile, geom, type, large, platformNumber) {
         geom.y / tile.ratio,
         hubRadius * tile.scaleratio,
         0,
-        FULL_CIRCLE,
+        Math.PI * 2,
       );
       tile.ctx.fill();
 
@@ -180,59 +162,7 @@ export function drawRoundIcon(tile, geom, type, large, platformNumber) {
       }
     }
   }
-
-  return {
-    iconRadius: stopRadius * tile.scaleratio,
-  };
 }
-
-export const drawRoundIconAlertBadge = async (
-  tile,
-  geometry,
-  iconRadius,
-  alertSeverityLevel,
-  getImage = getImageFromSpriteCache,
-) => {
-  if (!alertSeverityLevel) {
-    return;
-  }
-
-  const iconSize = iconRadius * 2;
-  const badgeSize = iconSize * 3 / 4;
-  if (badgeSize < 7) {
-    return;
-  }
-
-  const isCaution = alertSeverityLevel !== AlertSeverityLevelType.Info;
-  const image = await getImage(
-    `icon-icon_${isCaution ? 'caution-badge-with-halo' : 'info'}`,
-    badgeSize,
-    badgeSize,
-    isCaution ? getFill(`.icon.caution`) : getColor('.icon.info'),
-  );
-
-  const badgeCoords = {
-    x: geometry.x / tile.ratio - iconSize / 2 - badgeSize / 3,
-    y: geometry.y / tile.ratio,
-  };
-
-  // draw a white background circle for the info icon as it's partially transparent
-  if (!isCaution) {
-    tile.ctx.beginPath();
-    tile.ctx.fillStyle = '#fff';
-    tile.ctx.arc(
-      badgeCoords.x + badgeSize / 2,
-      badgeCoords.y + badgeSize / 2,
-      badgeSize / 2 + 1, // + 1 for a small halo effect
-      0,
-      FULL_CIRCLE,
-    );
-    tile.ctx.fill();
-  }
-
-  // draw the alert icon
-  tile.ctx.drawImage(image, badgeCoords.x, badgeCoords.y);
-};
 
 export function drawTerminalIcon(tile, geom, type, name) {
   const iconSize = (getStopRadius(tile.coords.z) * 2.5 + 8) * tile.scaleratio;
@@ -274,6 +204,22 @@ export function drawParkAndRideIcon(tile, geom, width, height) {
   );
 }
 
+export function drawCitybikeIcon(tile, geom, imageSize) {
+  return getImageFromSpriteCache(
+    'icon-icon_citybike',
+    imageSize,
+    imageSize,
+  ).then(image => drawIconImage(image, tile, geom, imageSize, imageSize));
+}
+
+export function drawCitybikeOffIcon(tile, geom, imageSize) {
+  return getImageFromSpriteCache(
+    'icon-icon_citybike_off',
+    imageSize,
+    imageSize,
+  ).then(image => drawIconImage(image, tile, geom, imageSize, imageSize));
+}
+
 export function drawCitybikeNotInUseIcon(tile, geom, imageSize) {
   return getImageFromSpriteCache(
     'icon-icon_not-in-use',
@@ -308,7 +254,7 @@ export function drawAvailabilityBadge(
 }
 
 export function drawIcon(icon, tile, geom, imageSize) {
-  return getImageFromSpriteCache(icon, imageSize, imageSize).then(image => {
+  getImageFromSpriteCache(icon, imageSize, imageSize).then(image => {
     drawIconImage(image, tile, geom, imageSize, imageSize);
   });
 }
@@ -330,7 +276,7 @@ export function drawAvailabilityValue(
 
   tile.ctx.beginPath();
   tile.ctx.fillStyle = value > 3 ? '#4EA700' : '#FF6319';
-  tile.ctx.arc(x, y, radius, 0, FULL_CIRCLE);
+  tile.ctx.arc(x, y, radius, 0, Math.PI * 2);
   tile.ctx.fill();
 
   tile.ctx.font = `${0.7 * badgeSize}px

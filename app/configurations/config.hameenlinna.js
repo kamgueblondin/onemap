@@ -1,4 +1,3 @@
-/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'hameenlinna';
@@ -56,10 +55,6 @@ export default configMerger(walttiConfig, {
     lon: 24.4662911533486,
   },
 
-  defaultSettings: {
-    minTransferTime: 60,
-  },
-
   defaultOrigins: [
     {
       icon: 'icon-icon_bus',
@@ -100,7 +95,7 @@ export default configMerger(walttiConfig, {
       {
         header: 'Tietoja palvelusta',
         paragraphs: [
-          'Tämän palvelun tarjoaa Hämeenlinnan seudun joukkoliikenne reittisuunnittelua varten Hattulan, Hämeenlinnan ja Janakkalan alueella. Palvelu sisältää paikallisen ja seudullisen joukkoliikenteen reitit ja aikataulut. Palvelu perustuu Digitransit-palvelualustaan.',
+          'Tämän palvelun tarjoaa Hämeenlinnan seudun joukkoliikenne reittisuunnittelua varten Hattulan, Hämeenlinnan ja Janakkalan alueella. Palvelu sisältää paikallisen ja seudullisen joukkoliikenteen reitit ja aikataulut. Palvelu perustuu Digitransit palvelualustaan.',
         ],
       },
     ],

@@ -1,27 +1,24 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { intlShape } from 'react-intl';
-
 import CardHeader from './CardHeader';
 import ComponentUsageExample from './ComponentUsageExample';
-import Icon from './Icon';
-import ServiceAlertIcon from './ServiceAlertIcon';
-import ZoneIcon from './ZoneIcon';
-import { getMaximumAlertSeverityLevel } from '../util/alertUtils';
+import InfoIcon from './InfoIcon';
 
 class StopCardHeader extends React.Component {
-  get headerConfig() {
-    return this.context.config.stopCard.header;
-  }
-
   getDescription() {
     let description = '';
 
-    if (this.headerConfig.showDescription && this.props.stop.desc) {
+    if (
+      this.context.config.stopCard.header.showDescription &&
+      this.props.stop.desc
+    ) {
       description += this.props.stop.desc;
     }
 
-    if (this.headerConfig.showDistance && this.props.distance) {
+    if (
+      this.context.config.stopCard.header.showDistance &&
+      this.props.distance
+    ) {
       description += ` // ${Math.round(this.props.distance)} m`;
     }
 
@@ -29,66 +26,38 @@ class StopCardHeader extends React.Component {
   }
 
   render() {
-    const { className, headingStyle, icons, stop } = this.props;
-    if (!stop) {
+    if (!this.props.stop) {
       return false;
     }
 
     return (
       <CardHeader
-        className={className}
-        headerIcon={
-          <ServiceAlertIcon
-            className="inline-icon"
-            severityLevel={getMaximumAlertSeverityLevel(stop.alerts)}
-          />
-        }
-        headingStyle={headingStyle}
-        name={stop.name}
+        className={this.props.className}
+        headingStyle={this.props.headingStyle}
+        name={this.props.stop.name}
         description={this.getDescription()}
-        code={this.headerConfig.showStopCode && stop.code ? stop.code : null}
-        icons={icons}
-      >
-        {this.headerConfig.showZone &&
-          stop.zoneId && <ZoneIcon showTitle zoneId={stop.zoneId} />}
-      </CardHeader>
+        code={
+          this.context.config.stopCard.header.showStopCode &&
+          this.props.stop.code
+            ? this.props.stop.code
+            : null
+        }
+        icons={this.props.icons}
+      />
     );
   }
 }
 
 StopCardHeader.propTypes = {
-  stop: PropTypes.shape({
-    gtfsId: PropTypes.string,
-    name: PropTypes.string,
-    code: PropTypes.string,
-    desc: PropTypes.string,
-    zoneId: PropTypes.string,
-    alerts: PropTypes.arrayOf(
-      PropTypes.shape({ alertSeverityLevel: PropTypes.string }),
-    ),
-  }),
+  stop: PropTypes.object,
   distance: PropTypes.number,
   className: PropTypes.string,
   headingStyle: PropTypes.string,
   icons: PropTypes.arrayOf(PropTypes.node),
 };
 
-StopCardHeader.defaultProps = {
-  stop: undefined,
-};
-
 StopCardHeader.contextTypes = {
-  config: PropTypes.shape({
-    stopCard: PropTypes.shape({
-      header: PropTypes.shape({
-        showDescription: PropTypes.bool,
-        showDistance: PropTypes.bool,
-        showStopCode: PropTypes.bool,
-        showZone: PropTypes.bool,
-      }).isRequired,
-    }).isRequired,
-  }).isRequired,
-  intl: intlShape.isRequired,
+  config: PropTypes.object.isRequired,
 };
 
 const exampleStop = {
@@ -97,6 +66,8 @@ const exampleStop = {
   name: 'Kaivonkatsojanpuisto',
   desc: 'Kaivonkatsojantie',
 };
+
+const exampleIcons = [<InfoIcon stop={exampleStop} key="example" />];
 
 StopCardHeader.displayName = 'StopCardHeader';
 
@@ -109,10 +80,7 @@ StopCardHeader.description = () => (
       <StopCardHeader
         stop={exampleStop}
         distance={345.6}
-        icons={[
-          <Icon className="info" img="icon-icon_info" key="1" />,
-          <Icon className="caution" img="icon-icon_caution" key="2" />,
-        ]}
+        icons={exampleIcons}
       />
     </ComponentUsageExample>
   </div>

@@ -7,7 +7,6 @@ import MainMenuContainer from './MainMenuContainer';
 import ComponentUsageExample from './ComponentUsageExample';
 import MessageBar from './MessageBar';
 import LogoSmall from './LogoSmall';
-import CanceledLegsBar from './CanceledLegsBar';
 
 const AppBarSmall = ({ disableBackButton, showLogo, title, homeUrl, logo }) => (
   <React.Fragment>
@@ -20,7 +19,6 @@ const AppBarSmall = ({ disableBackButton, showLogo, title, homeUrl, logo }) => (
       <MainMenuContainer homeUrl={homeUrl} />
     </nav>
     <MessageBar />
-    <CanceledLegsBar />
   </React.Fragment>
 );
 
@@ -30,12 +28,12 @@ AppBarSmall.description = () => (
   <div>
     <p>AppBar of application for small display</p>
     <ComponentUsageExample description="">
-      <AppBarSmall title="Reittiopas.hsl.fi" className="fullscreen" />
+      <AppBarSmall title="Reittiopas.fi" className="fullscreen" />
     </ComponentUsageExample>
     <ComponentUsageExample description="no back button">
       <AppBarSmall
         disableBackButton
-        title="Reittiopas.hsl.fi"
+        title="Reittiopas.fi"
         className="fullscreen"
       />
     </ComponentUsageExample>

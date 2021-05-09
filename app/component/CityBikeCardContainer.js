@@ -1,13 +1,11 @@
 import PropTypes from 'prop-types';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 import CityBikeCard from './CityBikeCard';
-
 import { toggleFavouriteCityBikeStation } from '../action/FavouriteActions';
-import PreferencesStore from '../store/PreferencesStore';
 
 const CityBikeCardContainer = connectToStores(
   CityBikeCard,
-  ['FavouriteCityBikeStationStore', PreferencesStore],
+  ['FavouriteCityBikeStationStore'],
   (context, props) => ({
     isFavourite: context
       .getStore('FavouriteCityBikeStationStore')
@@ -20,7 +18,6 @@ const CityBikeCardContainer = connectToStores(
         props.station.stationId,
       );
     },
-    language: context.getStore(PreferencesStore).getLanguage(),
   }),
 );
 

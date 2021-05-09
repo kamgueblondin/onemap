@@ -1,228 +1,82 @@
-import cx from 'classnames';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
-import Relay from 'react-relay/classic';
-import { Link } from 'react-router';
-import some from 'lodash/some';
 
 import Icon from './Icon';
-import { RouteAlertsQuery, StopAlertsQuery } from '../util/alertQueries';
-import {
-  getCancelationsForStop,
-  getServiceAlertsForStop,
-  getServiceAlertsForStopRoutes,
-  isAlertActive,
-} from '../util/alertUtils';
-import withBreakpoint from '../util/withBreakpoint';
 
-const Tab = {
-  Disruptions: 'hairiot',
-  RightNow: 'right-now',
-  RoutesAndPlatforms: 'linjat',
-  Timetable: 'aikataulu',
-};
+class StopPageTabContainer extends React.Component {
+  static propTypes = {
+    selectedTab: PropTypes.func.isRequired,
+  };
 
-const getActiveTab = pathname => {
-  if (pathname.indexOf(`/${Tab.Disruptions}`) > -1) {
-    return Tab.Disruptions;
-  }
-  if (pathname.indexOf(`/${Tab.RoutesAndPlatforms}`) > -1) {
-    return Tab.RoutesAndPlatforms;
-  }
-  if (pathname.indexOf(`/${Tab.Timetable}`) > -1) {
-    return Tab.Timetable;
-  }
-  return Tab.RightNow;
-};
-
-function StopPageTabContainer({
-  children,
-  params,
-  routes,
-  breakpoint,
-  location: { pathname },
-  stop,
-}) {
-  if (!stop || (some(routes, 'fullscreenMap') && breakpoint !== 'large')) {
-    return null;
+  constructor(props) {
+    super(props);
+    this.state = {
+      active: 'right-now', // show departures as the default
+    };
   }
 
-  const activeTab = getActiveTab(pathname);
-  const isTerminal = params.terminalId != null;
-  const urlBase = `/${
-    isTerminal ? 'terminaalit' : 'pysakit'
-  }/${encodeURIComponent(
-    params.terminalId ? params.terminalId : params.stopId,
-  )}`;
+  selectedTab = val => {
+    this.props.selectedTab(val);
+  };
 
-  const currentTime = moment().unix();
-  const hasActiveAlert = isAlertActive(
-    getCancelationsForStop(stop),
-    [...getServiceAlertsForStop(stop), ...getServiceAlertsForStopRoutes(stop)],
-    currentTime,
-  );
-
-  return (
-    <div className="stop-page-content-wrapper">
-      <div>
-        <div className="stop-tab-container">
-          <Link
-            to={urlBase}
-            className={cx('stop-tab-singletab', {
-              active: activeTab === Tab.RightNow,
-            })}
-          >
-            <div className="stop-tab-singletab-container">
-              <div>
-                <Icon
-                  className="stop-page-tab_icon"
-                  img="icon-icon_right-now"
-                />
-              </div>
-              <div>
-                <FormattedMessage id="right-now" defaultMessage="right now" />
-              </div>
+  render() {
+    return (
+      <div className="stop-tab-container">
+        <button
+          className={`stop-tab-singletab ${
+            this.state.active === 'right-now' ? 'active' : 'inactive'
+          }`}
+          onClick={() => {
+            this.setState({ active: 'right-now' });
+            this.selectedTab('right-now');
+          }}
+        >
+          <div className="stop-tab-singletab-container">
+            <div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={24}
+                height={24}
+                viewBox="0 0 1024 1024"
+              >
+                <path d="M368.356 1024.014c-44.781 0-81.079-36.302-81.079-81.079 0-361.528 294.123-655.658 655.651-655.658 44.781 0 81.079 36.302 81.079 81.079s-36.298 81.079-81.079 81.079c-272.112 0-493.497 221.385-493.497 493.5 0.004 44.773-36.295 81.079-81.075 81.079z" />
+                <path d="M81.072 1024.014c-44.781 0-81.079-36.302-81.079-81.079 0-519.948 423.002-942.946 942.939-942.946 44.781 0 81.079 36.302 81.079 81.079s-36.298 81.079-81.079 81.079c-430.524 0-780.781 350.257-780.781 780.788 0 44.773-36.298 81.079-81.079 81.079z" />
+              </svg>
             </div>
-          </Link>
-          <Link
-            to={`${urlBase}/${Tab.Timetable}`}
-            className={cx('stop-tab-singletab', {
-              active: activeTab === Tab.Timetable,
-            })}
-          >
-            <div className="stop-tab-singletab-container">
-              <div>
-                <Icon className="stop-page-tab_icon" img="icon-icon_schedule" />
-              </div>
-              <div>
-                <FormattedMessage id="timetable" defaultMessage="timetable" />
-              </div>
+            <div>
+              <FormattedMessage id="right-now" defaultMessage="right now" />
             </div>
-          </Link>
-          <Link
-            to={`${urlBase}/${Tab.RoutesAndPlatforms}`}
-            className={cx('stop-tab-singletab', {
-              active: activeTab === Tab.RoutesAndPlatforms,
-            })}
-          >
-            <div className="stop-tab-singletab-container">
-              <div>
-                <Icon className="stop-page-tab_icon" img="icon-icon_info" />
-              </div>
-              <div>
-                <FormattedMessage
-                  id="routes-platforms"
-                  defaultMessage="routes-platforms"
-                />
-              </div>
+          </div>
+        </button>
+        <button
+          className={`stop-tab-singletab ${
+            this.state.active === 'timetable' ? 'active' : 'inactive'
+          }`}
+          onClick={() => {
+            this.setState({ active: 'timetable' });
+            this.selectedTab('timetable');
+          }}
+        >
+          <div className="stop-tab-singletab-container">
+            <div>
+              <Icon img="icon-icon_schedule" className="stop-page-tab_icon" />
             </div>
-          </Link>
-          <Link
-            to={`${urlBase}/${Tab.Disruptions}`}
-            className={cx('stop-tab-singletab', {
-              active: activeTab === Tab.Disruptions,
-              'alert-active': hasActiveAlert,
-            })}
-          >
-            <div className="stop-tab-singletab-container">
-              <div>
-                <Icon
-                  className="stop-page-tab_icon"
-                  img={hasActiveAlert ? 'icon-icon_caution' : 'icon-icon_info'}
-                />
-              </div>
-              <div>
-                <FormattedMessage id="disruptions" />
-              </div>
+            <div>
+              <FormattedMessage id="timetable" defaultMessage="timetable" />
             </div>
-          </Link>
-        </div>
-        <div className="stop-tabs-fillerline" />
+          </div>
+        </button>
+        {
+          // <div
+          // className={`stop-tab-singletab add-info ${this.state.active === 'add-info'
+          // ? 'active' : 'inactive'}`}
+          // onClick={() => { this.setState({ active: 'add-info' }); }}
+          // />
+        }
       </div>
-      {children}
-    </div>
-  );
+    );
+  }
 }
 
-const alertArrayShape = PropTypes.arrayOf(
-  PropTypes.shape({ alertSeverityLevel: PropTypes.string }),
-);
-
-StopPageTabContainer.propTypes = {
-  children: PropTypes.node.isRequired,
-  breakpoint: PropTypes.string.isRequired,
-  params: PropTypes.oneOfType([
-    PropTypes.shape({ stopId: PropTypes.string.isRequired }).isRequired,
-    PropTypes.shape({ terminalId: PropTypes.string.isRequired }).isRequired,
-  ]).isRequired,
-  routes: PropTypes.arrayOf(
-    PropTypes.shape({
-      fullscreenMap: PropTypes.bool,
-    }).isRequired,
-  ).isRequired,
-  location: PropTypes.shape({
-    pathname: PropTypes.string.isRequired,
-  }).isRequired,
-  stop: PropTypes.shape({
-    alerts: alertArrayShape,
-    stoptimes: PropTypes.arrayOf(
-      PropTypes.shape({
-        realtimeState: PropTypes.string,
-        trip: PropTypes.shape({
-          pattern: PropTypes.shape({
-            code: PropTypes.string,
-          }),
-          route: PropTypes.shape({
-            alerts: alertArrayShape,
-            trip: PropTypes.shape({
-              pattern: PropTypes.shape({
-                code: PropTypes.string,
-              }),
-            }),
-          }),
-        }),
-      }),
-    ),
-  }),
-};
-
-StopPageTabContainer.defaultProps = {
-  stop: undefined,
-};
-
-const containerComponent = Relay.createContainer(
-  withBreakpoint(StopPageTabContainer),
-  {
-    fragments: {
-      stop: () => Relay.QL`
-        fragment on Stop {
-          ${StopAlertsQuery}
-          stoptimes: stoptimesWithoutPatterns(
-            startTime:$startTime,
-            timeRange:$timeRange,
-            numberOfDepartures:100,
-            omitCanceled:false
-          ) {
-            realtimeState
-            trip {
-              pattern {
-                code
-              }
-              route {
-                ${RouteAlertsQuery}
-              }
-            }
-          }
-        }
-      `,
-    },
-    initialVariables: {
-      startTime: moment().unix() - 60 * 5, // 5 mins in the past
-      timeRange: 60 * 15, // -5 + 15 = 10 mins in the future
-    },
-  },
-);
-
-export { containerComponent as default, StopPageTabContainer as Component };
+export default StopPageTabContainer;

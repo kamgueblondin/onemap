@@ -1,5 +1,7 @@
 import { isBrowser, isWindowsPhone, isIOSApp } from '../util/browser';
-import { OptimizeType } from '../constants';
+
+const getLocalStorage = runningInBrowser =>
+  runningInBrowser ? window.localStorage : global.localStorage;
 
 function handleSecurityError(error, logMessage) {
   if (error.name === 'SecurityError') {
@@ -10,22 +12,6 @@ function handleSecurityError(error, logMessage) {
     throw error;
   }
 }
-
-export const getLocalStorage = (
-  runningInBrowser,
-  errorHandler = handleSecurityError,
-) => {
-  if (runningInBrowser) {
-    try {
-      return window.localStorage;
-    } catch (error) {
-      errorHandler(error);
-      return null;
-    }
-  } else {
-    return global.localStorage;
-  }
-};
 
 function setItem(key, value) {
   const localStorage = getLocalStorage(isBrowser);
@@ -83,85 +69,32 @@ export function removeItem(k) {
 }
 
 export function getCustomizedSettings() {
-  return getItemAsJson('customizedSettings', '{}');
+  return getItemAsJson('customizedSettings');
 }
 
 export function setCustomizedSettings(data) {
-  const getNumberValueOrDefault = (value, defaultValue) =>
-    value !== undefined && value !== null ? Number(value) : defaultValue;
-  const getValueOrDefault = (value, defaultValue) =>
-    value !== undefined ? value : defaultValue;
-
   // Get old settings and test if set values have changed
   const oldSettings = getCustomizedSettings();
-  const optimize = getValueOrDefault(data.optimize, oldSettings.optimize);
-
   const newSettings = {
-    accessibilityOption: getNumberValueOrDefault(
-      data.accessibilityOption,
-      oldSettings.accessibilityOption,
-    ),
-    bikeSpeed: getNumberValueOrDefault(data.bikeSpeed, oldSettings.bikeSpeed),
-    minTransferTime: getNumberValueOrDefault(
-      data.minTransferTime,
-      oldSettings.minTransferTime,
-    ),
-    modes: getValueOrDefault(data.modes, oldSettings.modes),
-    optimize,
-    preferredRoutes: getValueOrDefault(
-      data.preferredRoutes,
-      oldSettings.preferredRoutes,
-    ),
-    ticketTypes: getValueOrDefault(data.ticketTypes, oldSettings.ticketTypes),
-    transferPenalty: getNumberValueOrDefault(
-      data.transferPenalty,
-      oldSettings.transferPenalty,
-    ),
-    unpreferredRoutes: getValueOrDefault(
-      data.unpreferredRoutes,
-      oldSettings.unpreferredRoutes,
-    ),
-    walkBoardCost: getNumberValueOrDefault(
-      data.walkBoardCost,
-      oldSettings.walkBoardCost,
-    ),
-    walkReluctance: getNumberValueOrDefault(
-      data.walkReluctance,
-      oldSettings.walkReluctance,
-    ),
-    walkSpeed: getNumberValueOrDefault(data.walkSpeed, oldSettings.walkSpeed),
+    accessibilityOption: !(typeof data.accessibilityOption === 'undefined')
+      ? data.accessibilityOption
+      : oldSettings.accessibilityOption,
+    minTransferTime: data.minTransferTime
+      ? data.minTransferTime
+      : oldSettings.minTransferTime,
+    modes: data.modes ? data.modes : oldSettings.modes,
+    walkBoardCost: data.walkBoardCost
+      ? data.walkBoardCost
+      : oldSettings.walkBoardCost,
+    walkReluctance: data.walkReluctance
+      ? data.walkReluctance
+      : oldSettings.walkReluctance,
+    walkSpeed: data.walkSpeed ? data.walkSpeed : oldSettings.walkSpeed,
+    ticketTypes: data.ticketTypes ? data.ticketTypes : oldSettings.ticketTypes,
+    transferPenalty: data.transferPenalty
+      ? data.transferPenalty
+      : oldSettings.transferPenalty,
   };
-  if (optimize === OptimizeType.Triangle) {
-    newSettings.safetyFactor = getNumberValueOrDefault(
-      data.safetyFactor,
-      oldSettings.safetyFactor,
-    );
-    newSettings.slopeFactor = getNumberValueOrDefault(
-      data.slopeFactor,
-      oldSettings.slopeFactor,
-    );
-    newSettings.timeFactor = getNumberValueOrDefault(
-      data.timeFactor,
-      oldSettings.timeFactor,
-    );
-  } else {
-    delete newSettings.safetyFactor;
-    delete newSettings.slopeFactor;
-    delete newSettings.timeFactor;
-  }
-  if (
-    newSettings.preferredRoutes !== undefined &&
-    newSettings.preferredRoutes.length === 0
-  ) {
-    delete newSettings.preferredRoutes;
-  }
-  if (
-    newSettings.unpreferredRoutes !== undefined &&
-    newSettings.unpreferredRoutes.length === 0
-  ) {
-    delete newSettings.unpreferredRoutes;
-  }
-
   setItem('customizedSettings', newSettings);
 }
 
@@ -342,32 +275,3 @@ export function setHistory(history) {
 export function getHistory() {
   return getItemAsJson('history', '{"entries":["/"], "index":0, "time":0}');
 }
-
-export const setMapLayerSettings = settings => {
-  setItem('map-layers', settings);
-};
-
-export const getMapLayerSettings = () => getItemAsJson('map-layers', '{}');
-
-/**
- * Sets the seen state of the given dialog.
- *
- * @param {string} dialogId The identifier of the dialog. Will be ignored if falsey.
- * @param {boolean} seen Whether the dialog has been seen. Defaults to true.
- */
-export const setDialogState = (dialogId, seen = true) => {
-  if (!dialogId) {
-    return;
-  }
-  const dialogStates = getItemAsJson('dialogState', '{}');
-  dialogStates[`${dialogId}`] = seen;
-  setItem('dialogState', dialogStates);
-};
-
-/**
- * Checks if the given dialog has been seen by the user.
- *
- * @param {string} dialogId The identifier of the dialog.
- */
-export const getDialogState = dialogId =>
-  getItemAsJson('dialogState', '{}')[`${dialogId}`] === true;

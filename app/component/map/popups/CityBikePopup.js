@@ -64,7 +64,6 @@ export default Relay.createContainer(CityBikePopup, {
         bikesAvailable
         spacesAvailable
         state
-        networks
       }
     `,
   },

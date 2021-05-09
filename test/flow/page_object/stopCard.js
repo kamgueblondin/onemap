@@ -47,14 +47,13 @@ module.exports = {
       selector: '.card-header .sub-header-h4',
     },
     cardName: {
-      selector:
-        '.card-header > .card-header-content > .card-header-wrapper > .h3',
+      selector: '.card-header > .card-header-wrapper > .h3',
     },
     departure: {
       selector: '.route-detail-text',
     },
     inactiveTab: {
-      selector: '.stop-tab-singletab:not(.active)',
+      selector: '.stop-tab-singletab.inactive',
     },
     timetable: {
       selector: '.timetable',

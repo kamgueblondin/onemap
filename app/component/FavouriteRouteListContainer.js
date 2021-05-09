@@ -4,15 +4,11 @@ import connectToStores from 'fluxible-addons-react/connectToStores';
 import NextDeparturesList from './NextDeparturesList';
 import { getDistanceToNearestStop } from '../util/geo-utils';
 
-export const getNextDepartures = (routes, lat, lon) => {
+const getNextDepartures = (routes, lat, lon) => {
   const nextDepartures = [];
   const seenDepartures = {};
 
   routes.forEach(route => {
-    if (!route) {
-      return;
-    }
-
     const hasDisruption = route.alerts.length > 0;
 
     route.patterns.forEach(pattern => {

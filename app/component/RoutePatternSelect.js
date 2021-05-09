@@ -2,17 +2,11 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Relay from 'react-relay/classic';
 import cx from 'classnames';
-import sortBy from 'lodash/sortBy';
 import { routerShape } from 'react-router';
 import connectToStores from 'fluxible-addons-react/connectToStores';
-import moment from 'moment';
-
 import Icon from './Icon';
 import ComponentUsageExample from './ComponentUsageExample';
-import {
-  routePatterns as exampleRoutePatterns,
-  twoRoutePatterns as exampleTwoRoutePatterns,
-} from './ExampleData';
+import { routePatterns as exampleRoutePatterns } from './ExampleData';
 import { PREFIX_ROUTES } from '../util/path';
 
 const DATE_FORMAT = 'YYYYMMDD';
@@ -57,7 +51,7 @@ class RoutePatternSelect extends Component {
         o => o.tripsForDate && o.tripsForDate.length > 0,
       ) === undefined &&
         this.props.activeTab === 'aikataulu')
-        ? sortBy(this.props.route.patterns, 'code')
+        ? this.props.route.patterns
             .filter(
               o =>
                 this.props.activeTab !== 'aikataulu'
@@ -95,94 +89,34 @@ class RoutePatternSelect extends Component {
             ) === undefined && this.props.activeTab !== 'aikataulu',
         })}
       >
-        {options.length > 2 || options.length === 1 ? (
-          <React.Fragment>
-            <Icon img="icon-icon_arrow-dropdown" />
-            <select
-              id="select-route-pattern"
-              onChange={e => this.props.onSelectChange(e.target.value)}
-              value={this.props.params && this.props.params.patternId}
-            >
-              {options}
-            </select>
-          </React.Fragment>
-        ) : (
-          <div className="route-patterns-toggle">
-            <div
-              className="route-option"
-              role="button"
-              tabIndex={0}
-              onKeyPress={() =>
-                this.props.onSelectChange(
-                  options.find(
-                    o => o.props.value !== this.props.params.patternId,
-                  ).props.value,
-                )
-              }
-              onClick={() =>
-                this.props.onSelectChange(
-                  options.find(
-                    o => o.props.value !== this.props.params.patternId,
-                  ).props.value,
-                )
-              }
-            >
-              {
-                options.filter(
-                  o => o.props.value === this.props.params.patternId,
-                )[0]
-              }
-            </div>
-
-            <button
-              type="button"
-              className="toggle-direction"
-              onClick={() =>
-                this.props.onSelectChange(
-                  options.find(
-                    o => o.props.value !== this.props.params.patternId,
-                  ).props.value,
-                )
-              }
-            >
-              <Icon img="icon-icon_direction-b" />
-            </button>
-          </div>
-        )}
+        <Icon img="icon-icon_arrow-dropdown" />
+        <select
+          onChange={this.props.onSelectChange}
+          value={this.props.params && this.props.params.patternId}
+        >
+          {options}
+        </select>
       </div>
     );
   }
 }
 
-const defaultProps = {
-  activeTab: 'pysakit',
-  className: 'bp-large',
-  serviceDay: '20190306',
-  relay: {
-    setVariables: () => {},
-  },
-  params: {
-    routeId: 'HSL:1010',
-    patternId: 'HSL:1010:0:01',
-  },
-};
-
 RoutePatternSelect.description = () => (
   <div>
     <p>Display a dropdown to select the pattern for a route</p>
     <ComponentUsageExample>
-      <RoutePatternSelect route={exampleRoutePatterns} {...defaultProps} />
-    </ComponentUsageExample>
-    <ComponentUsageExample>
-      <RoutePatternSelect route={exampleTwoRoutePatterns} {...defaultProps} />
+      <RoutePatternSelect
+        pattern={exampleRoutePatterns}
+        onSelectChange={() => {}}
+      />
     </ComponentUsageExample>
   </div>
 );
 
-const withStore = connectToStores(
+export default connectToStores(
   Relay.createContainer(RoutePatternSelect, {
     initialVariables: {
-      serviceDay: moment().format(DATE_FORMAT),
+      serviceDay: '19700101',
     },
     fragments: {
       route: () => Relay.QL`
@@ -217,5 +151,3 @@ const withStore = connectToStores(
       .format(DATE_FORMAT),
   }),
 );
-
-export { withStore as default, RoutePatternSelect as Component };

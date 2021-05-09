@@ -1,9 +1,8 @@
-import cx from 'classnames';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { FormattedMessage } from 'react-intl';
 import { Link } from 'react-router';
+import moment from 'moment';
+import { FormattedMessage } from 'react-intl';
 
 import RouteNumber from './RouteNumber';
 import Icon from './Icon';
@@ -14,11 +13,6 @@ import IntermediateLeg from './IntermediateLeg';
 import PlatformNumber from './PlatformNumber';
 import ItineraryCircleLine from './ItineraryCircleLine';
 import { PREFIX_ROUTES } from '../util/path';
-import {
-  legHasActiveAlert,
-  legHasCancelation,
-  tripHasCancelationForStop,
-} from '../util/alertUtils';
 
 class TransitLeg extends React.Component {
   constructor(props) {
@@ -31,95 +25,65 @@ class TransitLeg extends React.Component {
   stopCode = stopCode => stopCode && <StopCode code={stopCode} />;
 
   toggleShowIntermediateStops = () => {
-    window.dataLayer.push({
-      event: 'sendMatomoEvent',
-      category: 'ItinerarySettings',
-      action: 'IntermediateStopsClick',
-      name: this.state.showIntermediateStops
-        ? 'IntermediateStopsCollapse'
-        : 'IntermediateStopsExpand',
-    });
-
-    this.setState(prevState => ({
-      showIntermediateStops: !prevState.showIntermediateStops,
-    }));
+    if (this.context.piwik != null) {
+      this.context.piwik.trackEvent(
+        'ItinerarySettings',
+        'IntermediateStopsClick',
+        this.state.showIntermediateStops
+          ? 'IntermediateStopsCollapse'
+          : 'IntermediateStopsExpand',
+      );
+    }
+    this.setState({ showIntermediateStops: !this.state.showIntermediateStops });
   };
 
   renderIntermediate() {
-    const { leg, mode } = this.props;
     if (
-      leg.intermediatePlaces.length > 0 &&
+      this.props.leg.intermediatePlaces.length > 0 &&
       this.state.showIntermediateStops === true
     ) {
-      const stopList = leg.intermediatePlaces.map((place, i, array) => {
-        const isFirstPlace = i === 0;
-        const isLastPlace = i === array.length - 1;
-        const isCanceled = tripHasCancelationForStop(leg.trip, place.stop);
-
-        const previousZoneId =
-          (array[i - 1] && array[i - 1].stop.zoneId) ||
-          (isFirstPlace && leg.from.stop.zoneId);
-        const currentZoneId = place.stop.zoneId;
-        const nextZoneId =
-          (array[i + 1] && array[i + 1].stop.zoneId) ||
-          (isLastPlace && leg.to.stop.zoneId);
-
-        const previousZoneIdDiffers =
-          previousZoneId && previousZoneId !== currentZoneId;
-        const nextZoneIdDiffers = nextZoneId && nextZoneId !== currentZoneId;
-        const showCurrentZoneId = previousZoneIdDiffers || nextZoneIdDiffers;
-
-        return (
-          <IntermediateLeg
-            color={leg.route ? `#${leg.route.color}` : 'currentColor'}
-            key={place.stop.gtfsId}
-            mode={mode}
-            name={place.stop.name}
-            arrivalTime={place.arrivalTime}
-            realTime={leg.realTime}
-            stopCode={place.stop.code}
-            focusFunction={this.context.focusFunction({
-              lat: place.stop.lat,
-              lon: place.stop.lon,
-            })}
-            showZoneLimits={this.context.config.itinerary.showZoneLimits}
-            showCurrentZoneDelimiter={previousZoneIdDiffers}
-            previousZoneId={
-              (isFirstPlace && previousZoneIdDiffers && previousZoneId) ||
-              undefined
-            }
-            currentZoneId={(showCurrentZoneId && currentZoneId) || undefined}
-            nextZoneId={
-              (isLastPlace && nextZoneIdDiffers && nextZoneId) || undefined
-            }
-            isCanceled={isCanceled}
-          />
-        );
-      });
+      const stopList = this.props.leg.intermediatePlaces.map(place => (
+        <IntermediateLeg
+          color={
+            this.props.leg.route
+              ? `#${this.props.leg.route.color}`
+              : 'currentColor'
+          }
+          key={place.stop.gtfsId}
+          mode={this.props.mode}
+          name={place.stop.name}
+          arrivalTime={place.arrivalTime}
+          realTime={this.props.leg.realTime}
+          stopCode={place.stop.code}
+          focusFunction={this.context.focusFunction({
+            lat: place.stop.lat,
+            lon: place.stop.lon,
+          })}
+        />
+      ));
       return <div className="itinerary-leg-container">{stopList}</div>;
     }
     return null;
   }
 
   renderMain = () => {
-    const { children, focusAction, index, leg, mode } = this.props;
-    const originalTime = leg.realTime &&
-      leg.departureDelay &&
-      leg.departureDelay >= this.context.config.itinerary.delayThreshold && [
+    const originalTime = this.props.leg.realTime &&
+      this.props.leg.departureDelay >=
+        this.context.config.itinerary.delayThreshold && [
         <br key="br" />,
         <span key="time" className="original-time">
-          {moment(leg.startTime)
-            .subtract(leg.departureDelay, 's')
+          {moment(this.props.leg.startTime)
+            .subtract(this.props.leg.departureDelay, 's')
             .format('HH:mm')}
         </span>,
       ];
 
-    const firstLegClassName = index === 0 ? ' start' : '';
+    const firstLegClassName = this.props.index === 0 ? ' start' : '';
     /* const modeClassName =
       `${this.props.mode.toLowerCase()}${this.props.index === 0 ? ' from' : ''}`;
     */
-    const modeClassName = mode.toLowerCase();
-    const StopInfo = ({ stops, leg: stopLeg, toggleFunction }) => {
+    const modeClassName = this.props.mode.toLowerCase();
+    const StopInfo = ({ stops, leg, toggleFunction }) => {
       const stopCount = (stops && stops.length) || 0;
       const message = (this.state.showIntermediateStops && (
         <FormattedMessage
@@ -152,59 +116,76 @@ class TransitLeg extends React.Component {
             </span>
           )}{' '}
           <span className="intermediate-stops-duration">
-            ({durationToString(stopLeg.duration * 1000)})
+            ({durationToString(leg.duration * 1000)})
           </span>
         </div>
       );
     };
 
     return (
-      <div key={index} className="row itinerary-row">
+      <div key={this.props.index} className="row itinerary-row">
         <div className="small-2 columns itinerary-time-column">
           <Link
             onClick={e => e.stopPropagation()}
             to={
-              `/${PREFIX_ROUTES}/${leg.route.gtfsId}/pysakit/${
-                leg.trip.pattern.code
-              }/${leg.trip.gtfsId}`
+              `/${PREFIX_ROUTES}/${this.props.leg.route.gtfsId}/pysakit/${
+                this.props.leg.trip.pattern.code
+              }/${this.props.leg.trip.gtfsId}`
               // TODO: Create a helper function for generationg links
             }
           >
             <div className="itinerary-time-column-time">
-              <span className={cx({ canceled: legHasCancelation(leg) })}>
-                {moment(leg.startTime).format('HH:mm')}
+              <span className={this.props.leg.realTime ? 'realtime' : ''}>
+                {this.props.leg.realTime && (
+                  <Icon
+                    img="icon-icon_realtime"
+                    className="realtime-icon realtime"
+                  />
+                )}
+                {moment(this.props.leg.startTime).format('HH:mm')}
               </span>
               {originalTime}
             </div>
             <RouteNumber //  shouldn't this be a route number container instead???
-              mode={mode.toLowerCase()}
-              color={leg.route ? `#${leg.route.color}` : 'currentColor'}
-              hasDisruption={legHasActiveAlert(leg)}
-              text={leg.route && leg.route.shortName}
-              realtime={leg.realTime}
+              mode={this.props.mode.toLowerCase()}
+              color={
+                this.props.leg.route
+                  ? `#${this.props.leg.route.color}`
+                  : 'currentColor'
+              }
+              text={this.props.leg.route && this.props.leg.route.shortName}
+              realtime={this.props.leg.realTime}
               vertical
               fadeLong
             />
           </Link>
         </div>
         <ItineraryCircleLine
-          index={index}
+          index={this.props.index}
           modeClassName={modeClassName}
-          color={leg.route ? `#${leg.route.color}` : 'currentColor'}
+          color={
+            this.props.leg.route
+              ? `#${this.props.leg.route.color}`
+              : 'currentColor'
+          }
         />
         <div
           style={{
-            color: leg.route ? `#${leg.route.color}` : 'currentColor',
+            color: this.props.leg.route
+              ? `#${this.props.leg.route.color}`
+              : 'currentColor',
           }}
-          onClick={focusAction}
+          onClick={this.props.focusAction}
           className={`small-9 columns itinerary-instruction-column ${firstLegClassName} ${modeClassName}`}
         >
           <div className="itinerary-leg-first-row">
             <div>
-              {leg.from.name}
-              {this.stopCode(leg.from.stop && leg.from.stop.code)}
+              {this.props.leg.from.name}
+              {this.stopCode(
+                this.props.leg.from.stop && this.props.leg.from.stop.code,
+              )}
               <PlatformNumber
-                number={leg.from.stop.platformCode}
+                number={this.props.leg.from.stop.platformCode}
                 short={false}
               />
             </div>
@@ -213,13 +194,15 @@ class TransitLeg extends React.Component {
               className="itinerary-search-icon"
             />
           </div>
-          <div className="itinerary-transit-leg-route">{children}</div>
-          <LegAgencyInfo leg={leg} />
+          <div className="itinerary-transit-leg-route">
+            {this.props.children}
+          </div>
+          <LegAgencyInfo leg={this.props.leg} />
           <div>
             <StopInfo
               toggleFunction={this.toggleShowIntermediateStops}
-              leg={leg}
-              stops={leg.intermediatePlaces}
+              leg={this.props.leg}
+              stops={this.props.leg.intermediatePlaces}
             />
           </div>
         </div>
@@ -229,23 +212,20 @@ class TransitLeg extends React.Component {
 
   render() {
     return (
-      <React.Fragment>
-        {this.renderMain()}
-        {this.renderIntermediate()}
-      </React.Fragment>
+      <div>
+        {[].concat([this.renderMain()]).concat([this.renderIntermediate()])}
+      </div>
     );
   }
 }
 
 TransitLeg.propTypes = {
   leg: PropTypes.shape({
-    realtimeState: PropTypes.string,
     realTime: PropTypes.bool,
     from: PropTypes.shape({
       stop: PropTypes.shape({
         code: PropTypes.string,
         platformCode: PropTypes.string,
-        zoneId: PropTypes.string,
       }).isRequired,
       name: PropTypes.string.isRequired,
     }).isRequired,
@@ -254,11 +234,6 @@ TransitLeg.propTypes = {
       shortName: PropTypes.string,
       color: PropTypes.string,
     }).isRequired,
-    to: PropTypes.shape({
-      stop: PropTypes.shape({
-        zoneId: PropTypes.string,
-      }).isRequired,
-    }).isRequired,
     trip: PropTypes.shape({
       gtfsId: PropTypes.string.isRequired,
       pattern: PropTypes.shape({
@@ -266,7 +241,7 @@ TransitLeg.propTypes = {
       }).isRequired,
     }).isRequired,
     startTime: PropTypes.number.isRequired,
-    departureDelay: PropTypes.number,
+    departureDelay: PropTypes.number.isRequired,
     intermediatePlaces: PropTypes.arrayOf(
       PropTypes.shape({
         arrivalTime: PropTypes.number.isRequired,
@@ -274,10 +249,9 @@ TransitLeg.propTypes = {
           gtfsId: PropTypes.string.isRequired,
           code: PropTypes.string,
           platformCode: PropTypes.string,
-          zoneId: PropTypes.string,
         }).isRequired,
       }),
-    ).isRequired,
+    ),
   }).isRequired,
   index: PropTypes.number.isRequired,
   mode: PropTypes.string.isRequired,
@@ -287,12 +261,8 @@ TransitLeg.propTypes = {
 
 TransitLeg.contextTypes = {
   focusFunction: PropTypes.func.isRequired,
-  config: PropTypes.shape({
-    itinerary: PropTypes.shape({
-      delayThreshold: PropTypes.number,
-      showZoneLimits: PropTypes.bool,
-    }).isRequired,
-  }).isRequired,
+  config: PropTypes.object.isRequired,
+  piwik: PropTypes.object,
 };
 
 export default TransitLeg;

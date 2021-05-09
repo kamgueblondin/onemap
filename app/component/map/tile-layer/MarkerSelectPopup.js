@@ -20,8 +20,7 @@ function MarkerSelectPopup(props) {
           selectRow={() => props.selectRow(option)}
         />
       );
-    }
-    if (option.layer === 'stop') {
+    } else if (option.layer === 'stop') {
       return (
         <SelectStopRow
           {...option.feature.properties}
@@ -29,17 +28,15 @@ function MarkerSelectPopup(props) {
           selectRow={() => props.selectRow(option)}
         />
       );
-    }
-    if (option.layer === 'citybike') {
+    } else if (option.layer === 'citybike') {
       return (
         <SelectCityBikeRow
           {...option.feature.properties}
-          key={`citybike:${option.feature.properties.id}`}
+          key={option.feature.properties.stationId}
           selectRow={() => props.selectRow(option)}
         />
       );
-    }
-    if (option.layer === 'parkAndRide') {
+    } else if (option.layer === 'parkAndRide') {
       return (
         <SelectParkAndRideRow
           {...option.feature.properties}
@@ -47,8 +44,7 @@ function MarkerSelectPopup(props) {
           selectRow={() => props.selectRow(option)}
         />
       );
-    }
-    if (option.layer === 'ticketSales') {
+    } else if (option.layer === 'ticketSales') {
       return (
         <SelectTicketSalesRow
           {...option.feature.properties}

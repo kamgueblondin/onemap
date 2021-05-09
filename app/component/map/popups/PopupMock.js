@@ -15,22 +15,19 @@ const PopupMock = props => {
   let height;
   switch (props.size) {
     case 'small':
-      height = 10;
+      height = 8;
+      break;
+    case 'large':
+      height = 19;
       break;
     case 'medium':
     default:
-      height = 16;
-      break;
-    case 'large':
-      height = 21;
+      height = 14;
       break;
   }
 
   return (
-    <div
-      className="leaflet-container"
-      style={{ height: `${height}rem`, position: 'relative' }}
-    >
+    <div className="leaflet-container" style={{ height: `${height}rem` }}>
       <div
         className="leaflet-popup popup leaflet-zoom-animated"
         style={{ transform: `translate3d(30px, 10px, 0)` }}

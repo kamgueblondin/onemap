@@ -32,19 +32,15 @@ You must use following additional variables:
 - `-e PIWIK_ID=<..>`
 - `-e NODE_ENV=production`
 
-There are also optional variables:
-- `-e API_URL=<..>`
-- `-e MAP_URL=<..>`
-- `-e OTP_URL=<..>`
-- `-e ASSET_URL=<..>`
-- `-e RELAY_FETCH_TIMEOUT=<..>`
-- `-e NODE_OPTS=<..>`
-
 ## Build new snapshot image
 Only Linux and Mac OS are supported.
 
-### Build a new docker image
-- `docker build -t hsldevcom/digitransit-ui .`
+### Build new latest image
+- `./release`
 
-### Releases
-- Done through automated builds in travis
+### Build new release image
+- `./release release`
+
+### Push images to Dockerhub
+- Login to docker `docker login`
+- Push `docker push hsldevcom/digitransit-ui`

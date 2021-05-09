@@ -1,12 +1,9 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import cx from 'classnames';
-import { FormattedMessage, intlShape } from 'react-intl';
-
-import DepartureTime from './DepartureTime';
-import Icon from './Icon';
 import RouteNumberContainer from './RouteNumberContainer';
 import RouteDestination from './RouteDestination';
+import DepartureTime from './DepartureTime';
 import PlatformNumber from './PlatformNumber';
 import ComponentUsageExample from './ComponentUsageExample';
 import { isCallAgencyDeparture } from '../util/legUtils';
@@ -16,61 +13,41 @@ import {
   realtimeDeparture as exampleRealtimeDeparture,
 } from './ExampleData';
 
-function Departure({
-  canceled,
-  className,
-  currentTime,
-  departure,
-  hasDisruption,
-  isArrival,
-  isLastStop,
-  showPlatformCode,
-  staticDeparture,
-  useUTC,
-}) {
-  const mode = departure.pattern.route.mode.toLowerCase();
+function Departure(props) {
+  const mode = props.departure.pattern.route.mode.toLowerCase();
 
   let platformNumber = false;
-  if (showPlatformCode && departure.stop.platformCode) {
-    platformNumber = <PlatformNumber number={departure.stop.platformCode} />;
+  if (props.showPlatformCode && props.departure.stop.platformCode) {
+    platformNumber = (
+      <PlatformNumber number={props.departure.stop.platformCode} />
+    );
   }
 
   return (
-    <p className={cx('departure', 'route-detail-text', className)}>
-      {!staticDeparture && (
-        <DepartureTime
-          departureTime={departure.stoptime}
-          realtime={departure.realtime}
-          currentTime={currentTime}
-          canceled={canceled}
-          useUTC={useUTC}
-        />
-      )}
+    <p className={cx('departure', 'route-detail-text', props.className)}>
+      <DepartureTime
+        departureTime={props.departure.stoptime}
+        realtime={props.departure.realtime}
+        currentTime={props.currentTime}
+        canceled={props.canceled}
+        useUTC={props.useUTC}
+      />
       <RouteNumberContainer
-        route={departure.pattern.route}
-        hasDisruption={hasDisruption}
-        isCallAgency={isCallAgencyDeparture(departure)}
+        route={props.departure.pattern.route}
+        hasDisruption={props.hasDisruption}
+        isCallAgency={isCallAgencyDeparture(props.departure)}
         fadeLong
       />
       <RouteDestination
         mode={mode}
         destination={
-          departure.headsign ||
-          departure.pattern.headsign ||
-          (departure.trip && departure.trip.tripHeadsign) ||
-          departure.pattern.route.longName
+          props.departure.headsign ||
+          props.departure.pattern.headsign ||
+          props.departure.pattern.route.longName
         }
-        isArrival={isArrival}
-        isLastStop={isLastStop}
+        isArrival={props.isArrival}
       />
-      {canceled ? (
-        <span className="departure-canceled">
-          <Icon img="icon-icon_caution" />
-          <FormattedMessage id="canceled" defaultMessage="Canceled" />
-        </span>
-      ) : (
-        platformNumber
-      )}
+      {platformNumber}
     </p>
   );
 }
@@ -102,23 +79,13 @@ Departure.description = () => (
         useUTC
       />
     </ComponentUsageExample>
-    <ComponentUsageExample description="drop-off only">
+    <ComponentUsageExample description="isArrival true">
       <Departure
         departure={exampleDeparture}
         currentTime={exampleCurrentTime}
         className="padding-normal padding-bottom"
         useUTC
         isArrival
-      />
-    </ComponentUsageExample>
-    <ComponentUsageExample description="last stop">
-      <Departure
-        departure={exampleDeparture}
-        currentTime={exampleCurrentTime}
-        className="padding-normal padding-bottom"
-        useUTC
-        isArrival
-        isLastStop
       />
     </ComponentUsageExample>
   </div>
@@ -131,36 +98,14 @@ Departure.propTypes = {
   className: PropTypes.string,
   hasDisruption: PropTypes.bool,
   currentTime: PropTypes.number.isRequired,
-  departure: PropTypes.shape({
-    headsign: PropTypes.string,
-    pattern: PropTypes.shape({
-      headsign: PropTypes.string,
-      route: PropTypes.shape({
-        longName: PropTypes.string,
-        mode: PropTypes.string.isRequired,
-      }).isRequired,
-    }).isRequired,
-    realtime: PropTypes.bool,
-    stop: PropTypes.shape({
-      platformCode: PropTypes.string,
-    }),
-    stoptime: PropTypes.number.isRequired,
-    trip: PropTypes.object,
-  }).isRequired,
+  departure: PropTypes.object.isRequired,
   isArrival: PropTypes.bool,
-  isLastStop: PropTypes.bool,
   showPlatformCode: PropTypes.bool,
   useUTC: PropTypes.bool,
-  staticDeparture: PropTypes.bool,
 };
 
 Departure.defaultProps = {
   showPlatformCode: false,
-};
-
-Departure.contextTypes = {
-  config: PropTypes.object.isRequired,
-  intl: intlShape.isRequired,
 };
 
 export default Departure;

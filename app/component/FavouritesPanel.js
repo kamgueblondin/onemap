@@ -3,7 +3,6 @@ import React from 'react';
 import Relay from 'react-relay/classic';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 import shouldUpdate from 'recompose/shouldUpdate';
-import isEqual from 'lodash/isEqual';
 
 import FavouriteRouteListContainer from './FavouriteRouteListContainer';
 import FavouriteLocationsContainer from './FavouriteLocationsContainer';
@@ -14,7 +13,6 @@ import PanelOrSelectLocation from './PanelOrSelectLocation';
 import { dtLocationShape } from '../util/shapes';
 import { TAB_FAVOURITES } from '../util/path';
 import withBreakpoint from '../util/withBreakpoint';
-import { isBrowser } from '../util/browser';
 
 class FavouriteRouteListContainerRoute extends Relay.Route {
   static queries = {
@@ -26,27 +24,30 @@ class FavouriteRouteListContainerRoute extends Relay.Route {
           })}
     }}`,
   };
-
   static paramDefinitions = {
     ids: { required: true },
   };
-
   static routeName = 'FavouriteRouteRowRoute';
 }
 
-const FavouriteRoutes = ({ routes, origin }) => (
-  <Relay.RootContainer
-    Component={FavouriteRouteListContainer}
-    forceFetch
-    route={
-      new FavouriteRouteListContainerRoute({
-        ids: routes,
-        origin,
-      })
-    }
-    renderLoading={Loading}
-  />
-);
+const FavouriteRoutes = ({ routes, origin }) => {
+  if (routes.length > 0) {
+    return (
+      <Relay.RootContainer
+        Component={FavouriteRouteListContainer}
+        forceFetch
+        route={
+          new FavouriteRouteListContainerRoute({
+            ids: routes,
+            origin,
+          })
+        }
+        renderLoading={Loading}
+      />
+    );
+  }
+  return <NoFavouritesPanel />;
+};
 
 FavouriteRoutes.propTypes = {
   routes: PropTypes.array.isRequired,
@@ -60,33 +61,27 @@ const FavouritesPanel = ({
   favouriteLocations,
   favouriteStops,
   breakpoint,
-}) =>
-  isBrowser && (
-    <div className="frontpage-panel">
-      <FavouriteLocationsContainer
-        origin={origin}
-        currentTime={currentTime}
-        favourites={[...favouriteLocations, ...favouriteStops]}
-      />
-      <div
-        className={`nearby-table-container ${breakpoint !== 'large' &&
-          `mobile`}`}
-      >
-        {routes.length > 0 ? (
-          <table className="nearby-departures-table">
-            <thead>
-              <NextDeparturesListHeader />
-            </thead>
-            <tbody>
-              <FavouriteRoutes routes={routes} origin={origin} />
-            </tbody>
-          </table>
-        ) : (
-          <NoFavouritesPanel />
-        )}
-      </div>
+}) => (
+  <div className="frontpage-panel">
+    <FavouriteLocationsContainer
+      origin={origin}
+      currentTime={currentTime}
+      favourites={[...favouriteLocations, ...favouriteStops]}
+    />
+    <div
+      className={`nearby-table-container ${breakpoint !== 'large' && `mobile`}`}
+    >
+      <table className="nearby-departures-table">
+        <thead>
+          <NextDeparturesListHeader />
+        </thead>
+        <tbody>
+          <FavouriteRoutes routes={routes} origin={origin} />
+        </tbody>
+      </table>
     </div>
-  );
+  </div>
+);
 
 FavouritesPanel.propTypes = {
   routes: PropTypes.array.isRequired,
@@ -100,9 +95,9 @@ FavouritesPanel.propTypes = {
 const FilteredFavouritesPanel = shouldUpdate(
   (props, nextProps) =>
     nextProps.currentTime !== props.currentTime ||
-    !isEqual(nextProps.routes, props.routes) ||
-    !isEqual(nextProps.favouriteLocations, props.favouriteLocations) ||
-    !isEqual(nextProps.favouriteStops, props.favouriteStops) ||
+    nextProps.routes !== props.routes ||
+    nextProps.favouriteLocations !== props.favouriteLocations ||
+    nextProps.favouriteStops !== props.favouriteStops ||
     nextProps.origin.gps !== props.origin.gps ||
     (!nextProps.origin.gps &&
       (nextProps.origin.lat !== props.origin.lat ||

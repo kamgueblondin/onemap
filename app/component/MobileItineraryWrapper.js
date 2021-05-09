@@ -28,8 +28,6 @@ export default class MobileItineraryWrapper extends React.Component {
     intl: intlShape.isRequired,
   };
 
-  itineraryTabs = [];
-
   getTabs(itineraries, selectedIndex) {
     return itineraries.map((itinerary, i) => (
       <Tab
@@ -56,6 +54,8 @@ export default class MobileItineraryWrapper extends React.Component {
     ));
   }
 
+  itineraryTabs = [];
+
   toggleFullscreenMap = () => {
     if (this.props.fullscreenMap) {
       this.context.router.goBack();
@@ -70,12 +70,14 @@ export default class MobileItineraryWrapper extends React.Component {
   focusMap = (lat, lon) => this.props.focus(lat, lon);
 
   switchSlide = index => {
-    window.dataLayer.push({
-      event: 'sendMatomoEvent',
-      category: 'ItinerarySettings',
-      action: 'ItineraryDetailsClick',
-      name: 'ItineraryDetailsExpand',
-    });
+    if (this.context.piwik != null) {
+      this.context.piwik.trackEvent(
+        'ItinerarySettings',
+        'ItineraryDetailsClick',
+        'ItineraryDetailsExpand',
+        index,
+      );
+    }
 
     this.context.router.replace({
       ...this.context.location,

@@ -1,45 +1,29 @@
 module.exports = {
   'parser': 'babel-eslint',
   'extends': [
-    'plugin:compat/recommended',
-    'plugin:jsx-a11y/recommended',
     'airbnb',
     'prettier',
     'prettier/react',
   ],
   'rules': {
     'curly': ['error', 'all'],
-    'lines-between-class-members': 'warn',
-    'no-else-return': 'warn',
-    'no-plusplus': ['error', { "allowForLoopAfterthoughts": true }],
-
-    // react
-    'react/button-has-type': 'warn',
-    'react/destructuring-assignment': 'warn',
+    // Require custom extension
     'react/jsx-filename-extension': ['error', { "extensions": [".js"] }],
     'react/jsx-key': 'error',
     'react/forbid-prop-types': ['warn', { forbid: ['any', 'array', 'object'] }],
     'react/require-default-props': 'warn',
-    
-    // jsx-a11y
     'jsx-a11y/anchor-is-valid': [ 'error', {
         'components': [ 'Link' ],
         'specialLink': [ 'to' ],
         'aspects': [ 'noHref', 'invalidHref', 'preferButton' ]
       }],
-    'jsx-a11y/label-has-associated-control': 'error',
-    'jsx-a11y/label-has-for': 'off', // deprecated in 6.1.0, does not support select tags
-    
-    // compat
+    'no-plusplus': ['error', { "allowForLoopAfterthoughts": true }],
     'compat/compat': 'error',
-    
-    // graphql
+    // Enable GraphQL linting
     'graphql/template-strings': ['error', {
       'env': 'relay',
       'schemaJson': require('./build/schema.json'),
     }],
-
-    // prettier
     'prettier/prettier': ['error', {
       'singleQuote': true,
       'trailingComma': 'all',
@@ -52,8 +36,7 @@ module.exports = {
     'react',
     'graphql',
     'compat',
-    'prettier',
-    'jsx-a11y'
+    'prettier'
   ],
   'settings': {
     'polyfills': ['fetch', 'promises']

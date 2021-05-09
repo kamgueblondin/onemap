@@ -8,10 +8,8 @@ export default class ParkAndRideFacilityRoute extends Relay.Route {
       }
     `,
   };
-
   static paramDefinitions = {
     id: { required: true },
   };
-
   static routeName = 'ParkAndRideFacilityRoute';
 }

@@ -1,4 +1,3 @@
-/* eslint-disable prefer-template */
 import configMerger from '../util/configMerger';
 
 const CONFIG = 'turku';
@@ -166,8 +165,4 @@ export default configMerger(walttiConfig, {
   },
 
   staticMessages: [],
-
-  geoJson: {
-    layerConfigUrl: 'https://data.foli.fi/geojson/reittiopas',
-  },
 });

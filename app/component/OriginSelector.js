@@ -53,7 +53,7 @@ const OriginSelector = (
     : favouriteLocations
         .map(f => (
           <OriginSelectorRow
-            key={`fl-${f.locationName}`}
+            key={`f-${f.locationName}`}
             icon={getIcon('favourite')}
             onClick={() => {
               setOrigin({ ...f, address: f.locationName });
@@ -64,7 +64,7 @@ const OriginSelector = (
         .concat(
           favouriteStops.map(f => (
             <OriginSelectorRow
-              key={`fs-${f.locationName}`}
+              key={`f-${f.locationName}`}
               icon={getIcon('favourite')}
               onClick={() => {
                 setOrigin({ ...f, address: f.locationName });

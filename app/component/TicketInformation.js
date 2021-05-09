@@ -1,24 +1,44 @@
 import cx from 'classnames';
+import get from 'lodash/get';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { FormattedMessage, intlShape } from 'react-intl';
+import { FormattedMessage } from 'react-intl';
 
 import ComponentUsageExample from './ComponentUsageExample';
 import { plan as examplePlan } from './ExampleData';
 import ExternalLink from './ExternalLink';
 import Icon from './Icon';
-import { renderZoneTicketIcon, isWithinZoneB } from './ZoneTicketIcon';
-import mapFares from '../util/fareUtils';
 
-export default function TicketInformation({ fares, zones }, { config, intl }) {
-  const currency = '€';
-  const mappedFares = mapFares(fares, config, intl.locale);
-  if (!mappedFares) {
+// eslint-disable-next-line react/prop-types
+const FareInformation = ({ fareId, config }) => {
+  const fareMapping = get(config, 'fareMapping', {});
+  const mappedFareId = fareId ? fareMapping[fareId] : null;
+  if (!mappedFareId) {
     return null;
   }
-  const [regularFare] = fares.filter(fare => fare.type === 'regular');
-  const isMultiComponent = mappedFares.length > 1;
-  const isOnlyZoneB = isWithinZoneB(zones, mappedFares);
+  return <FormattedMessage id={`ticket-type-${mappedFareId}`} />;
+};
+
+export default function TicketInformation({ fares }, { config }) {
+  let currency;
+  let regularFare;
+  if (fares != null) {
+    [regularFare] = fares.filter(fare => fare.type === 'regular');
+  }
+
+  if (!regularFare || regularFare.cents === -1) {
+    return null;
+  }
+
+  switch (regularFare.currency) {
+    case 'EUR':
+    default:
+      currency = '€';
+  }
+
+  const { components } = regularFare;
+  const hasComponent = Array.isArray(components) && components.length > 0;
+  const isMultiComponent = hasComponent && components.length > 1;
 
   return (
     <div className="row itinerary-ticket-information">
@@ -35,20 +55,17 @@ export default function TicketInformation({ fares, zones }, { config, intl }) {
               />
             </div>
           )}
-          {mappedFares.map((component, i) => (
-            <div
-              className={cx('ticket-type-zone', {
-                'multi-component': isMultiComponent,
-              })}
-              key={i} // eslint-disable-line react/no-array-index-key
-            >
-              {config.useTicketIcons ? (
-                renderZoneTicketIcon(component, isOnlyZoneB)
-              ) : (
-                <span>{component}</span>
-              )}
-            </div>
-          ))}
+          {hasComponent &&
+            components.map((component, i) => (
+              <div
+                className={cx('ticket-type-zone', {
+                  'multi-component': isMultiComponent,
+                })}
+                key={i} // eslint-disable-line react/no-array-index-key
+              >
+                <FareInformation fareId={component.fareId} config={config} />
+              </div>
+            ))}
           <div>
             <span className="ticket-type-group">
               <FormattedMessage
@@ -79,16 +96,10 @@ export default function TicketInformation({ fares, zones }, { config, intl }) {
 
 TicketInformation.propTypes = {
   fares: PropTypes.array,
-  zones: PropTypes.arrayOf(PropTypes.string),
-};
-
-TicketInformation.defaultProps = {
-  zones: [],
 };
 
 TicketInformation.contextTypes = {
   config: PropTypes.object,
-  intl: intlShape.isRequired,
 };
 
 TicketInformation.displayName = 'TicketInformation';

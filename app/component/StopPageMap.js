@@ -101,7 +101,7 @@ StopPageMap.propTypes = {
     lat: PropTypes.number.isRequired,
     lon: PropTypes.number.isRequired,
     platformCode: PropTypes.string,
-  }),
+  }).isRequired,
   routes: PropTypes.arrayOf(
     PropTypes.shape({
       fullscreenMap: PropTypes.string,
@@ -114,11 +114,7 @@ StopPageMap.propTypes = {
   breakpoint: PropTypes.string.isRequired,
 };
 
-StopPageMap.defaultProps = {
-  stop: undefined,
-};
-
-const containerComponent = Relay.createContainer(withBreakpoint(StopPageMap), {
+export default Relay.createContainer(withBreakpoint(StopPageMap), {
   fragments: {
     stop: () => Relay.QL`
       fragment on Stop {
@@ -132,5 +128,3 @@ const containerComponent = Relay.createContainer(withBreakpoint(StopPageMap), {
     `,
   },
 });
-
-export { containerComponent as default, StopPageMap as Component };

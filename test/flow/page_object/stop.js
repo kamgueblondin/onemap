@@ -22,8 +22,7 @@ module.exports = {
   ],
   elements: {
     stopName: {
-      selector:
-        '.stop-page.header > .card-header-content > .card-header-wrapper > .h3',
+      selector: '.stop-page.header > .card-header-wrapper > .h3',
     },
     stopPageHeader: {
       selector: '.stop-page.header',

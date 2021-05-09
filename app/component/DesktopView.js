@@ -1,4 +1,3 @@
-import cx from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Link } from 'react-router';
@@ -8,7 +7,7 @@ import Icon from './Icon';
 import ErrorBoundary from './ErrorBoundary';
 
 export default function DesktopView(
-  { title, header, map, content, homeUrl, scrollable },
+  { title, header, map, content, homeUrl },
   { intl: { formatMessage } },
 ) {
   return (
@@ -32,14 +31,8 @@ export default function DesktopView(
             {title}
           </h2>
         </div>
-        <div
-          className={cx('scrollable-content-wrapper', {
-            'momentum-scroll': scrollable,
-          })}
-        >
-          {header}
-          <ErrorBoundary>{content}</ErrorBoundary>
-        </div>
+        {header}
+        <ErrorBoundary>{content}</ErrorBoundary>
       </div>
       <div className="map-content">
         <ErrorBoundary>{map}</ErrorBoundary>
@@ -54,11 +47,6 @@ DesktopView.propTypes = {
   map: PropTypes.node,
   content: PropTypes.node,
   homeUrl: PropTypes.string,
-  scrollable: PropTypes.bool,
-};
-
-DesktopView.defaultProps = {
-  scrollable: false,
 };
 
 DesktopView.contextTypes = {

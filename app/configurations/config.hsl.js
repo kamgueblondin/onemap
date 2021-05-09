@@ -1,12 +1,9 @@
-/* eslint-disable prefer-template */
 const CONFIG = 'hsl';
 const API_URL = process.env.API_URL || 'https://dev-api.digitransit.fi';
 const MAP_URL =
   process.env.MAP_URL || 'https://digitransit-dev-cdn-origin.azureedge.net';
-const APP_DESCRIPTION = 'Helsingin seudun liikenteen Reittiopas.';
+const APP_DESCRIPTION = 'Helsingin seudun liikenteen uusi Reittiopas.';
 const YEAR = 1900 + new Date().getYear();
-
-const HSLRouteTimetable = require('./timetableConfigUtils').default.HSLRoutes;
 
 export default {
   CONFIG,
@@ -14,10 +11,10 @@ export default {
   URL: {
     OTP: process.env.OTP_URL || `${API_URL}/routing/v1/routers/hsl/`,
     STOP_MAP: `${MAP_URL}/map/v1/hsl-stop-map/`,
+    CITYBIKE_MAP: `${MAP_URL}/map/v1/hsl-citybike-map/`,
     PARK_AND_RIDE_MAP: `${MAP_URL}/map/v1/hsl-parkandride-map/`,
     TICKET_SALES_MAP: `${MAP_URL}/map/v1/hsl-ticket-sales-map/`,
-    FONT: 'https://cloud.typography.com/6364294/7572592/css/fonts.css',
-    STOP_TIMETABLES: `${API_URL}/timetables/v1/hsl/stops/`,
+    FONT: 'https://cloud.typography.com/6364294/6653152/css/fonts.css',
   },
 
   contactName: {
@@ -36,8 +33,9 @@ export default {
   // Navbar logo
   logo: 'hsl/reittiopas-logo.svg',
 
-  feedIds: ['HSL', 'HSLlautta'],
+  feedIds: ['HSL'],
 
+  preferredAgency: 'HSL',
   showHSLTracking: true,
 
   defaultMapCenter: {
@@ -71,7 +69,7 @@ export default {
     primary: '#007ac9',
   },
 
-  sprites: 'assets/svg-sprite.hsl.svg',
+  sprites: 'svg-sprite.hsl.svg',
 
   appBarLink: { name: 'HSL.fi', href: 'https://www.hsl.fi/' },
 
@@ -82,7 +80,7 @@ export default {
   },
 
   socialMedia: {
-    title: 'Reittiopas',
+    title: 'Uusi Reittiopas',
     description: APP_DESCRIPTION,
 
     image: {
@@ -101,6 +99,9 @@ export default {
     description: APP_DESCRIPTION,
   },
 
+  showTicketInformation: true,
+  ticketLink: 'https://www.hsl.fi/liput-ja-hinnat',
+
   transportModes: {
     airplane: {
       availableForSelection: false,
@@ -109,12 +110,6 @@ export default {
   },
 
   streetModes: {
-    bicycle: {
-      availableForSelection: true,
-      defaultValue: false,
-      icon: 'biking',
-    },
-
     car_park: {
       availableForSelection: true,
       defaultValue: false,
@@ -127,16 +122,6 @@ export default {
       icon: 'car_park-withoutBox',
     },
   },
-
-  search: {
-    /* identify searches for route numbers/labels: bus | train | metro */
-    lineRegexp: new RegExp(
-      '(^[0-9]+[a-z]?$|^[yuleapinkrtdz]$|(^m[12]?b?$))',
-      'i',
-    ),
-  },
-
-  modesWithNoBike: ['BUS', 'TRAM'],
 
   useSearchPolygon: true,
 
@@ -188,79 +173,6 @@ export default {
     [25.3652, 60.3756],
     [25.5345, 60.2592],
   ],
-
-  // If certain mode(s) only exist in limited number of areas, that are unwanted or unlikely places for transfers,
-  // listing the areas as a list of polygons for selected mode key will remove the mode(s) from queries if no coordinates
-  // in the query are within the polygon(s). This reduces complexity in finding routes for the query.
-  modePolygons: {
-    FERRY: [
-      [
-        [24.63006, 60.074576],
-        [24.660625, 60.113425],
-        [24.69124, 60.107706],
-        [24.715029, 60.097581],
-        [24.755061, 60.110121],
-        [24.7684, 60.12747],
-        [24.741944, 60.137888],
-        [24.766268, 60.149167],
-        [24.79965, 60.153677],
-        [24.825623, 60.150484],
-        [24.847359, 60.14129],
-        [24.878784, 60.135211],
-        [24.917694, 60.135829],
-        [24.946839, 60.144845],
-        [24.970082, 60.153435],
-        [24.981806, 60.168956],
-        [24.975605, 60.175104],
-        [24.981962, 60.177926],
-        [24.993498, 60.17687],
-        [24.997357, 60.161094],
-        [25.020459, 60.161442],
-        [25.030537, 60.158628],
-        [25.020867, 60.143668],
-        [25.028754, 60.133249],
-        [25.043732, 60.125569],
-        [25.065996, 60.12853],
-        [25.089449, 60.133809],
-        [25.098075, 60.14447],
-        [25.103441, 60.165948],
-        [25.086419, 60.174593],
-        [25.068493, 60.175979],
-        [25.064752, 60.183954],
-        [25.070873, 60.192076],
-        [25.083312, 60.196155],
-        [25.100825, 60.189909],
-        [25.104737, 60.188276],
-        [25.137785, 60.186437],
-        [25.159803, 60.179311],
-        [25.183815, 60.182462],
-        [25.198859, 60.199072],
-        [25.206376, 60.221731],
-        [25.218456, 60.236505],
-        [25.246769, 60.246879],
-        [25.294546, 60.250321],
-        [25.322258, 60.252981],
-        [25.339717, 60.254482],
-        [25.350696, 60.261796],
-        [25.363947, 60.265035],
-        [25.372362, 60.261807],
-        [25.377763, 60.246494],
-        [25.389704, 60.234336],
-        [25.403708, 60.221946],
-        [25.428855, 60.213275],
-        [25.463838, 60.225219],
-        [25.486258, 60.24188],
-        [25.510785, 60.258049],
-        [25.53992, 60.264011],
-        [25.567193, 60.2538],
-        [25.587328, 60.217364],
-        [25.547057, 60.126195],
-        [25.516869, 59.979617],
-        [24.637799, 59.885142],
-        [24.63006, 60.074576],
-      ],
-    ],
-  },
 
   footer: {
     content: [
@@ -321,10 +233,6 @@ export default {
   redirectReittiopasParams: true,
   queryMaxAgeDays: 14, // to drop too old route request times from entry url
 
-  routeTimetables: {
-    HSL: HSLRouteTimetable,
-  },
-
   aboutThisService: {
     fi: [
       {
@@ -372,71 +280,48 @@ export default {
     ],
   },
 
-  showTicketInformation: true,
-  ticketLink:
-    'https://www.hsl.fi/liput-ja-hinnat?utm_campaign=omat-palvelut&utm_source=reittiopas&utm_medium=referral&utm_content=nain-ostat-lipun',
-  showTicketSelector: true,
-
-  fares: [
-    'HSL:hki',
-    'HSL:esp',
-    'HSL:van',
-    'HSL:ker',
-    'HSL:kir',
-    'HSL:seu',
-    'HSL:lse',
-    'HSL:kse',
-  ],
-
-  // mapping (string, lang) from OTP fare identifiers to human readable form
-  fareMapping: function mapHslFareId(fareId, lang) {
-    const names = {
-      fi: {
-        esp: 'Espoo ja Kauniainen',
-        hki: 'Helsinki',
-        ker: 'Kerava-Sipoo-Tuusula',
-        kir: 'Kirkkonummi-Siuntio',
-        kse: 'Lähiseutu 3',
-        lse: 'Lähiseutu 2',
-        seu: 'Seutulippu',
-        van: 'Vantaa',
-      },
-      en: {
-        esp: 'Espoo and Kauniainen',
-        hki: 'Helsinki',
-        ker: 'Kerava-Sipoo-Tuusula',
-        kir: 'Kirkkonummi-Siuntio',
-        kse: 'Region three zone',
-        lse: 'Region two zone',
-        seu: 'Regional ticket',
-        van: 'Vantaa',
-      },
-      sv: {
-        esp: 'Esbo och Grankulla',
-        hki: 'Helsingfors',
-        ker: 'Kervo-Sibbo-Tusby',
-        kir: 'Kyrkslätt-Sjundeå',
-        kse: 'Närregion 3',
-        lse: 'Närregion 2',
-        seu: 'Regionbiljett',
-        van: 'Vanda',
-      },
-    };
-    const mappedLang = names[lang] ? lang : 'fi';
-    if (fareId && fareId.substring) {
-      const zone = fareId.substring(
-        fareId.indexOf(':') + 1,
-        fareId.indexOf(':') + 4,
-      );
-      return names[mappedLang][zone] || '';
-    }
-    return '';
+  fareMapping: {
+    'HSL:hki': 'HSL:hki',
+    'HSL:hki2': 'HSL:hki',
+    'HSL:esp': 'HSL:esp',
+    'HSL:esp2': 'HSL:esp',
+    'HSL:van': 'HSL:van',
+    'HSL:van2': 'HSL:van',
+    'HSL:ker': 'HSL:ker',
+    'HSL:kir': 'HSL:kir',
+    'HSL:seu': 'HSL:seu',
+    'HSL:seu2': 'HSL:seu',
+    'HSL:seu3': 'HSL:seu',
+    'HSL:seu4': 'HSL:seu',
+    'HSL:seu5': 'HSL:seu',
+    'HSL:lse': 'HSL:lse',
+    'HSL:lse2': 'HSL:lse',
+    'HSL:lse3': 'HSL:lse',
+    'HSL:lse4': 'HSL:lse',
+    'HSL:lse5': 'HSL:lse',
+    'HSL:lse6': 'HSL:lse',
+    'HSL:kse': 'HSL:kse',
+    'HSL:kse1': 'HSL:kse',
+    'HSL:kse2': 'HSL:kse',
+    'HSL:kse3': 'HSL:kse',
+    'HSL:kse4': 'HSL:kse',
+    'HSL:kse5': 'HSL:kse',
+    'HSL:kse6': 'HSL:kse',
+    'HSL:kse7': 'HSL:kse',
+    'HSL:kse8': 'HSL:kse',
+    'HSL:kse9': 'HSL:kse',
+    'HSL:kse10': 'HSL:kse',
+    'HSL:kse11': 'HSL:kse',
+    'HSL:kse12': 'HSL:kse',
+    'HSL:kse13': 'HSL:kse',
+    'HSL:kse14': 'HSL:kse',
+    'HSL:kse15': 'HSL:kse',
+    'HSL:kse16': 'HSL:kse',
   },
 
   staticMessages: [
     {
       id: '2',
-      priority: -1,
       content: {
         fi: [
           {
@@ -493,70 +378,4 @@ export default {
     },
   ],
   staticMessagesUrl: 'https://yleisviesti.hsldev.com/',
-  geoJson: {
-    layers: [
-      {
-        name: {
-          fi: 'Vyöhykkeet',
-          sv: 'Zoner',
-          en: 'Zones',
-        },
-        url: '/hsl_zone_lines.json',
-      },
-    ],
-    zones: {
-      url: '/hsl_zone_areas.json',
-    },
-  },
-  mapLayers: {
-    featureMapping: {
-      ticketSales: {
-        Palvelupiste: 'servicePoint',
-        'HSL Automaatti MNL': 'ticketMachine',
-        'HSL Automaatti KL': 'ticketMachine',
-        Myyntipiste: 'salesPoint',
-        'R-kioski': 'salesPoint',
-      },
-    },
-    tooltip: {
-      fi:
-        'Uudet vyöhykkeet otetaan käyttöön 27.4.2019. Tutustu vyöhykkeisiin kartalla jo nyt. Voit piilottaa vyöhykerajat tästä.',
-      sv:
-        'De nya zonerna tas i bruk 27.4.2019. Bekanta dig med resezonerna redan nu. Göm zongränserna här.',
-      en:
-        'New fare zones will be introduced on 27 April 2019. Check them out on the map already now. The zones can be hidden here.',
-    },
-  },
-  cityBike: {
-    // TODO: Change according to the real network names TBD later
-    networks: {
-      samocat: {
-        icon: 'scooter',
-        name: {
-          fi: 'Vuosaari',
-          sv: 'Nordsjö',
-          en: 'Vuosaari',
-        },
-        type: 'scooter',
-      },
-      smoove: {
-        icon: 'citybike',
-        name: {
-          fi: 'Helsinki ja Espoo',
-          sv: 'Helsingfors och Esbo',
-          en: 'Helsinki and Espoo',
-        },
-        type: 'citybike',
-      },
-      vantaa: {
-        icon: 'citybike-secondary',
-        name: {
-          fi: 'Vantaa',
-          sv: 'Vanda',
-          en: 'Vantaa',
-        },
-        type: 'citybike',
-      },
-    },
-  },
 };

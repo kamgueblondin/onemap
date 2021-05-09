@@ -1,10 +1,10 @@
 import htmlParser from 'htm-to-json';
 import defaultConfig from './configurations/config.default';
 import configMerger from './util/configMerger';
-import { boundWithMinimumAreaSimple } from './util/geo-utils';
 
 const configs = {}; // cache merged configs for speed
 const themeMap = {};
+const piwikMap = [];
 
 if (defaultConfig.themeMap) {
   Object.keys(defaultConfig.themeMap).forEach(theme => {
@@ -12,12 +12,21 @@ if (defaultConfig.themeMap) {
   });
 }
 
+if (defaultConfig.piwikMap) {
+  for (let i = 0; i < defaultConfig.piwikMap.length; i++) {
+    piwikMap.push({
+      id: defaultConfig.piwikMap[i].id,
+      expr: new RegExp(defaultConfig.piwikMap[i].expr, 'i'),
+    });
+  }
+}
+
 function addMetaData(config) {
   let stats;
 
   try {
     // eslint-disable-next-line global-require, import/no-dynamic-require
-    stats = require(`../_static/assets/iconstats-${config.CONFIG}`);
+    stats = require(`../_static/iconstats-${config.CONFIG}`);
   } catch (error) {
     return;
   }
@@ -62,8 +71,10 @@ function addMetaData(config) {
   });
 }
 
-export function getNamedConfiguration(configName) {
-  if (!configs[configName]) {
+export function getNamedConfiguration(configName, piwikId) {
+  const key = configName + (piwikId || '');
+
+  if (!configs[key]) {
     let additionalConfig;
 
     if (configName !== 'default') {
@@ -83,31 +94,20 @@ export function getNamedConfiguration(configName) {
       config.searchParams['boundary.polygon'] = pointsParam;
     }
 
-    Object.keys(config.modePolygons).forEach(mode => {
-      const boundingBoxes = [];
-      config.modePolygons[mode].forEach(polygon => {
-        boundingBoxes.push(boundWithMinimumAreaSimple(polygon));
-      });
-      config.modeBoundingBoxes = config.modeBoundingBoxes || {};
-      config.modeBoundingBoxes[mode] = boundingBoxes;
-    });
-    Object.keys(config.realTimePatch).forEach(realTimeKey => {
-      config.realTime[realTimeKey] = {
-        ...(config.realTime[realTimeKey] || {}),
-        ...config.realTimePatch[realTimeKey],
-      };
-    });
-
+    if (piwikId) {
+      config.PIWIK_ID = piwikId;
+    }
     addMetaData(config); // add dynamic metadata content
 
-    configs[configName] = config;
+    configs[key] = config;
   }
-  return configs[configName];
+  return configs[key];
 }
 
 export function getConfiguration(req) {
   let configName = process.env.CONFIG || 'default';
   let host;
+  let piwikId;
 
   if (req) {
     host =
@@ -130,5 +130,19 @@ export function getConfiguration(req) {
     });
   }
 
-  return getNamedConfiguration(configName);
+  if (
+    host &&
+    process.env.NODE_ENV !== 'development' &&
+    (!process.env.PIWIK_ID || process.env.PIWIK_ID === '')
+  ) {
+    // PIWIK_ID unset, map dynamically by hostname
+    for (let i = 0; i < piwikMap.length; i++) {
+      if (piwikMap[i].expr.test(host)) {
+        piwikId = piwikMap[i].id;
+        // console.log('###PIWIK', piwikId);
+        break;
+      }
+    }
+  }
+  return getNamedConfiguration(configName, piwikId);
 }

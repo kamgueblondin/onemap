@@ -3,7 +3,6 @@ import React from 'react';
 import { intlShape, FormattedMessage } from 'react-intl';
 import Icon from './Icon';
 import ComponentUsageExample from './ComponentUsageExample';
-import { isKeyboardSelectionEvent } from '../util/browser';
 
 export default function RightOffcanvasToggle(
   { onToggleClick, hasChanges },
@@ -15,11 +14,8 @@ export default function RightOffcanvasToggle(
   });
   return (
     <div className="right-offcanvas-toggle">
-      <div
-        role="button"
-        tabIndex="0"
+      <button
         onClick={onToggleClick}
-        onKeyPress={e => isKeyboardSelectionEvent(e) && onToggleClick()}
         aria-label={label}
         title={label}
         className="noborder cursor-pointer"
@@ -35,9 +31,14 @@ export default function RightOffcanvasToggle(
               <Icon img="icon-icon_attention" className="super-icon" />
             ) : null}
           </div>
-          <FormattedMessage id="settings" defaultMessage="Settings" />
+          <div>
+            <FormattedMessage
+              id="more-settings"
+              defaultMessage="More Settings"
+            />
+          </div>
         </div>
-      </div>
+      </button>
     </div>
   );
 }
@@ -47,12 +48,8 @@ RightOffcanvasToggle.propTypes = {
   hasChanges: PropTypes.bool,
 };
 
-RightOffcanvasToggle.defaultProps = {
-  hasChanges: false,
-};
-
 RightOffcanvasToggle.contextTypes = {
-  intl: intlShape.isRequired,
+  intl: intlShape.isRequired, // eslint-disable-line react/no-typos
 };
 
 RightOffcanvasToggle.displayName = 'RightOffcanvasToggle';

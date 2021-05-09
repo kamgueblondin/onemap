@@ -3,9 +3,7 @@ import { expect } from 'chai';
 import { describe, it } from 'mocha';
 
 import { shallowWithIntl } from './helpers/mock-intl-enzyme';
-
 import AppBarLarge from '../../app/component/AppBarLarge';
-import LogoSmall from '../../app/component/LogoSmall';
 
 describe('<AppBarLarge />', () => {
   it('should show logo image', () => {
@@ -20,8 +18,8 @@ describe('<AppBarLarge />', () => {
       },
     );
 
-    expect(wrapper.find('section.title')).to.have.lengthOf(0);
-    expect(wrapper.find(LogoSmall).props().showLogo).to.equal(true);
+    expect(wrapper.find('.title span')).to.have.lengthOf(0);
+    expect(wrapper.find('div.navi-logo')).to.have.lengthOf(1);
   });
 
   it('should show text logo when textLogo is true', () => {
@@ -36,7 +34,7 @@ describe('<AppBarLarge />', () => {
       },
     );
 
-    expect(wrapper.find('section.title')).to.have.lengthOf(1);
-    expect(wrapper.find(LogoSmall).props().showLogo).to.equal(false);
+    expect(wrapper.find('.title span')).to.have.lengthOf(1);
+    expect(wrapper.find('div.navi-logo')).to.have.lengthOf(0);
   });
 });

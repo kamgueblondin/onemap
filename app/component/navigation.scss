@@ -40,8 +40,7 @@ $content-background-color: $background-color;
   z-index: 1008;
 
   // Fixed navbar height for now, as dynamic height leads to Safari issues
-  height: $topbar-height;
-  min-height: $topbar-height;
+  height: 40px;
 
   &.bp-large {
     height: 60px;
@@ -77,6 +76,7 @@ $content-background-color: $background-color;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: left center;
+
   }
   .navi-logo {
     margin-left: 32px;
@@ -88,10 +88,6 @@ $content-background-color: $background-color;
     background-position: left center;
     cursor: pointer;
   }
-}
-
-#skip-to-content-link {
-  height: 0px;
 }
 
 .flex-horizontal {
@@ -113,7 +109,7 @@ $content-background-color: $background-color;
     margin: 0px 2px;
     &.selected {
       border-radius: 3px;
-      background-color: hsla(0,0%,100%,.15);
+      background-color: rgba($white, 0.15);
     }
   }
 }
@@ -123,7 +119,7 @@ $content-background-color: $background-color;
   #lang-select {
     border-bottom: 0px;
     .lang.selected {
-      background: $selected-lang-background;
+      background: rgba(0, 0, 0, 0.15);
     }
   }
 }
@@ -137,10 +133,6 @@ $content-background-color: $background-color;
     font-size: 1.8em;
     color: $primary-color;
     fill: $top-navigation-icon-color;
-    &.caution-topbar {
-      fill: $caution-icon-color;
-      color: $caution-icon-font-color;
-    }
   }
   width: 50px;
 }
@@ -256,20 +248,6 @@ section.content {
         width: 100%;
         display: inline;
       }
-
-      .scrollable-content-wrapper {
-        display: flex;
-        flex-basis: 0px;
-        flex-direction: column;
-        flex-grow: 1;
-        flex-shrink: 0;
-
-        @media print {
-          display: inline;
-          height: auto;
-          width: 100%;
-        }
-      }
     }
 
     .map-content {
@@ -311,7 +289,7 @@ section.content {
 }
 
 .desktop-title {
-  background: $desktop-title-color;
+  background: $primary-color;
 
   a {
     color: $primary-font-color;
@@ -331,7 +309,7 @@ section.content {
   .arrow-icon {
     font-size: 0.6em;
     margin: 2px 1em;
-    color: $desktop-title-arrow-icon-color;
+    color: $secondary-color;
   }
 }
 
@@ -354,9 +332,7 @@ section.content {
     display: flex;
     max-height: 100%;
 
-    .message-bar-content {
-      flex-basis: auto;
-      flex-grow: 1;
+    .message-bar-info {
       width: 60%;
     }
   }

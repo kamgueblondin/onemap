@@ -1,15 +1,15 @@
-import cx from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
+import cx from 'classnames';
 import { routerShape } from 'react-router';
-
-import LazilyLoad, { importLazy } from './LazilyLoad';
 import OriginDestinationBar from './OriginDestinationBar';
-import QuickSettingsPanel from './QuickSettingsPanel';
-import StreetModeSelectorPanel from './StreetModeSelectorPanel';
-import { getDrawerWidth, isBrowser } from '../util/browser';
-import * as ModeUtils from '../util/modeUtils';
+import TimeSelectorContainer from './TimeSelectorContainer';
+// import RightOffcanvasToggle from './RightOffcanvasToggle';
+import LazilyLoad, { importLazy } from './LazilyLoad';
 import { parseLocation } from '../util/path';
+import Icon from './Icon';
+import SecondaryButton from './SecondaryButton';
+import QuickSettingsPanel from './QuickSettingsPanel';
 import withBreakpoint from '../util/withBreakpoint';
 
 class SummaryNavigation extends React.Component {
@@ -18,8 +18,11 @@ class SummaryNavigation extends React.Component {
       from: PropTypes.string,
       to: PropTypes.string,
     }).isRequired,
+    hasDefaultPreferences: PropTypes.bool.isRequired,
     startTime: PropTypes.number,
     endTime: PropTypes.number,
+    isQuickSettingsOpen: PropTypes.bool.isRequired,
+    toggleQuickSettings: PropTypes.func.isRequired,
     breakpoint: PropTypes.string.isRequired,
     serviceTimeRange: PropTypes.shape({
       start: PropTypes.number.isRequired,
@@ -33,14 +36,9 @@ class SummaryNavigation extends React.Component {
   };
 
   static contextTypes = {
-    config: PropTypes.object.isRequired,
+    piwik: PropTypes.object,
     router: routerShape,
     location: PropTypes.object.isRequired,
-  };
-
-  customizeSearchModules = {
-    Drawer: () => importLazy(import('material-ui/Drawer')),
-    CustomizeSearch: () => importLazy(import('./CustomizeSearchNew')),
   };
 
   componentDidMount() {
@@ -80,17 +78,39 @@ class SummaryNavigation extends React.Component {
       this.context.location.state.customizeSearchOffcanvas) ||
     false;
 
+  checkQuickSettingsIcon = () => {
+    if (this.props.isQuickSettingsOpen) {
+      return `icon-icon_close`;
+    } else if (
+      !this.props.isQuickSettingsOpen &&
+      !this.props.hasDefaultPreferences
+    ) {
+      return `icon-icon_settings-adjusted`;
+    }
+    return `icon-icon_settings`;
+  };
+
+  customizeSearchModules = {
+    Drawer: () => importLazy(import('material-ui/Drawer')),
+    CustomizeSearch: () => importLazy(import('./CustomizeSearch')),
+  };
+
+  toggleQuickSettingsPanel = () => {
+    this.props.toggleQuickSettings(!this.props.isQuickSettingsOpen);
+  };
+
   toggleCustomizeSearchOffcanvas = () => {
     this.internalSetOffcanvas(!this.getOffcanvasState());
   };
 
   internalSetOffcanvas = newState => {
-    window.dataLayer.push({
-      event: 'sendMatomoEvent',
-      category: 'ItinerarySettings',
-      action: 'ExtraSettingsPanelClick',
-      name: newState ? 'ExtraSettingsPanelOpen' : 'ExtraSettingsPanelClose',
-    });
+    if (this.context.piwik != null) {
+      this.context.piwik.trackEvent(
+        'ItinerarySettings',
+        'ExtraSettingsPanelClick',
+        newState ? 'ExtraSettingsPanelOpen' : 'ExtraSettingsPanelClose',
+      );
+    }
 
     if (newState) {
       this.context.router.push({
@@ -105,41 +125,20 @@ class SummaryNavigation extends React.Component {
     }
   };
 
-  renderStreetModeSelector = (config, router) => (
-    <div className="street-mode-selector-panel-container">
-      <StreetModeSelectorPanel
-        selectedStreetMode={ModeUtils.getStreetMode(router.location, config)}
-        selectStreetMode={(streetMode, isExclusive) =>
-          ModeUtils.setStreetMode(streetMode, config, router, isExclusive)
-        }
-        streetModeConfigs={ModeUtils.getAvailableStreetModeConfigs(config)}
-      />
-    </div>
-  );
-
   render() {
-    const { config, router } = this.context;
+    const quickSettingsIcon = this.checkQuickSettingsIcon();
     const className = cx({ 'bp-large': this.props.breakpoint === 'large' });
+    let drawerWidth = 291;
+    if (typeof window !== 'undefined') {
+      drawerWidth =
+        0.5 * window.innerWidth > 291
+          ? Math.min(600, 0.5 * window.innerWidth)
+          : 291;
+    }
     const isOpen = this.getOffcanvasState();
 
     return (
-      <div className="summary-navigation-container">
-        <OriginDestinationBar
-          className={className}
-          origin={parseLocation(this.props.params.from)}
-          destination={parseLocation(this.props.params.to)}
-        />
-        {isBrowser && (
-          <React.Fragment>
-            {this.renderStreetModeSelector(config, router)}
-            <div className={cx('quicksettings-separator-line')} />
-            <QuickSettingsPanel
-              timeSelectorStartTime={this.props.startTime}
-              timeSelectorEndTime={this.props.endTime}
-              timeSelectorServiceTimeRange={this.props.serviceTimeRange}
-            />
-          </React.Fragment>
-        )}
+      <div style={{ background: '#f4f4f5' }}>
         <LazilyLoad modules={this.customizeSearchModules}>
           {({ Drawer, CustomizeSearch }) => (
             <Drawer
@@ -153,17 +152,57 @@ class SummaryNavigation extends React.Component {
               containerStyle={{
                 background: 'transparent',
                 boxShadow: 'none',
-                overflow: 'visible',
+                ...(isOpen && { '-moz-transform': 'none' }), // needed to prevent showing an extra scrollbar in FF
               }}
-              width={getDrawerWidth(window)}
+              width={drawerWidth}
             >
               <CustomizeSearch
+                isOpen={isOpen}
                 params={this.props.params}
                 onToggleClick={this.toggleCustomizeSearchOffcanvas}
               />
             </Drawer>
           )}
         </LazilyLoad>
+        <OriginDestinationBar
+          className={className}
+          origin={parseLocation(this.props.params.from)}
+          destination={parseLocation(this.props.params.to)}
+        />
+        <div
+          className={cx('quicksettings-separator-line', {
+            hidden: !this.props.isQuickSettingsOpen,
+          })}
+        />
+        <div
+          className={cx('time-selector-settings-row', className, {
+            quickSettingsOpen: this.props.isQuickSettingsOpen,
+          })}
+        >
+          <TimeSelectorContainer
+            startTime={this.props.startTime}
+            endTime={this.props.endTime}
+            serviceTimeRange={this.props.serviceTimeRange}
+          />
+          <div className="button-container">
+            <div className="icon-holder">
+              {!this.props.hasDefaultPreferences &&
+              !this.props.isQuickSettingsOpen ? (
+                <Icon img="icon-icon_attention" className="super-icon" />
+              ) : null}
+            </div>
+            <SecondaryButton
+              ariaLabel={this.props.isQuickSettingsOpen ? `close` : `settings`}
+              buttonName={this.props.isQuickSettingsOpen ? `close` : `settings`}
+              buttonClickAction={this.toggleQuickSettingsPanel}
+              buttonIcon={quickSettingsIcon}
+            />
+          </div>
+        </div>
+        <QuickSettingsPanel
+          visible={this.props.isQuickSettingsOpen}
+          hasDefaultPreferences={this.props.hasDefaultPreferences}
+        />
       </div>
     );
   }

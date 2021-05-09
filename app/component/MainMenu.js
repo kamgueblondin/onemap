@@ -30,12 +30,10 @@ function MainMenu(props, { config, intl }) {
           <FormattedMessage id="frontpage" defaultMessage="Frontpage" />
         </Link>
       </div>
-      {config.mainMenu.showDisruptions &&
-        props.showDisruptionInfo && (
-          <div className="offcanvas-section">
-            <DisruptionInfoButtonContainer />
-          </div>
-        )}
+      <div className="offcanvas-section">
+        {config.mainMenu.showDisruptions &&
+          props.showDisruptionInfo && <DisruptionInfoButtonContainer />}
+      </div>
       <MainMenuLinks
         content={(
           [config.appBarLink].concat(config.footer && config.footer.content) ||
@@ -60,6 +58,9 @@ MainMenu.defaultProps = {
 MainMenu.contextTypes = {
   getStore: PropTypes.func.isRequired,
   config: PropTypes.object.isRequired,
+  // due to a bug within react/no-typos it gives a false positive
+  // on intlShape.isRequired, need to do this until it's fixed
+  // eslint-disable-next-line react/no-typos
   intl: intlShape.isRequired,
 };
 

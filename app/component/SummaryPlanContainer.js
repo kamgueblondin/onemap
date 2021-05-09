@@ -1,69 +1,51 @@
-import connectToStores from 'fluxible-addons-react/connectToStores';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
 import Relay from 'react-relay/classic';
 import { routerShape } from 'react-router';
+import moment from 'moment';
 import getContext from 'recompose/getContext';
-
 import ItinerarySummaryListContainer from './ItinerarySummaryListContainer';
 import TimeNavigationButtons from './TimeNavigationButtons';
-import TimeStore from '../store/TimeStore';
-import PositionStore from '../store/PositionStore';
-import { otpToLocation } from '../util/otpStrings';
 import { getRoutePath } from '../util/path';
+import Loading from './Loading';
 import {
   preparePlanParams,
+  getDefaultOTPModes,
   defaultRoutingSettings,
 } from '../util/planParamUtil';
-import { getIntermediatePlaces, replaceQueryParams } from '../util/queryUtils';
 import withBreakpoint from '../util/withBreakpoint';
 
 class SummaryPlanContainer extends React.Component {
   static propTypes = {
-    activeIndex: PropTypes.number,
-    breakpoint: PropTypes.string.isRequired,
+    plan: PropTypes.object.isRequired,
+    itineraries: PropTypes.array.isRequired,
     children: PropTypes.node,
-    config: PropTypes.object.isRequired,
-    currentTime: PropTypes.number.isRequired,
-    error: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.shape({ message: PropTypes.string }),
-    ]),
-    itineraries: PropTypes.arrayOf(
-      PropTypes.shape({
-        endTime: PropTypes.number,
-        startTime: PropTypes.number,
-      }),
-    ),
-    locationState: PropTypes.object,
+    error: PropTypes.string,
+    setLoading: PropTypes.func.isRequired,
+    setError: PropTypes.func.isRequired,
     params: PropTypes.shape({
       from: PropTypes.string.isRequired,
       to: PropTypes.string.isRequired,
       hash: PropTypes.string,
     }).isRequired,
-    plan: PropTypes.shape({ date: PropTypes.number }), // eslint-disable-line
+    config: PropTypes.object.isRequired,
     serviceTimeRange: PropTypes.shape({
       start: PropTypes.number.isRequired,
       end: PropTypes.number.isRequired,
     }).isRequired,
-    setError: PropTypes.func.isRequired,
-    setLoading: PropTypes.func.isRequired,
-  };
-
-  static defaultProps = {
-    activeIndex: 0,
-    error: undefined,
-    itineraries: [],
+    breakpoint: PropTypes.string.isRequired,
   };
 
   static contextTypes = {
+    getStore: PropTypes.func.isRequired,
+    executeAction: PropTypes.func.isRequired,
     router: routerShape.isRequired,
     location: PropTypes.object.isRequired,
+    piwik: PropTypes.object,
   };
 
   onSelectActive = index => {
-    if (this.props.activeIndex === index) {
+    if (this.getActiveIndex() === index) {
       this.onSelectImmediately(index);
     } else {
       this.context.router.replace({
@@ -77,12 +59,14 @@ class SummaryPlanContainer extends React.Component {
   onSelectImmediately = index => {
     if (Number(this.props.params.hash) === index) {
       if (this.props.breakpoint === 'large') {
-        window.dataLayer.push({
-          event: 'sendMatomoEvent',
-          category: 'ItinerarySettings',
-          action: 'ItineraryDetailsClick',
-          name: 'ItineraryDetailsCollapse',
-        });
+        if (this.context.piwik != null) {
+          this.context.piwik.trackEvent(
+            'ItinerarySettings',
+            'ItineraryDetailsClick',
+            'ItineraryDetailsCollapse',
+            index,
+          );
+        }
         this.context.router.replace({
           ...this.context.location,
           pathname: getRoutePath(this.props.params.from, this.props.params.to),
@@ -91,12 +75,14 @@ class SummaryPlanContainer extends React.Component {
         this.context.router.goBack();
       }
     } else {
-      window.dataLayer.push({
-        event: 'sendMatomoEvent',
-        category: 'ItinerarySettings',
-        action: 'ItineraryDetailsClick',
-        name: 'ItineraryDetailsExpand',
-      });
+      if (this.context.piwik != null) {
+        this.context.piwik.trackEvent(
+          'ItinerarySettings',
+          'ItineraryDetailsClick',
+          'ItineraryDetailsExpand',
+          index,
+        );
+      }
       const newState = {
         ...this.context.location,
         state: { summaryPageSelected: index },
@@ -123,12 +109,13 @@ class SummaryPlanContainer extends React.Component {
   };
 
   onLater = () => {
-    window.dataLayer.push({
-      event: 'sendMatomoEvent',
-      category: 'ItinerarySettings',
-      action: 'ShowMoreRoutesClick',
-      name: 'ShowMoreRoutesLater',
-    });
+    if (this.context.piwik != null) {
+      this.context.piwik.trackEvent(
+        'ItinerarySettings',
+        'ShowMoreRoutesClick',
+        'ShowMoreRoutesLater',
+      );
+    }
 
     const end = moment.unix(this.props.serviceTimeRange.end);
     const latestDepartureTime = this.props.itineraries.reduce(
@@ -137,8 +124,7 @@ class SummaryPlanContainer extends React.Component {
 
         if (previous == null) {
           return startTime;
-        }
-        if (startTime.isAfter(previous)) {
+        } else if (startTime.isAfter(previous)) {
           return startTime;
         }
         return previous;
@@ -157,8 +143,12 @@ class SummaryPlanContainer extends React.Component {
 
     if (this.context.location.query.arriveBy !== 'true') {
       // user does not have arrive By
-      replaceQueryParams(this.context.router, {
-        time: latestDepartureTime.unix(),
+      this.context.router.replace({
+        ...this.context.location,
+        query: {
+          ...this.context.location.query,
+          time: latestDepartureTime.unix(),
+        },
       });
     } else {
       this.props.setLoading(true);
@@ -169,6 +159,7 @@ class SummaryPlanContainer extends React.Component {
 
       const tunedParams = {
         wheelchair: null,
+        ...{ modes: getDefaultOTPModes(this.props.config).join(',') },
         ...defaultRoutingSettings,
         ...params,
         numItineraries:
@@ -199,28 +190,36 @@ class SummaryPlanContainer extends React.Component {
           }
 
           this.props.setLoading(false);
-          replaceQueryParams(this.context.router, { time: newTime.unix() });
+          this.context.router.replace({
+            ...this.context.location,
+            query: {
+              ...this.context.location.query,
+              time: newTime.unix(),
+            },
+          });
         }
       });
     }
   };
 
   onEarlier = () => {
-    window.dataLayer.push({
-      event: 'sendMatomoEvent',
-      category: 'ItinerarySettings',
-      action: 'ShowMoreRoutesClick',
-      name: 'ShowMoreRoutesEarlier',
-    });
+    if (this.context.piwik != null) {
+      this.context.piwik.trackEvent(
+        'ItinerarySettings',
+        'ShowMoreRoutesClick',
+        'ShowMoreRoutesEarlier',
+      );
+    }
 
     const start = moment.unix(this.props.serviceTimeRange.start);
+
     const earliestArrivalTime = this.props.itineraries.reduce(
       (previous, current) => {
         const endTime = moment(current.endTime);
+
         if (previous == null) {
           return endTime;
-        }
-        if (endTime.isBefore(previous)) {
+        } else if (endTime.isBefore(previous)) {
           return endTime;
         }
         return previous;
@@ -229,16 +228,15 @@ class SummaryPlanContainer extends React.Component {
     );
 
     earliestArrivalTime.subtract(1, 'minutes');
-    if (earliestArrivalTime <= start) {
-      this.props.setError('no-route-start-date-too-early');
-      this.props.setLoading(false);
-      return;
-    }
 
     if (this.context.location.query.arriveBy === 'true') {
       // user has arriveBy already
-      replaceQueryParams(this.context.router, {
-        time: earliestArrivalTime.unix(),
+      this.context.router.replace({
+        ...this.context.location,
+        query: {
+          ...this.context.location.query,
+          time: earliestArrivalTime.unix(),
+        },
       });
     } else {
       this.props.setLoading(true);
@@ -250,6 +248,7 @@ class SummaryPlanContainer extends React.Component {
 
       const tunedParams = {
         wheelchair: null,
+        ...{ modes: getDefaultOTPModes(this.props.config).join(',') },
         ...defaultRoutingSettings,
         ...params,
         numItineraries:
@@ -293,7 +292,13 @@ class SummaryPlanContainer extends React.Component {
             }
 
             this.props.setLoading(false);
-            replaceQueryParams(this.context.router, { time: newTime.unix() });
+            this.context.router.replace({
+              ...this.context.location,
+              query: {
+                ...this.context.location.query,
+                time: newTime.unix(),
+              },
+            });
           }
         }
       });
@@ -301,16 +306,21 @@ class SummaryPlanContainer extends React.Component {
   };
 
   onNow = () => {
-    window.dataLayer.push({
-      event: 'sendMatomoEvent',
-      category: 'ItinerarySettings',
-      action: 'ShowMoreRoutesClick',
-      name: 'ShowMoreRoutesNow',
-    });
+    if (this.context.piwik != null) {
+      this.context.piwik.trackEvent(
+        'ItinerarySettings',
+        'ShowMoreRoutesClick',
+        'ShowMoreRoutesNow',
+      );
+    }
 
-    replaceQueryParams(this.context.router, {
-      time: moment().unix(),
-      arriveBy: false, // XXX
+    this.context.router.replace({
+      ...this.context.location,
+      query: {
+        ...this.context.location.query,
+        time: moment().unix(),
+        arriveBy: false, // XXX
+      },
     });
   };
 
@@ -326,7 +336,6 @@ class SummaryPlanContainer extends React.Component {
       $wheelchair:Boolean!,
       $disableRemainingWeightHeuristic:Boolean!,
       $preferred:InputPreferred!,
-      $unpreferred: InputUnpreferred!,
       $fromPlace:String!,
       $toPlace:String!
       $date: String!,
@@ -368,7 +377,6 @@ class SummaryPlanContainer extends React.Component {
           disableRemainingWeightHeuristic:$disableRemainingWeightHeuristic,
           arriveBy:$arriveBy,
           preferred:$preferred,
-          unpreferred: $unpreferred,
           modes:$modes
           transferPenalty:$transferPenalty,
           ignoreRealtimeUpdates:$ignoreRealtimeUpdates,
@@ -392,44 +400,48 @@ class SummaryPlanContainer extends React.Component {
       }
     }`;
 
+  getActiveIndex() {
+    if (this.context.location.state) {
+      return this.context.location.state.summaryPageSelected || 0;
+    }
+    /*
+     * If state does not exist, for example when accessing the summary
+     * page by an external link, we check if an itinerary selection is
+     * supplied in URL and make that the active selection.
+     */
+    const lastURLSegment = this.context.location.pathname.split('/').pop();
+    return Number.isNaN(Number(lastURLSegment)) ? 0 : Number(lastURLSegment);
+  }
+
   render() {
-    const { location } = this.context;
-    const { from, to } = this.props.params;
-    const { activeIndex, currentTime, locationState, itineraries } = this.props;
-    const searchTime =
-      this.props.plan.date ||
-      (location.query &&
-        location.query.time &&
-        moment(location.query.time).unix()) ||
-      currentTime;
-    const disableButtons = !itineraries || itineraries.length === 0;
+    const currentTime = this.context
+      .getStore('TimeStore')
+      .getCurrentTime()
+      .valueOf();
+    const activeIndex = this.getActiveIndex();
+    if (!this.props.itineraries && this.props.error === null) {
+      return <Loading />;
+    }
 
     return (
       <div className="summary">
         <ItinerarySummaryListContainer
-          activeIndex={activeIndex}
+          searchTime={this.props.plan.date}
+          itineraries={this.props.itineraries}
           currentTime={currentTime}
-          locationState={locationState}
-          error={this.props.error}
-          from={otpToLocation(from)}
-          intermediatePlaces={getIntermediatePlaces(
-            this.context.location.query,
-          )}
-          itineraries={itineraries}
           onSelect={this.onSelectActive}
           onSelectImmediately={this.onSelectImmediately}
+          activeIndex={activeIndex}
           open={Number(this.props.params.hash)}
-          searchTime={searchTime}
-          to={otpToLocation(to)}
+          error={this.props.error}
         >
           {this.props.children}
         </ItinerarySummaryListContainer>
         <TimeNavigationButtons
-          isEarlierDisabled={disableButtons}
-          isLaterDisabled={disableButtons}
           onEarlier={this.onEarlier}
           onLater={this.onLater}
           onNow={this.onNow}
+          itineraries={this.props.itineraries}
         />
       </div>
     );
@@ -440,7 +452,7 @@ const withConfig = getContext({
   config: PropTypes.object.isRequired,
 })(withBreakpoint(SummaryPlanContainer));
 
-const withRelayContainer = Relay.createContainer(withConfig, {
+export default Relay.createContainer(withConfig, {
   fragments: {
     plan: () => Relay.QL`
       fragment on Plan {
@@ -456,17 +468,3 @@ const withRelayContainer = Relay.createContainer(withConfig, {
     `,
   },
 });
-
-const connectedContainer = connectToStores(
-  withRelayContainer,
-  [TimeStore, PositionStore],
-  context => ({
-    currentTime: context
-      .getStore(TimeStore)
-      .getCurrentTime()
-      .valueOf(),
-    locationState: context.getStore(PositionStore).getLocationState(),
-  }),
-);
-
-export { connectedContainer as default, SummaryPlanContainer as Component };

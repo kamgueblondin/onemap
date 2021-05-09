@@ -1,5 +1,4 @@
 module.exports = {
-  '@disabled': true,
   tags: ['favourite'],
   'Add route 615 as favourite': browser => {
     browser.url(

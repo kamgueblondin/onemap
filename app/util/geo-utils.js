@@ -1,7 +1,5 @@
 /* eslint-disable camelcase */
 import unzip from 'lodash/unzip';
-import inside from 'point-in-polygon';
-
 import { isImperial } from './browser';
 
 function toRad(deg) {
@@ -21,25 +19,25 @@ export function getBearing(lat1, lng1, lat2, lng2) {
 
 const RADIUS = 6371000;
 
-export function distance(latlon1, latlon2) {
+export function distance(latlng1, latlng2) {
   const rad = Math.PI / 180;
-  const lat1 = latlon1.lat * rad;
-  const lat2 = latlon2.lat * rad;
-  const sinDLat = Math.sin((latlon2.lat - latlon1.lat) * rad / 2);
-  const sinDLon = Math.sin((latlon2.lon - latlon1.lon) * rad / 2);
+  const lat1 = latlng1.lat * rad;
+  const lat2 = latlng2.lat * rad;
+  const sinDLat = Math.sin((latlng2.lat - latlng1.lat) * rad / 2);
+  const sinDLon = Math.sin((latlng2.lng - latlng1.lng) * rad / 2);
   const a =
     sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return RADIUS * c;
 }
 
-export function getDistanceToNearestStop(lat, lon, stops) {
-  const myPos = { lat, lon };
+export function getDistanceToNearestStop(lat, lng, stops) {
+  const myPos = { lat, lng };
   let minDist = Number.MAX_VALUE;
   let minStop = null;
 
   stops.forEach(stop => {
-    const stopPos = { lat: stop.lat, lon: stop.lon };
+    const stopPos = { lat: stop.lat, lng: stop.lon };
     const dist = distance(myPos, stopPos);
 
     if (dist < minDist) {
@@ -58,8 +56,7 @@ export function displayImperialDistance(meters) {
 
   if (feet < 100) {
     return `${Math.round(feet / 10) * 10} ft`; // Tens of feet
-  }
-  if (feet < 1000) {
+  } else if (feet < 1000) {
     return `${Math.round(feet / 50) * 50} ft`; // fifty feet
   }
   return `${Math.round(feet / 528) / 10} mi`; // tenth of a mile
@@ -71,14 +68,11 @@ export function displayDistance(meters, config) {
   }
   if (meters < 100) {
     return `${Math.round(meters / 10) * 10} m`; // Tens of meters
-  }
-  if (meters < 1000) {
+  } else if (meters < 1000) {
     return `${Math.round(meters / 50) * 50} m`; // fifty meters
-  }
-  if (meters < 10000) {
+  } else if (meters < 10000) {
     return `${Math.round(meters / 100) * 100 / 1000} km`; // hudreds of meters
-  }
-  if (meters < 100000) {
+  } else if (meters < 100000) {
     return `${Math.round(meters / 1000)} km`; // kilometers
   }
   return `${Math.round(meters / 10000) * 10} km`; // tens of kilometers
@@ -105,32 +99,6 @@ export function boundWithMinimumArea(points) {
     [minlat - missingHeight / 2, minlon - missingWidth / 2],
     [maxlat + missingHeight / 2, maxlon + missingWidth / 2],
   ];
-}
-
-// Simpler version of boundWithMinimumArea that uses lonlat array
-// No checks for null values and assumes box is large enough
-export function boundWithMinimumAreaSimple(points) {
-  const lons = [];
-  const lats = [];
-  points.forEach(coordinatePair => {
-    lons.push(coordinatePair[0]);
-    lats.push(coordinatePair[1]);
-  });
-  const minlat = Math.min(...lats);
-  const minlon = Math.min(...lons);
-  const maxlat = Math.max(...lats);
-  const maxlon = Math.max(...lons);
-  return [[minlat, minlon], [maxlat, maxlon]];
-}
-
-// Checks if lat and lon are inside of [[minlat, minlon], [maxlat, maxlon]] bounding box
-export function isInBoundingBox(boundingBox, lat, lon) {
-  return (
-    boundingBox[0][0] <= lat &&
-    boundingBox[0][1] <= lon &&
-    boundingBox[1][0] >= lat &&
-    boundingBox[1][1] >= lon
-  );
 }
 
 function getLengthOf(geometry) {
@@ -356,58 +324,3 @@ export function kkj2ToWgs84(coords) {
 
   return [wgsLon, wgsLat];
 }
-
-/**
- * Finds any features inside which the given point is located. This returns
- * the properties of each feature by default.
- *
- * @param {{lat: number, lon: number}} point the location to check.
- * @param {*} features the area features available in a geojson format.
- * @param {function} mapFn the feature data mapping function.
- */
-export const findFeatures = (
-  { lat, lon },
-  features,
-  mapFn = feature => feature.properties,
-) => {
-  if (
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lon) ||
-    !Array.isArray(features) ||
-    features.length === 0
-  ) {
-    return [];
-  }
-  const matches = features
-    .filter(feature => {
-      const { coordinates, type } = feature.geometry;
-      const multiCoordinate = coordinates.length > 1;
-      return (
-        ['Polygon', 'MultiPolygon'].includes(type) &&
-        coordinates.some(areaBoundaries =>
-          inside(
-            [lon, lat],
-            multiCoordinate ? areaBoundaries[0] : areaBoundaries,
-          ),
-        )
-      );
-    })
-    .map(mapFn);
-  return matches;
-};
-
-/**
- * Checks if the given geometry exists and has type 'MultiPoint'.
- *
- * @param {{ type: string }} geometry the geometry object to check.
- */
-export const isMultiPointTypeGeometry = geometry =>
-  !!(geometry && geometry.type === 'MultiPoint');
-
-/**
- * Checks if the given geometry exists and has type 'Point'.
- *
- * @param {{ type: string }} geometry the geometry object to check.
- */
-export const isPointTypeGeometry = geometry =>
-  !!(geometry && geometry.type === 'Point');

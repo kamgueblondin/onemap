@@ -18,8 +18,6 @@ function WalkLeg(props, context) {
   const duration = durationToString(props.leg.duration * 1000);
   const modeClassName = 'walk';
 
-  const { previousLeg } = props;
-
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
   return (
     <div key={props.index} className="row itinerary-row">
@@ -36,15 +34,7 @@ function WalkLeg(props, context) {
       >
         <div className="itinerary-leg-first-row">
           <div>
-            {previousLeg && previousLeg.rentedBike ? (
-              <FormattedMessage
-                id="return-cycle-to"
-                values={{ station: props.leg.from.name }}
-                defaultMessage="Return the bike to {station} station"
-              />
-            ) : (
-              props.leg.from.name
-            )}
+            {props.leg.from.name}
             {props.children}
           </div>
           <Icon img="icon-icon_search-plus" className="itinerary-search-icon" />
@@ -88,30 +78,22 @@ WalkLeg.description = () => {
   );
 };
 
-const walkLegShape = PropTypes.shape({
-  distance: PropTypes.number.isRequired,
-  duration: PropTypes.number.isRequired,
-  from: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    stop: PropTypes.shape({
-      code: PropTypes.string,
-    }),
-  }).isRequired,
-  mode: PropTypes.string.isRequired,
-  rentedBike: PropTypes.bool,
-  startTime: PropTypes.number.isRequired,
-});
-
 WalkLeg.propTypes = {
-  children: PropTypes.node,
-  focusAction: PropTypes.func.isRequired,
+  leg: PropTypes.shape({
+    duration: PropTypes.number.isRequired,
+    startTime: PropTypes.number.isRequired,
+    distance: PropTypes.number.isRequired,
+    mode: PropTypes.string.isRequired,
+    from: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      stop: PropTypes.shape({
+        code: PropTypes.string,
+      }),
+    }).isRequired,
+  }).isRequired,
   index: PropTypes.number.isRequired,
-  leg: walkLegShape.isRequired,
-  previousLeg: walkLegShape,
-};
-
-WalkLeg.defaultProps = {
-  previousLeg: undefined,
+  focusAction: PropTypes.func.isRequired,
+  children: PropTypes.node,
 };
 
 WalkLeg.contextTypes = { config: PropTypes.object.isRequired };
