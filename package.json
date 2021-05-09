@@ -43,8 +43,8 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">=10.0.2",
-    "npm": ">=3.0"
+    "node": "12.14.1",
+    "npm": "7.22.10"
   },
   "browserslist": [
     "IE 11",
