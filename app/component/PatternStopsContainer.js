@@ -5,7 +5,6 @@ import some from 'lodash/some';
 import { routerShape } from 'react-router';
 import RouteListHeader from './RouteListHeader';
 import RouteStopListContainer from './RouteStopListContainer';
-import withBreakpoint from '../util/withBreakpoint';
 
 class PatternStopsContainer extends React.PureComponent {
   static propTypes = {
@@ -20,11 +19,11 @@ class PatternStopsContainer extends React.PureComponent {
     location: PropTypes.shape({
       pathname: PropTypes.string.isRequired,
     }).isRequired,
-    breakpoint: PropTypes.string.isRequired,
   };
 
   static contextTypes = {
     router: routerShape.isRequired,
+    breakpoint: PropTypes.string.isRequired,
   };
 
   toggleFullscreenMap = () => {
@@ -42,7 +41,7 @@ class PatternStopsContainer extends React.PureComponent {
 
     if (
       some(this.props.routes, route => route.fullscreenMap) &&
-      this.props.breakpoint !== 'large'
+      this.context.breakpoint !== 'large'
     ) {
       return <div className="route-page-content" />;
     }
@@ -51,7 +50,7 @@ class PatternStopsContainer extends React.PureComponent {
       <div className="route-page-content">
         <RouteListHeader
           key="header"
-          className={`bp-${this.props.breakpoint}`}
+          className={`bp-${this.context.breakpoint}`}
         />
         <RouteStopListContainer
           key="list"
@@ -63,7 +62,7 @@ class PatternStopsContainer extends React.PureComponent {
   }
 }
 
-export default Relay.createContainer(withBreakpoint(PatternStopsContainer), {
+export default Relay.createContainer(PatternStopsContainer, {
   initialVariables: {
     patternId: null,
   },

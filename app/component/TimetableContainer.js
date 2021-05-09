@@ -9,7 +9,6 @@ export default Relay.createContainer(Timetable, {
         gtfsId
         name
         url
-        locationType
         stoptimesForServiceDate(date:$date) {
           pattern {
             headsign

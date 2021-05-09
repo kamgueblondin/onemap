@@ -3,7 +3,6 @@ import React from 'react';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 import ComponentUsageExample from './ComponentUsageExample';
 import { setLanguage } from '../action/userPreferencesActions';
-import { isBrowser } from '../util/browser';
 
 const selectLanguage = (executeAction, lang) => () =>
   executeAction(setLanguage, lang);
@@ -19,23 +18,13 @@ const language = (lang, currentLanguage, highlight, executeAction) => (
   </button>
 );
 
-const LangSelect = ({ currentLanguage }, { executeAction, config }) => {
-  if (isBrowser) {
-    return (
-      <div key="lang-select" id="lang-select">
-        {config.availableLanguages.map(lang =>
-          language(
-            lang,
-            currentLanguage,
-            lang === currentLanguage,
-            executeAction,
-          ),
-        )}
-      </div>
-    );
-  }
-  return null;
-};
+const LangSelect = ({ currentLanguage }, { executeAction, config }) => (
+  <div key="lang-select" id="lang-select">
+    {config.availableLanguages.map(lang =>
+      language(lang, currentLanguage, lang === currentLanguage, executeAction),
+    )}
+  </div>
+);
 
 LangSelect.displayName = 'LangSelect';
 

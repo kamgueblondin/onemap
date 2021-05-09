@@ -1,5 +1,5 @@
 // Parse from, to and time parameters from old reittiopas searches
-import moment from 'moment-timezone/moment-timezone';
+import moment from 'moment-timezone';
 import { getGeocodingResult } from './searchUtils';
 import { locationToOTP } from './otpStrings';
 import { kkj2ToWgs84 } from './geo-utils';
@@ -42,9 +42,8 @@ function parseLocation(location, input, config) {
       .then(parseGeocodingResults)
       .catch(() => ' ');
   } else if (input) {
-    const decoded = input.replace('+', ' ');
     return getGeocodingResult(
-      decoded,
+      input,
       config.searchParams,
       null,
       null,

@@ -9,7 +9,7 @@ export default {
   CONFIG,
 
   URL: {
-    OTP: process.env.OTP_URL || `${API_URL}/routing/v1/routers/hsl/`,
+    OTP: `${API_URL}/routing/v1/routers/hsl/`,
     STOP_MAP: `${MAP_URL}/map/v1/hsl-stop-map/`,
     CITYBIKE_MAP: `${MAP_URL}/map/v1/hsl-citybike-map/`,
     PARK_AND_RIDE_MAP: `${MAP_URL}/map/v1/hsl-parkandride-map/`,
@@ -28,10 +28,7 @@ export default {
   availableLanguages: ['fi', 'sv', 'en'],
   defaultLanguage: 'fi',
 
-  favicon: './app/configurations/images/hsl/icon_favicon-reittiopas.svg',
-
-  // Navbar logo
-  logo: 'hsl/reittiopas-logo.svg',
+  favicon: './sass/themes/hsl/icon_favicon-reittiopas.svg',
 
   feedIds: ['HSL'],
 
@@ -49,8 +46,6 @@ export default {
   },
 
   maxWalkDistance: 2500,
-  itineraryFiltering: 2.5, // drops 40% worse routes
-
   parkAndRide: {
     showParkAndRide: true,
     parkAndRideMinZoom: 14,
@@ -60,8 +55,6 @@ export default {
     showTicketSales: true,
     ticketSalesMinZoom: 16,
   },
-
-  showDisclaimer: true,
 
   stopsMinZoom: 14,
 
@@ -282,41 +275,27 @@ export default {
 
   fareMapping: {
     'HSL:hki': 'HSL:hki',
-    'HSL:hki2': 'HSL:hki',
     'HSL:esp': 'HSL:esp',
-    'HSL:esp2': 'HSL:esp',
     'HSL:van': 'HSL:van',
-    'HSL:van2': 'HSL:van',
     'HSL:ker': 'HSL:ker',
     'HSL:kir': 'HSL:kir',
     'HSL:seu': 'HSL:seu',
     'HSL:seu2': 'HSL:seu',
     'HSL:seu3': 'HSL:seu',
     'HSL:seu4': 'HSL:seu',
-    'HSL:seu5': 'HSL:seu',
-    'HSL:lse': 'HSL:lse',
-    'HSL:lse2': 'HSL:lse',
-    'HSL:lse3': 'HSL:lse',
-    'HSL:lse4': 'HSL:lse',
-    'HSL:lse5': 'HSL:lse',
-    'HSL:lse6': 'HSL:lse',
-    'HSL:kse': 'HSL:kse',
-    'HSL:kse1': 'HSL:kse',
-    'HSL:kse2': 'HSL:kse',
-    'HSL:kse3': 'HSL:kse',
-    'HSL:kse4': 'HSL:kse',
-    'HSL:kse5': 'HSL:kse',
-    'HSL:kse6': 'HSL:kse',
-    'HSL:kse7': 'HSL:kse',
-    'HSL:kse8': 'HSL:kse',
-    'HSL:kse9': 'HSL:kse',
-    'HSL:kse10': 'HSL:kse',
-    'HSL:kse11': 'HSL:kse',
-    'HSL:kse12': 'HSL:kse',
-    'HSL:kse13': 'HSL:kse',
-    'HSL:kse14': 'HSL:kse',
-    'HSL:kse15': 'HSL:kse',
-    'HSL:kse16': 'HSL:kse',
+    'HSL:lse': 'HSL:lse2',
+    'HSL:lse2': 'HSL:lse2',
+    'HSL:lse3': 'HSL:lse2',
+    'HSL:lse4': 'HSL:lse2',
+    'HSL:lse5': 'HSL:lse2',
+    'HSL:kse': 'HSL:lse3',
+    'HSL:kse2': 'HSL:lse3',
+    'HSL:kse3': 'HSL:lse3',
+    'HSL:kse4': 'HSL:lse3',
+    'HSL:kse5': 'HSL:lse3',
+    'HSL:kse6': 'HSL:lse3',
+    'HSL:kse7': 'HSL:lse3',
+    'HSL:kse8': 'HSL:lse3',
   },
 
   staticMessages: [

@@ -22,9 +22,6 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
-  // Navbar logo
-  logo: 'joensuu/jojo-logo.png',
-
   colors: {
     primary: '#5c4696',
   },

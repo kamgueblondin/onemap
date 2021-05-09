@@ -5,21 +5,24 @@ import ComponentUsageExample from './ComponentUsageExample';
 import NearbyTabLabel from './NearbyTabLabel';
 import FavouritesTabLabelContainer from './FavouritesTabLabelContainer';
 
-const FrontPagePanelSmall = ({
-  selectedPanel,
-  nearbyClicked,
-  favouritesClicked,
-  mapExpanded,
-  children,
-  //  location,
-}) => {
+const FrontPagePanelSmall = (
+  {
+    selectedPanel,
+    nearbyClicked,
+    favouritesClicked,
+    mapExpanded,
+    children,
+    //  location,
+  },
+  { breakpoint },
+) => {
   const tabClasses = ['hover'];
   const nearbyClasses = ['nearby-routes', 'h4'];
   const favouritesClasses = ['favourites', 'h4'];
 
   if (selectedPanel === 1) {
     nearbyClasses.push('selected');
-  } else {
+  } else if (selectedPanel === 2) {
     favouritesClasses.push('selected');
   }
 
@@ -28,8 +31,10 @@ const FrontPagePanelSmall = ({
       className={cx([
         'frontpage-panel-wrapper',
         'no-select',
-        'small',
-        { 'expanded-panel': mapExpanded },
+        {
+          small: breakpoint !== 'large',
+          'expanded-panel': mapExpanded,
+        },
       ])}
       key="panel"
     >
@@ -83,17 +88,16 @@ FrontPagePanelSmall.description = () => (
   </div>
 );
 
-FrontPagePanelSmall.defaultProps = {
-  selectedPanel: 1,
-  children: null,
-};
-
 FrontPagePanelSmall.propTypes = {
-  selectedPanel: PropTypes.oneOf([1, 2]),
+  selectedPanel: PropTypes.number,
   nearbyClicked: PropTypes.func.isRequired,
   favouritesClicked: PropTypes.func.isRequired,
   mapExpanded: PropTypes.bool.isRequired,
   children: PropTypes.node,
+};
+
+FrontPagePanelSmall.contextTypes = {
+  breakpoint: PropTypes.string,
 };
 
 export default FrontPagePanelSmall;

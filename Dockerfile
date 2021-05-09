@@ -14,18 +14,13 @@ ENV \
   PORT=8080 \
   API_URL='' \
   MAP_URL='' \
-  OTP_URL='' \
-  ALERTS_URL='' \
-  VEHICLE_URL='' \
-  GEOCODING_BASE_URL='' \
   APP_PATH='' \
   CONFIG='' \
   PIWIK_ADDRESS='' \
   PIWIK_ID='' \
   NODE_ENV='' \
   NODE_OPTS='' \
-  RELAY_FETCH_TIMEOUT='' \
-  ASSET_URL=''
+  RELAY_FETCH_TIMEOUT=''
 
 WORKDIR ${WORK}
 ADD . ${WORK}

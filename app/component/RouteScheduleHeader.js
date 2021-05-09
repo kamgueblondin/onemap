@@ -4,7 +4,6 @@ import RouteScheduleStopSelect from './RouteScheduleStopSelect';
 import ComponentUsageExample from './ComponentUsageExample';
 import { routeScheduleHeaderStops as exampleStops } from './ExampleData';
 import Icon from './Icon';
-import { isBrowser } from '../util/browser';
 
 function RouteScheduleHeader({
   stops,
@@ -27,12 +26,6 @@ function RouteScheduleHeader({
     .displayName;
   const toDisplayName = toOptions.filter(o => o.value === to)[0].displayName;
 
-  const headerLineStyle = {};
-  if (isBrowser) {
-    // eslint-disable-next-line global-require
-    headerLineStyle.backgroundImage = `url(${require(`../configurations/images/default/dotted-line-bg2.png`)})`;
-  }
-
   const stopHeadersForPrinting = (
     <div className="printable-stop-header">
       <div className="printable-stop-header_icon-from">
@@ -41,7 +34,7 @@ function RouteScheduleHeader({
       <div className="printable-stop-header_from">
         <span>{fromDisplayName}</span>
       </div>
-      <div className="printable-stop-header_line" style={headerLineStyle} />
+      <div className="printable-stop-header_line" />
       <div className="printable-stop-header_icon-to">
         <Icon img="icon-icon_mapMarker-point" />
       </div>

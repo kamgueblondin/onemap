@@ -17,7 +17,6 @@ import {
   batchMiddleware,
 } from 'react-relay-network-layer/lib';
 import OfflinePlugin from 'offline-plugin/runtime';
-import Helmet from 'react-helmet';
 
 import Raven from './util/Raven';
 import configureMoment from './util/configure-moment';
@@ -30,9 +29,6 @@ import { BUILD_TIME } from './buildInfo';
 import createPiwik from './util/piwik';
 import ErrorBoundary from './component/ErrorBoundary';
 import oldParamParser from './util/oldParamParser';
-import { ClientProvider as ClientBreakpointProvider } from './util/withBreakpoint';
-import meta from './meta';
-import { isIOSApp } from './util/browser';
 
 const plugContext = f => () => ({
   plugComponentContext: f,
@@ -172,6 +168,7 @@ const callback = () =>
     const ContextProvider = provideContext(StoreListeningIntlProvider, {
       piwik: PropTypes.object,
       raven: PropTypes.object,
+      url: PropTypes.string,
       config: PropTypes.object,
       headers: PropTypes.object,
     });
@@ -186,62 +183,37 @@ const callback = () =>
         } else {
           IsomorphicRouter.prepareInitialRender(Relay.Store, renderProps).then(
             props => {
-              const root = document.getElementById('app');
-              const { initialBreakpoint } = root.dataset;
-
-              // KLUDGE: SSR and CSR mismatch breaks the UI in iOS PWA mode
-              // see: https://github.com/facebook/react/issues/11336
-              if (isIOSApp) {
-                root.innerHTML = '';
-              }
-
-              const content = (
-                <ClientBreakpointProvider
-                  serverGuessedBreakpoint={initialBreakpoint}
+              ReactDOM.hydrate(
+                <ContextProvider
+                  translations={translations}
+                  context={context.getComponentContext()}
                 >
-                  <ContextProvider
-                    translations={translations}
-                    context={context.getComponentContext()}
-                  >
-                    <ErrorBoundary>
-                      <MuiThemeProvider
-                        muiTheme={getMuiTheme(MUITheme(config), {
-                          userAgent: navigator.userAgent,
-                        })}
-                      >
-                        <React.Fragment>
-                          <Helmet
-                            {...meta(
-                              context
-                                .getStore('PreferencesStore')
-                                .getLanguage(),
-                              window.location.host,
-                              window.location.href,
-                              config,
-                            )}
-                          />
-                          <Router {...props} onUpdate={track} />
-                        </React.Fragment>
-                      </MuiThemeProvider>
-                    </ErrorBoundary>
-                  </ContextProvider>
-                </ClientBreakpointProvider>
+                  <ErrorBoundary>
+                    <MuiThemeProvider
+                      muiTheme={getMuiTheme(MUITheme(config), {
+                        userAgent: navigator.userAgent,
+                      })}
+                    >
+                      <Router {...props} onUpdate={track} />
+                    </MuiThemeProvider>
+                  </ErrorBoundary>
+                </ContextProvider>,
+                document.getElementById('app'),
+                () => {
+                  // Run only in production mode and when built in a docker container
+                  if (
+                    process.env.NODE_ENV === 'production' &&
+                    BUILD_TIME !== 'unset'
+                  ) {
+                    OfflinePlugin.install({
+                      onUpdateReady: () => OfflinePlugin.applyUpdate(),
+                      onUpdated: () => {
+                        hasSwUpdate = true;
+                      },
+                    });
+                  }
+                },
               );
-
-              ReactDOM.hydrate(content, root, () => {
-                // Run only in production mode and when built in a docker container
-                if (
-                  process.env.NODE_ENV === 'production' &&
-                  BUILD_TIME !== 'unset'
-                ) {
-                  OfflinePlugin.install({
-                    onUpdateReady: () => OfflinePlugin.applyUpdate(),
-                    onUpdated: () => {
-                      hasSwUpdate = true;
-                    },
-                  });
-                }
-              });
             },
           );
         }
@@ -261,7 +233,7 @@ const callback = () =>
     });
   });
 
-// Guard againist Samsung et.al. which are not properly polyfilled by polyfill-library
+// Guard againist Samsung et.al. which are not properly polyfilled by polyfill-service
 if (typeof window.Intl !== 'undefined') {
   callback();
 } else {

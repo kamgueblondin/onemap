@@ -35,5 +35,18 @@ selected theme can be forced by setting the `CONFIG` env. variable:
 
 ## Building the production version
 
-The build command `npm run build` collects all existing themes found from `app/configurations` folder.
+The build command `npm run build` collects all existing themes found from `app/configurations` folder. To build with a single theme,
+use the command:
+
+- `CONFIG=<theme> npm run build`
+
+To avoid illegal references to nonexistent themes, such a limited build could be run as:
+
+- `CONFIG=<theme> npm start`
+
+
+
+
+
+
 

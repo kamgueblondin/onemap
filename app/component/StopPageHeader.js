@@ -12,12 +12,10 @@ import ComponentUsageExample from './ComponentUsageExample';
 // import InfoIcon from './InfoIcon';
 // import Favourite from './Favourite';
 
-import withBreakpoint from '../util/withBreakpoint';
-
 const StopPageHeader = compose(
-  withBreakpoint,
   getContext({
     executeAction: PropTypes.func.isRequired,
+    breakpoint: PropTypes.string.isRequired,
   }),
   mapProps(props => ({
     stop: props.stop,

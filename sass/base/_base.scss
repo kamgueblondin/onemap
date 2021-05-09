@@ -62,7 +62,6 @@ body {
   flex-direction: column;
 
   @media print {
-    display: block;
     height: auto;
   }
 }

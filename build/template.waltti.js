@@ -28,7 +28,7 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
-  textLogo: __textlogo__,
+  textLogo: __textlogo__, // title text instead of logo img
 
   feedIds: ['__Theme__'],
 

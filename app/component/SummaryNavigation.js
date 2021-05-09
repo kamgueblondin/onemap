@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import Relay from 'react-relay/classic';
 import cx from 'classnames';
 import { routerShape } from 'react-router';
 import OriginDestinationBar from './OriginDestinationBar';
@@ -10,7 +11,6 @@ import { parseLocation } from '../util/path';
 import Icon from './Icon';
 import SecondaryButton from './SecondaryButton';
 import QuickSettingsPanel from './QuickSettingsPanel';
-import withBreakpoint from '../util/withBreakpoint';
 
 class SummaryNavigation extends React.Component {
   static propTypes = {
@@ -23,11 +23,6 @@ class SummaryNavigation extends React.Component {
     endTime: PropTypes.number,
     isQuickSettingsOpen: PropTypes.bool.isRequired,
     toggleQuickSettings: PropTypes.func.isRequired,
-    breakpoint: PropTypes.string.isRequired,
-    serviceTimeRange: PropTypes.shape({
-      start: PropTypes.number.isRequired,
-      end: PropTypes.number.isRequired,
-    }).isRequired,
   };
 
   static defaultProps = {
@@ -39,6 +34,7 @@ class SummaryNavigation extends React.Component {
     piwik: PropTypes.object,
     router: routerShape,
     location: PropTypes.object.isRequired,
+    breakpoint: PropTypes.string,
   };
 
   componentDidMount() {
@@ -106,9 +102,9 @@ class SummaryNavigation extends React.Component {
   internalSetOffcanvas = newState => {
     if (this.context.piwik != null) {
       this.context.piwik.trackEvent(
-        'ItinerarySettings',
-        'ExtraSettingsPanelClick',
-        newState ? 'ExtraSettingsPanelOpen' : 'ExtraSettingsPanelClose',
+        'Offcanvas',
+        'Customize Search',
+        newState ? 'close' : 'open',
       );
     }
 
@@ -125,9 +121,20 @@ class SummaryNavigation extends React.Component {
     }
   };
 
+  renderTimeSelectorContainer = ({ done, props }) =>
+    done ? (
+      <TimeSelectorContainer
+        {...props}
+        startTime={this.props.startTime}
+        endTime={this.props.endTime}
+      />
+    ) : (
+      undefined
+    );
+
   render() {
     const quickSettingsIcon = this.checkQuickSettingsIcon();
-    const className = cx({ 'bp-large': this.props.breakpoint === 'large' });
+    const className = cx({ 'bp-large': this.context.breakpoint === 'large' });
     let drawerWidth = 291;
     if (typeof window !== 'undefined') {
       drawerWidth =
@@ -135,7 +142,6 @@ class SummaryNavigation extends React.Component {
           ? Math.min(600, 0.5 * window.innerWidth)
           : 291;
     }
-    const isOpen = this.getOffcanvasState();
 
     return (
       <div style={{ background: '#f4f4f5' }}>
@@ -146,18 +152,14 @@ class SummaryNavigation extends React.Component {
               disableSwipeToOpen
               openSecondary
               docked={false}
-              open={isOpen}
+              open={this.getOffcanvasState()}
               onRequestChange={this.onRequestChange}
               // Needed for the closing arrow button that's left of the drawer.
-              containerStyle={{
-                background: 'transparent',
-                boxShadow: 'none',
-                ...(isOpen && { '-moz-transform': 'none' }), // needed to prevent showing an extra scrollbar in FF
-              }}
+              containerStyle={{ background: 'transparent', boxShadow: 'none' }}
               width={drawerWidth}
             >
               <CustomizeSearch
-                isOpen={isOpen}
+                isOpen={this.getOffcanvasState()}
                 params={this.props.params}
                 onToggleClick={this.toggleCustomizeSearchOffcanvas}
               />
@@ -179,10 +181,17 @@ class SummaryNavigation extends React.Component {
             quickSettingsOpen: this.props.isQuickSettingsOpen,
           })}
         >
-          <TimeSelectorContainer
-            startTime={this.props.startTime}
-            endTime={this.props.endTime}
-            serviceTimeRange={this.props.serviceTimeRange}
+          <Relay.Renderer
+            Container={TimeSelectorContainer}
+            queryConfig={{
+              params: {},
+              name: 'ServiceTimeRangRoute',
+              queries: {
+                serviceTimeRange: () => Relay.QL`query { serviceTimeRange }`,
+              },
+            }}
+            environment={Relay.Store}
+            render={this.renderTimeSelectorContainer}
           />
           <div className="button-container">
             <div className="icon-holder">
@@ -208,4 +217,4 @@ class SummaryNavigation extends React.Component {
   }
 }
 
-export default withBreakpoint(SummaryNavigation);
+export default SummaryNavigation;

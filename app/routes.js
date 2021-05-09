@@ -2,20 +2,20 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import Relay from 'react-relay/classic';
 import { Route, IndexRoute, IndexRedirect } from 'react-router';
+import ContainerDimensions from 'react-container-dimensions';
 import IndexPage from './component/IndexPage';
 import Error404 from './component/404';
 import NetworkError from './component/NetworkError';
 import Loading from './component/LoadingPage';
 import TopLevel from './component/TopLevel';
 import Title from './component/Title';
-import scrollTop from './util/scroll';
+import { isBrowser } from './util/browser';
 import {
   PREFIX_ROUTES,
   PREFIX_STOPS,
   PREFIX_ITINERARY_SUMMARY,
 } from './util/path';
 import { preparePlanParams } from './util/planParamUtil';
-import { validateServiceTimeRange } from './util/timeUtils';
 
 const ComponentLoading404Renderer = {
   /* eslint-disable react/prop-types */
@@ -100,7 +100,6 @@ const planQueries = {
         ${Component.getFragment('plan', variables)}
       }
     }`,
-  serviceTimeRange: () => Relay.QL`query { serviceTimeRange }`,
 };
 
 function errorLoading(err) {
@@ -123,7 +122,6 @@ export default config => {
           ...routerProps,
           ...preparePlanParams(config)(routerProps.params, routerProps),
           plan: { plan: {} },
-          serviceTimeRange: validateServiceTimeRange(), // use default range
           loading: true,
         });
 
@@ -132,7 +130,17 @@ export default config => {
     routerProps: PropTypes.object.isRequired,
   };
   return (
-    <Route component={TopLevel}>
+    <Route
+      component={props =>
+        isBrowser ? (
+          <ContainerDimensions>
+            <TopLevel {...props} />
+          </ContainerDimensions>
+        ) : (
+          <TopLevel {...props} />
+        )
+      }
+    >
       <Route
         path="/styleguide"
         getComponent={(location, cb) => {
@@ -454,15 +462,7 @@ export default config => {
         </Route>
       </Route>
       <Route
-        path="/suosikki/muokkaa/sijainti/:id"
-        getComponent={(location, cb) => {
-          import(/* webpackChunkName: "add-favourite" */ './component/AddFavouritePage')
-            .then(loadRoute(cb))
-            .catch(errorLoading);
-        }}
-      />
-      <Route
-        path="/suosikki/muokkaa/pysakki/:id"
+        path="/suosikki/muokkaa/:id"
         getComponent={(location, cb) => {
           import(/* webpackChunkName: "add-favourite" */ './component/AddFavouritePage')
             .then(loadRoute(cb))
@@ -480,16 +480,6 @@ export default config => {
           ]).then(([title, content]) => cb(null, { title, content }));
         }}
       />
-      {!config.URL.API_URL.includes('/api.') && (
-        <Route
-          path="/admin"
-          getComponent={(location, cb) => {
-            import(/* webpackChunkName: "admin" */ './component/AdminPage')
-              .then(loadRoute(cb))
-              .catch(errorLoading);
-          }}
-        />
-      )}
       <Route path="/js/:name" component={Error404} />
       <Route path="/css/:name" component={Error404} />
       <Route
@@ -499,7 +489,6 @@ export default config => {
           title: Title,
           content: IndexPage,
         }}
-        onEnter={scrollTop}
       />
       <Route
         path="/?mock"

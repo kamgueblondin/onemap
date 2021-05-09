@@ -1,50 +1,17 @@
 import Relay from 'react-relay/classic';
+
 import get from 'lodash/get';
-import isString from 'lodash/isString';
 import take from 'lodash/take';
 import orderBy from 'lodash/orderBy';
 import sortBy from 'lodash/sortBy';
 import debounce from 'lodash/debounce';
 import flatten from 'lodash/flatten';
-import merge from 'lodash/merge';
-import unorm from 'unorm';
-
 import { getJson } from './xhrPromise';
 import routeCompare from './route-compare';
 import { distance } from './geo-utils';
-import { uniqByLabel, isStop } from './suggestionUtils';
+import { uniqByLabel } from './suggestionUtils';
 import mapPeliasModality from './pelias-to-modality-mapper';
 import { PREFIX_ROUTES } from '../util/path';
-
-/**
- * LayerType depicts the type of the point-of-interest.
- */
-const LayerType = {
-  Address: 'address',
-  FavouriteStop: 'favouriteStop',
-  Station: 'station',
-  Stop: 'stop',
-  Street: 'street',
-  Venue: 'venue',
-};
-
-/**
- * SearchType depicts the type of the search.
- */
-const SearchType = {
-  All: 'all',
-  Endpoint: 'endpoint',
-  Search: 'search',
-};
-
-/**
- * SourceType depicts the source of the point-of-interest's information.
- */
-const SourceType = {
-  GtfsHsl: 'gtfshsl',
-  OpenAddresses: 'openaddresses',
-  OpenStreetMap: 'openstreetmap',
-};
 
 function getRelayQuery(query) {
   return new Promise((resolve, reject) => {
@@ -71,6 +38,20 @@ const mapRoute = item => ({
     coordinates: null,
   },
 });
+
+function mapStops(stops) {
+  return stops.map(item => ({
+    type: 'Stop',
+    properties: {
+      ...item,
+      mode: item.routes.length > 0 && item.routes[0].mode.toLowerCase(),
+      layer: 'stop',
+    },
+    geometry: {
+      coordinates: [item.lon, item.lat],
+    },
+  }));
+}
 
 function filterMatchingToInput(list, Input, fields) {
   if (typeof Input === 'string' && Input.length > 0) {
@@ -244,8 +225,7 @@ function getFavouriteRoutes(favourites, input) {
 }
 
 function getFavouriteStops(favourites, input, origin) {
-  // Currently we're updating only stops as there isn't suitable query for stations
-  const stopQuery = Relay.createQuery(
+  const query = Relay.createQuery(
     Relay.QL`
     query favouriteStops($ids: [String!]!) {
       stops(ids: $ids ) {
@@ -258,29 +238,22 @@ function getFavouriteStops(favourites, input, origin) {
         routes { mode }
       }
     }`,
-    { ids: favourites.map(item => item.gtfsId) },
+    { ids: favourites },
   );
 
-  const refLatLng = origin &&
-    origin.lat &&
+  const refLatLng = origin.lat &&
     origin.lon && { lat: origin.lat, lng: origin.lon };
 
-  return getRelayQuery(stopQuery)
-    .then(stops =>
-      merge(stops, favourites).map(stop => ({
+  return getRelayQuery(query)
+    .then(favouriteStops =>
+      mapStops(favouriteStops).map(favourite => ({
+        ...favourite,
+        properties: { ...favourite.properties, layer: 'favouriteStop' },
         type: 'FavouriteStop',
-        properties: {
-          ...stop,
-          layer: isStop(stop) ? 'favouriteStop' : 'favouriteStation',
-        },
-        geometry: {
-          coordinates: [stop.lon, stop.lat],
-        },
       })),
     )
     .then(stops =>
       filterMatchingToInput(stops, input, [
-        'properties.locationName',
         'properties.name',
         'properties.desc',
       ]),
@@ -288,10 +261,10 @@ function getFavouriteStops(favourites, input, origin) {
     .then(
       stops =>
         refLatLng
-          ? sortBy(stops, stop =>
+          ? sortBy(stops, item =>
               distance(refLatLng, {
-                lat: stop.lat,
-                lng: stop.lon,
+                lat: item.geometry.coordinates[1],
+                lng: item.geometry.coordinates[0],
               }),
             )
           : stops,
@@ -341,91 +314,10 @@ function getRoutes(input, config) {
 export const getAllEndpointLayers = () => [
   'CurrentPosition',
   'FavouritePlace',
-  'FavouriteStop',
   'OldSearch',
   'Geocoding',
   'Stops',
 ];
-
-/**
- * Helper function to sort the results with. Order:
- *  - routes and lines (if search done with numbers only)
- *  - stations
- *  - OSM points of interest
- *  - stops
- *
- * @param {*[]} results The search results that were received
- * @param {String} term The search term that was used
- */
-export const sortSearchResults = (results, term = '') => {
-  if (!Array.isArray(results)) {
-    return results;
-  }
-
-  const isLineIdentifier = value =>
-    !!(isString(value) && value.match(/^[0-9]+/));
-
-  const getLayerSortOrder = layer => {
-    switch (layer) {
-      case LayerType.Station:
-        return 2;
-      case LayerType.Address:
-      case LayerType.Street:
-      case LayerType.Venue:
-      default:
-        return 1;
-      case LayerType.Stop:
-        return 0;
-    }
-  };
-
-  const getSourceSortOrder = source => {
-    switch (source) {
-      case SourceType.GtfsHsl:
-        return 1;
-      case SourceType.OpenAddresses:
-      case SourceType.OpenStreetMap:
-      default:
-        return 0;
-    }
-  };
-
-  const normalize = str => {
-    if (!isString(str)) {
-      return '';
-    }
-    const lowerCaseStr = str.toLowerCase();
-    return `${(lowerCaseStr.normalize
-      ? lowerCaseStr.normalize('NFD')
-      : unorm.nfd(lowerCaseStr)
-    ).replace(/[\u0300-\u036f]/g, '')}`;
-  };
-
-  const isMatch = (value, comparison) =>
-    value.length > 0 && comparison.length > 0 && value === comparison;
-
-  const normalizedSearchTerm = normalize(term);
-  const orderedResults = orderBy(
-    results,
-    [
-      result =>
-        isLineIdentifier(term) && isLineIdentifier(result.properties.shortName)
-          ? 1
-          : 0,
-      result =>
-        result.properties.layer === LayerType.Address &&
-        (isMatch(normalizedSearchTerm, normalize(result.properties.label)) ||
-          isMatch(normalizedSearchTerm, normalize(result.properties.name)))
-          ? 1
-          : 0,
-      result => getLayerSortOrder(result.properties.layer),
-      result => getSourceSortOrder(result.properties.source),
-      result => result.properties.confidence,
-    ],
-    ['desc', 'desc', 'desc', 'desc', 'desc'],
-  );
-  return orderedResults;
-};
 
 export function executeSearchImmediate(
   getStore,
@@ -434,19 +326,18 @@ export function executeSearchImmediate(
   callback,
 ) {
   const position = getStore('PositionStore').getLocationState();
-  const endpointSearches = { type: 'endpoint', term: input, results: [] };
-  const searchSearches = { type: 'search', term: input, results: [] };
-
+  let endpointSearches;
+  let searchSearches;
   let endpointSearchesPromise;
   let searchSearchesPromise;
   const endpointLayers = layers || getAllEndpointLayers();
 
-  if (type === SearchType.Endpoint || type === SearchType.All) {
+  if (type === 'endpoint' || type === 'all') {
+    endpointSearches = { type: 'endpoint', term: input, results: [] };
     const favouriteLocations = getStore(
       'FavouriteLocationStore',
     ).getLocations();
     const oldSearches = getStore('OldSearchesStore').getOldSearches('endpoint');
-    const favouriteStops = getStore('FavouriteStopsStore').getStops();
     const language = getStore('PreferencesStore').getLanguage();
     const searchComponents = [];
 
@@ -458,9 +349,6 @@ export function executeSearchImmediate(
     }
     if (endpointLayers.includes('FavouritePlace')) {
       searchComponents.push(getFavouriteLocations(favouriteLocations, input));
-    }
-    if (endpointLayers.includes('FavouriteStop')) {
-      searchComponents.push(getFavouriteStops(favouriteStops, input, refPoint));
     }
     if (endpointLayers.includes('OldSearch')) {
       const dropLayers = ['currentPosition'];
@@ -554,23 +442,21 @@ export function executeSearchImmediate(
         endpointSearches.error = err;
       });
 
-    if (type === SearchType.Endpoint) {
-      endpointSearchesPromise.then(() =>
-        callback({
-          ...endpointSearches,
-          results: sortSearchResults(endpointSearches.results, input),
-        }),
-      );
+    if (type === 'endpoint') {
+      endpointSearchesPromise.then(() => callback([endpointSearches]));
       return;
     }
   }
 
-  if (type === SearchType.Search || type === SearchType.All) {
+  if (type === 'search' || type === 'all') {
+    searchSearches = { type: 'search', term: input, results: [] };
     const oldSearches = getStore('OldSearchesStore').getOldSearches('search');
     const favouriteRoutes = getStore('FavouriteRoutesStore').getRoutes();
+    const favouriteStops = getStore('FavouriteStopsStore').getStops();
 
     searchSearchesPromise = Promise.all([
       getFavouriteRoutes(favouriteRoutes, input),
+      getFavouriteStops(favouriteStops, input, refPoint),
       getOldSearches(oldSearches, input),
       getRoutes(input, config),
     ])
@@ -585,27 +471,15 @@ export function executeSearchImmediate(
 
     if (type === 'search') {
       searchSearchesPromise.then(() => {
-        callback({
-          ...searchSearches,
-          results: sortSearchResults(searchSearches.results, input),
-        });
+        callback([searchSearches]);
       });
       return;
     }
   }
 
-  Promise.all([endpointSearchesPromise, searchSearchesPromise]).then(() => {
-    const results = [];
-    if (endpointSearches && Array.isArray(endpointSearches.results)) {
-      results.push(...endpointSearches.results);
-    }
-    if (searchSearches && Array.isArray(searchSearches.results)) {
-      results.push(...searchSearches.results);
-    }
-    callback({
-      results: sortSearchResults(results, input),
-    });
-  });
+  Promise.all([endpointSearchesPromise, searchSearchesPromise]).then(() =>
+    callback([searchSearches, endpointSearches]),
+  );
 }
 
 const debouncedSearch = debounce(executeSearchImmediate, 300, {

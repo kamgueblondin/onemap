@@ -9,7 +9,6 @@ import values from 'lodash/values';
 
 import TripRouteStop from './TripRouteStop';
 import { getDistanceToNearestStop } from '../util/geo-utils';
-import withBreakpoint from '../util/withBreakpoint';
 
 class TripStopListContainer extends React.PureComponent {
   static propTypes = {
@@ -18,14 +17,11 @@ class TripStopListContainer extends React.PureComponent {
     vehicles: PropTypes.object,
     locationState: PropTypes.object.isRequired,
     currentTime: PropTypes.object.isRequired,
-    relay: PropTypes.shape({
-      forceFetch: PropTypes.func.isRequired,
-    }).isRequired,
     tripStart: PropTypes.string.isRequired,
-    breakpoint: PropTypes.string,
   };
 
   static contextTypes = {
+    breakpoint: PropTypes.string,
     config: PropTypes.object.isRequired,
   };
 
@@ -35,20 +31,13 @@ class TripStopListContainer extends React.PureComponent {
   }
 
   componentDidMount() {
-    if (this.props.breakpoint === 'large') {
+    if (this.context.breakpoint === 'large') {
       this.scrollToSelectedTailIcon();
     }
   }
 
-  componentWillReceiveProps({ relay, currentTime }) {
-    const currUnix = this.props.currentTime.unix();
-    const nextUnix = currentTime.unix();
-    if (currUnix !== nextUnix) {
-      relay.forceFetch();
-    }
-  }
   componentDidUpdate() {
-    if (this.props.breakpoint === 'large' && !this.state.hasScrolled) {
+    if (this.context.breakpoint === 'large' && !this.state.hasScrolled) {
       this.scrollToSelectedTailIcon();
     }
   }
@@ -146,7 +135,7 @@ class TripStopListContainer extends React.PureComponent {
           route={this.props.trip.route.gtfsId}
           last={index === this.props.trip.stoptimesForDate.length - 1}
           first={index === 0}
-          className={`bp-${this.props.breakpoint}`}
+          className={`bp-${this.context.breakpoint}`}
         />
       );
     });
@@ -173,7 +162,7 @@ class TripStopListContainer extends React.PureComponent {
 
 export default Relay.createContainer(
   connectToStores(
-    withBreakpoint(TripStopListContainer),
+    TripStopListContainer,
     ['RealTimeInformationStore', 'PositionStore', 'TimeStore'],
     ({ getStore }) => ({
       vehicles: getStore('RealTimeInformationStore').vehicles,

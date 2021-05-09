@@ -3,14 +3,13 @@ import React from 'react';
 import Relay from 'react-relay/classic';
 import some from 'lodash/some';
 import cx from 'classnames';
-import pure from 'recompose/pure';
+import { pure } from 'recompose';
 
 import { getStartTime } from '../util/timeUtils';
 import TripListHeader from './TripListHeader';
 import TripStopListContainer from './TripStopListContainer';
-import withBreakpoint from '../util/withBreakpoint';
 
-function TripStopsContainer({ breakpoint, ...props }) {
+function TripStopsContainer(props, { breakpoint }) {
   const tripStartTime = getStartTime(
     props.trip.stoptimesForDate[0].scheduledDeparture,
   );
@@ -51,10 +50,13 @@ TripStopsContainer.propTypes = {
       fullscreenMap: PropTypes.bool,
     }),
   ).isRequired,
-  breakpoint: PropTypes.string.isRequired,
 };
 
-export default Relay.createContainer(pure(withBreakpoint(TripStopsContainer)), {
+TripStopsContainer.contextTypes = {
+  breakpoint: PropTypes.string,
+};
+
+export default Relay.createContainer(pure(TripStopsContainer), {
   fragments: {
     trip: () =>
       Relay.QL`

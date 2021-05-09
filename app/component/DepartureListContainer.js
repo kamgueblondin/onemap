@@ -21,8 +21,8 @@ const asDepartures = stoptimes =>
     : stoptimes.map(stoptime => {
         const isArrival = stoptime.pickupType === 'NONE';
         /* OTP returns either scheduled time or realtime prediction in
-           * 'realtimeDeparture' and 'realtimeArrival' fields.
-           * EXCEPT when state is CANCELLED, then it returns -1 for realtime  */
+       * 'realtimeDeparture' and 'realtimeArrival' fields.
+       * EXCEPT when state is CANCELLED, then it returns -1 for realtime  */
         const canceled = stoptime.realtimeState === 'CANCELED';
         const arrivalTime =
           stoptime.serviceDay +
@@ -58,11 +58,6 @@ class DepartureListContainer extends Component {
     routeLinks: PropTypes.bool,
     className: PropTypes.string,
     isTerminal: PropTypes.bool,
-    showPlatformCodes: PropTypes.bool,
-  };
-
-  static defaultProps = {
-    showPlatformCodes: false,
   };
 
   onScroll = () => {
@@ -129,7 +124,7 @@ class DepartureListContainer extends Component {
           className={cx(classes, this.props.rowClasses)}
           canceled={departure.canceled}
           isArrival={departure.isArrival}
-          showPlatformCode={this.props.showPlatformCodes}
+          isTerminal={this.props.isTerminal}
         />
       );
 

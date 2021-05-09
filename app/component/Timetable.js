@@ -1,8 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import moment from 'moment';
-import uniqBy from 'lodash/uniqBy';
-import sortBy from 'lodash/sortBy';
 import groupBy from 'lodash/groupBy';
 import padStart from 'lodash/padStart';
 import { FormattedMessage } from 'react-intl';
@@ -18,7 +16,6 @@ class Timetable extends React.Component {
     stop: PropTypes.shape({
       url: PropTypes.string,
       gtfsId: PropTypes.string,
-      locationType: PropTypes.string,
       stoptimesForServiceDate: PropTypes.arrayOf(
         PropTypes.shape({
           pattern: PropTypes.shape({
@@ -47,10 +44,6 @@ class Timetable extends React.Component {
     }).isRequired,
   };
 
-  static contextTypes = {
-    config: PropTypes.object.isRequired,
-  };
-
   constructor(props) {
     super(props);
     this.setRouteVisibilityState = this.setRouteVisibilityState.bind(this);
@@ -65,33 +58,6 @@ class Timetable extends React.Component {
     if (this.props.stop.gtfsId !== this.state.oldStopId) {
       this.resetStopOptions(this.props.stop.gtfsId);
     }
-  };
-
-  getDuplicatedRoutes = () => {
-    const routesToCheck = this.mapStopTimes(
-      this.props.stop.stoptimesForServiceDate,
-    )
-      .map(o => {
-        const obj = {};
-        obj.shortName = o.name;
-        obj.headsign = o.headsign;
-        return obj;
-      })
-      .filter(
-        (item, index, self) =>
-          index ===
-          self.findIndex(
-            o => o.headsign === item.headsign && o.shortName === item.shortName,
-          ),
-      );
-
-    const routesWithDupes = [];
-    Object.entries(groupBy(routesToCheck, 'shortName')).forEach(
-      ([key, value]) =>
-        value.length > 1 ? routesWithDupes.push(key) : undefined,
-    );
-
-    return routesWithDupes;
   };
 
   setRouteVisibilityState = val => {
@@ -111,11 +77,11 @@ class Timetable extends React.Component {
       .map(stoptime =>
         stoptime.stoptimes.filter(st => st.pickupType !== 'NONE').map(st => ({
           id: stoptime.pattern.code,
-          name: stoptime.pattern.route.shortName || stoptime.pattern.headsign,
+          name:
+            stoptime.pattern.route.shortName ||
+            stoptime.pattern.route.agency.name,
           scheduledDeparture: st.scheduledDeparture,
           serviceDay: st.serviceDay,
-          headsign: stoptime.pattern.headsign,
-          longName: stoptime.pattern.route.longName,
         })),
       )
       .reduce((acc, val) => acc.concat(val), []);
@@ -146,101 +112,10 @@ class Timetable extends React.Component {
     );
   };
 
-  formTimeRow = (timetableMap, hour) => {
-    const sortedArr = timetableMap[hour].sort(
-      (time1, time2) => time1.scheduledDeparture - time2.scheduledDeparture,
-    );
-
-    const filteredRoutes = sortedArr
-      .map(
-        time =>
-          this.state.showRoutes.filter(o => o === time.name || o === time.id)
-            .length > 0 &&
-          moment.unix(time.serviceDay + time.scheduledDeparture).format('HH'),
-      )
-      .filter(o => o === padStart(hour % 24, 2, '0'));
-
-    return filteredRoutes;
-  };
-
-  createTimeTableRows = timetableMap =>
-    Object.keys(timetableMap)
-      .sort((a, b) => a - b)
-      .map(hour => (
-        <TimetableRow
-          key={hour}
-          title={padStart(hour % 24, 2, '0')}
-          stoptimes={timetableMap[hour]}
-          showRoutes={this.state.showRoutes}
-          timerows={this.formTimeRow(timetableMap, hour)}
-        />
-      ));
-
   render() {
-    // Leave out all the routes without a shortname to avoid flooding of
-    // long distance buses being falsely positived as duplicates
-    // then look foor routes operating under the same number but
-    // different headsigns
-    const duplicateRoutes = this.getDuplicatedRoutes();
-    const variantList = groupBy(
-      sortBy(
-        uniqBy(
-          this.mapStopTimes(
-            this.props.stop.stoptimesForServiceDate.filter(
-              o => o.pattern.route.shortName,
-            ),
-          )
-            .map(o => {
-              const obj = Object.assign(o);
-              obj.groupId = `${o.name}-${o.headsign}`;
-              obj.duplicate = !!duplicateRoutes.includes(o.name);
-              return obj;
-            })
-            .filter(o => o.duplicate === true),
-          'groupId',
-        ),
-        'name',
-      ),
-      'name',
+    const timetableMap = this.groupArrayByHour(
+      this.mapStopTimes(this.props.stop.stoptimesForServiceDate),
     );
-
-    let variantsWithMarks = [];
-
-    Object.keys(variantList).forEach(key => {
-      variantsWithMarks.push(
-        variantList[key].map((o, i) => {
-          const obj = Object.assign(o);
-          obj.duplicate = '*'.repeat(i + 1);
-          return obj;
-        }),
-      );
-    });
-
-    variantsWithMarks = [].concat(...variantsWithMarks);
-
-    const routesWithDetails = this.mapStopTimes(
-      this.props.stop.stoptimesForServiceDate,
-    ).map(o => {
-      const obj = Object.assign(o);
-      const getDuplicate = variantsWithMarks.find(
-        o2 => o2.name === o.name && o2.headsign === o.headsign && o2.duplicate,
-      );
-      obj.duplicate = getDuplicate ? getDuplicate.duplicate : false;
-      return obj;
-    });
-
-    const timetableMap = this.groupArrayByHour(routesWithDetails);
-
-    const stopIdSplitted = this.props.stop.gtfsId.split(':');
-
-    const stopPDFURL =
-      stopIdSplitted[0] === 'HSL' && this.props.stop.locationType !== 'STATION'
-        ? `${
-            this.context.config.URL.API_URL
-          }/timetables/v1/${stopIdSplitted[0].toLowerCase()}/stops/${
-            stopIdSplitted[1]
-          }.pdf`
-        : null;
 
     return (
       <div className="timetable">
@@ -263,7 +138,6 @@ class Timetable extends React.Component {
             startDate={this.props.propsForStopPageActionBar.startDate}
             selectedDate={this.props.propsForStopPageActionBar.selectedDate}
             onDateChange={this.props.propsForStopPageActionBar.onDateChange}
-            stopPDFURL={stopPDFURL}
           />
         </div>
         <div className="timetable-for-printing-header">
@@ -284,28 +158,31 @@ class Timetable extends React.Component {
               />
             </div>
           </div>
-          {this.createTimeTableRows(timetableMap)}
-          <div
-            className="route-remarks"
-            style={{
-              display:
-                variantsWithMarks.filter(o => o.duplicate).length > 0
-                  ? 'block'
-                  : 'none',
-            }}
-          >
-            <h1>
-              <FormattedMessage
-                id="explanations"
-                defaultMessage="Explanations"
-              />:
-            </h1>
-            {variantsWithMarks.map(o => (
-              <div className="remark-row" key={`${o.id}-${o.headsign}`}>
-                <span>{`${o.name}${o.duplicate} = ${o.headsign}`}</span>
-              </div>
+          {Object.keys(timetableMap)
+            .sort((a, b) => a - b)
+            .map(hour => (
+              <TimetableRow
+                key={hour}
+                title={padStart(hour % 24, 2, '0')}
+                stoptimes={timetableMap[hour]}
+                showRoutes={this.state.showRoutes}
+                timerows={timetableMap[hour]
+                  .sort(
+                    (time1, time2) =>
+                      time1.scheduledDeparture - time2.scheduledDeparture,
+                  )
+                  .map(
+                    time =>
+                      this.state.showRoutes.filter(
+                        o => o === time.name || o === time.id,
+                      ).length > 0 &&
+                      moment
+                        .unix(time.serviceDay + time.scheduledDeparture)
+                        .format('HH'),
+                  )
+                  .filter(o => o === padStart(hour % 24, 2, '0'))}
+              />
             ))}
-          </div>
         </div>
       </div>
     );
@@ -340,7 +217,6 @@ const exampleStop = {
       pattern: {
         route: {
           mode: 'BUS',
-          shortName: 'Kotkan linja-autoasema',
           agency: {
             name: 'Helsingin seudun liikenne',
           },

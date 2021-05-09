@@ -11,15 +11,8 @@ import ComponentUsageExample from './ComponentUsageExample';
 import { isBrowser } from '../util/browser';
 
 function DisruptionInfo(props, context) {
-  if (!((props && props.isBrowser) || isBrowser)) {
-    return null;
-  }
-
   const isOpen = () =>
     context.location.state ? context.location.state.disruptionInfoOpen : false;
-  if (!isOpen()) {
-    return null;
-  }
 
   const toggleVisibility = () => {
     if (isOpen()) {
@@ -35,37 +28,40 @@ function DisruptionInfo(props, context) {
     }
   };
 
-  return (
-    <Modal
-      open
-      title={
-        <FormattedMessage
-          id="disruption-info"
-          defaultMessage="Disruption info"
-        />
-      }
-      toggleVisibility={toggleVisibility}
-    >
-      <Relay.RootContainer
-        Component={DisruptionListContainer}
-        forceFetch
-        route={{
-          name: 'ViewerRoute',
-          queries: {
-            root: (Component, { feedIds }) => Relay.QL`
+  if (isBrowser && isOpen()) {
+    return (
+      <Modal
+        open
+        title={
+          <FormattedMessage
+            id="disruption-info"
+            defaultMessage="Disruption info"
+          />
+        }
+        toggleVisibility={toggleVisibility}
+      >
+        <Relay.RootContainer
+          Component={DisruptionListContainer}
+          forceFetch
+          route={{
+            name: 'ViewerRoute',
+            queries: {
+              root: (Component, { feedIds }) => Relay.QL`
                 query {
                   viewer {
                     ${Component.getFragment('root', { feedIds })}
                   }
                 }
              `,
-          },
-          params: { feedIds: context.config.feedIds },
-        }}
-        renderLoading={() => <Loading />}
-      />
-    </Modal>
-  );
+            },
+            params: { feedIds: context.config.feedIds },
+          }}
+          renderLoading={() => <Loading />}
+        />
+      </Modal>
+    );
+  }
+  return <div />;
 }
 
 DisruptionInfo.contextTypes = {
@@ -74,14 +70,6 @@ DisruptionInfo.contextTypes = {
   config: PropTypes.shape({
     feedIds: PropTypes.arrayOf(PropTypes.string.isRequired),
   }).isRequired,
-};
-
-DisruptionInfo.propTypes = {
-  isBrowser: PropTypes.bool,
-};
-
-DisruptionInfo.defaultProps = {
-  isBrowser: false,
 };
 
 DisruptionInfo.description = () => (

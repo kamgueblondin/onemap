@@ -24,7 +24,7 @@ export default configMerger(walttiConfig, {
 
   textLogo: true, // title text instead of logo img
 
-  favicon: './app/configurations/images/lappeenranta/bussi_fin.jpeg',
+  favicon: './sass/themes/lappeenranta/bussi_fin.jpeg',
 
   feedIds: ['Lappeenranta'],
 

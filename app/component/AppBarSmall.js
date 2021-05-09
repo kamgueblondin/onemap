@@ -6,20 +6,26 @@ import DisruptionInfo from './DisruptionInfo';
 import MainMenuContainer from './MainMenuContainer';
 import ComponentUsageExample from './ComponentUsageExample';
 import MessageBar from './MessageBar';
-import LogoSmall from './LogoSmall';
 
-const AppBarSmall = ({ disableBackButton, showLogo, title, homeUrl, logo }) => (
-  <React.Fragment>
+const AppBarSmall = (
+  { disableBackButton, showLogo, title, homeUrl },
+  { config },
+) => (
+  <div>
     <DisruptionInfo />
     <nav className="top-bar">
       {!disableBackButton && <BackButton />}
       <section className="title">
-        <LogoSmall showLogo={showLogo} logo={logo} title={title} />
+        {showLogo && !config.textLogo ? (
+          <div className="logo" />
+        ) : (
+          <span className="title">{title}</span>
+        )}
       </section>
       <MainMenuContainer homeUrl={homeUrl} />
     </nav>
     <MessageBar />
-  </React.Fragment>
+  </div>
 );
 
 AppBarSmall.displayName = 'AppBarSmall';
@@ -37,15 +43,26 @@ AppBarSmall.description = () => (
         className="fullscreen"
       />
     </ComponentUsageExample>
+    <ComponentUsageExample description="Show logo">
+      <AppBarSmall
+        showLogo
+        disableBackButton
+        title="Reittiopas.fi"
+        className="fullscreen"
+      />
+    </ComponentUsageExample>
   </div>
 );
 
 AppBarSmall.propTypes = {
   disableBackButton: PropTypes.bool,
-  showLogo: PropTypes.bool,
   title: PropTypes.node,
+  showLogo: PropTypes.bool,
   homeUrl: PropTypes.string,
-  logo: PropTypes.string,
+};
+
+AppBarSmall.contextTypes = {
+  config: PropTypes.object.isRequired,
 };
 
 export default AppBarSmall;

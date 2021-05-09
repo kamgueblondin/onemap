@@ -12,31 +12,27 @@ import Icon from './Icon';
 
 class DTAutosuggest extends React.Component {
   static contextTypes = {
-    config: PropTypes.object.isRequired,
     getStore: PropTypes.func.isRequired,
+    config: PropTypes.object.isRequired,
     intl: intlShape.isRequired,
   };
 
   static propTypes = {
+    selectedFunction: PropTypes.func,
+    placeholder: PropTypes.string.isRequired,
+    value: PropTypes.string,
     autoFocus: PropTypes.bool,
-    className: PropTypes.string,
-    executeSearch: PropTypes.func,
+    searchType: PropTypes.string.isRequired,
+    className: PropTypes.string.isRequired,
     id: PropTypes.string.isRequired,
     isFocused: PropTypes.func,
-    layers: PropTypes.arrayOf(PropTypes.string).isRequired,
-    placeholder: PropTypes.string.isRequired,
     refPoint: dtLocationShape.isRequired,
-    searchType: PropTypes.oneOf(['all', 'endpoint']).isRequired,
-    selectedFunction: PropTypes.func.isRequired,
-    value: PropTypes.string,
+    layers: PropTypes.array.isRequired,
   };
 
   static defaultProps = {
-    autoFocus: false,
-    className: '',
-    executeSearch,
     isFocused: () => {},
-    value: '',
+    autoFocus: false,
   };
 
   constructor(props) {
@@ -50,12 +46,6 @@ class DTAutosuggest extends React.Component {
       valid: true,
     };
   }
-
-  componentDidMount = () => {
-    if (this.props.autoFocus && this.input) {
-      this.input.focus();
-    }
-  };
 
   componentWillReceiveProps = nextProps => {
     if (nextProps.value !== this.state.value && !this.state.editing) {
@@ -153,7 +143,7 @@ class DTAutosuggest extends React.Component {
 
   fetchFunction = ({ value }) =>
     this.setState({ valid: false }, () => {
-      this.props.executeSearch(
+      executeSearch(
         this.context.getStore,
         this.props.refPoint,
         {
@@ -162,12 +152,21 @@ class DTAutosuggest extends React.Component {
           type: this.props.searchType,
           config: this.context.config,
         },
-        searchResult => {
-          if (searchResult == null) {
+        result => {
+          if (result == null) {
             return;
           }
+          let suggestions = [];
+          const [res1, res2] = result;
+
+          if (res2 && res2.results) {
+            suggestions = suggestions.concat(res2.results);
+          }
+          if (res1 && res1.results) {
+            suggestions = suggestions.concat(res1.results);
+          }
           // XXX translates current location
-          const suggestions = (searchResult.results || []).map(suggestion => {
+          suggestions = suggestions.map(suggestion => {
             if (suggestion.type === 'CurrentLocation') {
               const translated = { ...suggestion };
               translated.properties.labelId = this.context.intl.formatMessage({
@@ -254,6 +253,8 @@ class DTAutosuggest extends React.Component {
       value,
       onChange: this.onChange,
       onBlur: this.onBlur,
+      onFocus: this.onFocus,
+      autoFocus: this.props.autoFocus,
       className: `react-autosuggest__input ${this.props.className}`,
     };
 

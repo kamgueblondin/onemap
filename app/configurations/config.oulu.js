@@ -30,9 +30,6 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
-  // Navbar logo
-  logo: 'oulu/oulu-logo.png',
-
   searchParams: {
     'boundary.rect.min_lat': 64.71,
     'boundary.rect.max_lat': 65.38,
@@ -46,10 +43,6 @@ export default configMerger(walttiConfig, {
     address: 'Keskusta',
     lat: 65.0118,
     lon: 25.4702,
-  },
-
-  defaultSettings: {
-    walkBoardCost: 900,
   },
 
   defaultOrigins: [

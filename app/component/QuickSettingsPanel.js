@@ -8,8 +8,9 @@ import get from 'lodash/get';
 import Icon from './Icon';
 import ModeFilter from './ModeFilter';
 import RightOffcanvasToggle from './RightOffcanvasToggle';
-import { getDefaultModes, defaultSettings } from './../util/planParamUtil';
+import { getDefaultModes } from './../util/planParamUtil';
 import { getCustomizedSettings } from '../store/localStorage';
+import { defaultSettings } from './CustomizeSearch';
 
 /* define what belongs to predefined 'quick' parameter selections */
 const quickOptionParams = [
@@ -19,6 +20,32 @@ const quickOptionParams = [
   'walkReluctance',
   'transferPenalty',
 ];
+
+const quickOptions = {
+  'default-route': {
+    ...defaultSettings,
+  },
+  'fastest-route': {
+    ...defaultSettings,
+    minTransferTime: 60,
+    walkSpeed: 1.5,
+    walkBoardCost: 540,
+    walkReluctance: 1.5,
+    transferPenalty: 0,
+  },
+  'least-transfers': {
+    ...defaultSettings,
+    walkBoardCost: 600,
+    walkReluctance: 3,
+    transferPenalty: 5460,
+  },
+  'least-walking': {
+    ...defaultSettings,
+    walkBoardCost: 360,
+    walkReluctance: 5,
+    transferPenalty: 0,
+  },
+};
 
 class QuickSettingsPanel extends React.Component {
   static propTypes = {
@@ -44,14 +71,6 @@ class QuickSettingsPanel extends React.Component {
 
   setArriveBy = ({ target }) => {
     const arriveBy = target.value;
-    if (this.context.piwik != null) {
-      this.context.piwik.trackEvent(
-        'ItinerarySettings',
-        'LeavingArrivingSelection',
-        arriveBy === 'true' ? 'SelectArriving' : 'SelectLeaving',
-      );
-    }
-
     this.context.router.replace({
       pathname: this.context.location.pathname,
       query: {
@@ -61,47 +80,8 @@ class QuickSettingsPanel extends React.Component {
     });
   };
 
-  getQuickOptions = () => {
-    const mergedDefaultSettings = {
-      ...defaultSettings,
-      ...this.context.config.defaultSettings,
-    };
-    return {
-      'default-route': {
-        ...mergedDefaultSettings,
-      },
-      'fastest-route': {
-        ...mergedDefaultSettings,
-        minTransferTime: 60,
-        walkSpeed: 1.5,
-        walkBoardCost: 540,
-        walkReluctance: 1.5,
-        transferPenalty: 0,
-      },
-      'least-transfers': {
-        ...mergedDefaultSettings,
-        walkBoardCost: 600,
-        walkReluctance: 3,
-        transferPenalty: 5460,
-      },
-      'least-walking': {
-        ...mergedDefaultSettings,
-        walkBoardCost: 360,
-        walkReluctance: 5,
-        transferPenalty: 0,
-      },
-    };
-  };
-
   setQuickOption = name => {
-    if (this.context.piwik != null) {
-      this.context.piwik.trackEvent(
-        'ItinerarySettings',
-        'ItineraryQuickSettingsSelection',
-        name,
-      );
-    }
-    const chosenMode = this.getQuickOptions()[name];
+    const chosenMode = quickOptions[name];
     this.context.router.replace({
       ...this.context.location,
       query: {
@@ -132,7 +112,7 @@ class QuickSettingsPanel extends React.Component {
 
   matchQuickOption = () => {
     const merged = {
-      ...this.getQuickOptions()['default-route'],
+      ...quickOptions['default-route'],
       ...getCustomizedSettings(),
       ...this.context.location.query,
     };
@@ -149,8 +129,8 @@ class QuickSettingsPanel extends React.Component {
 
     // Find out which quick option the user has selected
     let currentOption = 'customized-mode';
-    Object.keys(this.getQuickOptions()).forEach(key => {
-      if (match(merged, this.getQuickOptions()[key])) {
+    Object.keys(quickOptions).forEach(key => {
+      if (match(merged, quickOptions[key])) {
         currentOption = key;
       }
     });
@@ -158,23 +138,13 @@ class QuickSettingsPanel extends React.Component {
   };
 
   toggleTransportMode(mode, otpMode) {
-    const modes = xor(this.getModes(), [(otpMode || mode).toUpperCase()]).join(
-      ',',
-    );
-
-    if (this.context.piwik != null) {
-      this.context.piwik.trackEvent(
-        'ItinerarySettings',
-        'QuickSettingsTransportModeSelection',
-        modes,
-      );
-    }
-
     this.context.router.replace({
       ...this.context.location,
       query: {
         ...this.context.location.query,
-        modes,
+        modes: xor(this.getModes(), [(otpMode || mode).toUpperCase()]).join(
+          ',',
+        ),
       },
     });
   }
@@ -196,9 +166,9 @@ class QuickSettingsPanel extends React.Component {
   internalSetOffcanvas = newState => {
     if (this.context.piwik != null) {
       this.context.piwik.trackEvent(
-        'ItinerarySettings',
-        'ExtraSettingsPanelClick',
-        newState ? 'ExtraSettingsPanelOpen' : 'ExtraSettingsPanelClose',
+        'Offcanvas',
+        'Customize Search',
+        newState ? 'close' : 'open',
       );
     }
 

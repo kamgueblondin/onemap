@@ -29,9 +29,6 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
-  // Navbar logo
-  logo: 'lahti/lahti-logo.png',
-
   textLogo: false, // title text instead of logo img
 
   feedIds: ['Lahti'],

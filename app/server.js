@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom/server';
 import match from 'react-router/lib/match';
 import Helmet from 'react-helmet';
 import createHistory from 'react-router/lib/createMemoryHistory';
-import RelayQueryCaching from 'react-relay/lib/RelayQueryCaching';
+import Relay from 'react-relay/classic';
 import IsomorphicRouter from 'isomorphic-relay-router';
 import {
   RelayNetworkLayer,
@@ -21,7 +21,7 @@ import provideContext from 'fluxible-addons-react/provideContext';
 // Libraries
 import serialize from 'serialize-javascript';
 import { IntlProvider } from 'react-intl';
-import polyfillLibrary from 'polyfill-library';
+import polyfillService from 'polyfill-service';
 import fs from 'fs';
 import path from 'path';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
@@ -33,8 +33,6 @@ import appCreator from './app';
 import translations from './translations';
 import MUITheme from './MuiTheme';
 import configureMoment from './util/configure-moment';
-import { BreakpointProvider, getServerBreakpoint } from './util/withBreakpoint';
-import meta from './meta';
 
 // configuration
 import { getConfiguration } from './config';
@@ -46,31 +44,16 @@ const appRoot = `${process.cwd()}/`;
 const polyfillls = LRU(200);
 
 // Disable relay query cache in order tonot leak memory, see facebook/relay#754
-RelayQueryCaching.disable();
+Relay.disableQueryCaching();
 
 let assets;
-let mainAssets;
 let manifest;
 
 if (process.env.NODE_ENV !== 'development') {
-  // eslint-disable-next-line global-require, import/no-unresolved
-  assets = require('../manifest.json');
-  // eslint-disable-next-line global-require, import/no-unresolved
-  mainAssets = require('../stats.json').entrypoints.main.assets.filter(
-    asset => !asset.endsWith('.map'),
-  );
+  assets = require('../manifest.json'); // eslint-disable-line global-require, import/no-unresolved
 
-  const manifestFiles = mainAssets.filter(asset =>
-    asset.startsWith('js/runtime'),
-  );
-
-  manifest = manifestFiles
-    .map(manifestFile =>
-      fs.readFileSync(path.join(appRoot, '_static', manifestFile)),
-    )
-    .join('\n');
-
-  mainAssets = mainAssets.filter(asset => !manifestFiles.includes(asset));
+  const manifestFile = assets['manifest.js'];
+  manifest = fs.readFileSync(path.join(appRoot, '_static', manifestFile));
 }
 
 function getPolyfills(userAgent, config) {
@@ -87,7 +70,7 @@ function getPolyfills(userAgent, config) {
     userAgent = ''; // eslint-disable-line no-param-reassign
   }
 
-  const normalizedUA = polyfillLibrary.normalizeUserAgent(userAgent);
+  const normalizedUA = polyfillService.normalizeUserAgent(userAgent);
   let polyfill = polyfillls.get(normalizedUA);
 
   if (polyfill) {
@@ -113,7 +96,7 @@ function getPolyfills(userAgent, config) {
     };
   });
 
-  polyfill = polyfillLibrary
+  polyfill = polyfillService
     .getPolyfillString({
       uaString: userAgent,
       features,
@@ -135,35 +118,23 @@ const ContextProvider = provideContext(IntlProvider, {
   headers: PropTypes.object,
 });
 
-function getContent(context, renderProps, locale, userAgent, req) {
-  const breakpoint = getServerBreakpoint(userAgent);
-  const { config } = context.getComponentContext();
-  const content = ReactDOM.renderToString(
-    <BreakpointProvider value={breakpoint}>
-      <ContextProvider
-        locale={locale}
-        messages={translations[locale]}
-        context={context.getComponentContext()}
+function getContent(context, renderProps, locale, userAgent) {
+  // TODO: This should be moved to a place to coexist with similar content from client.js
+  return ReactDOM.renderToString(
+    <ContextProvider
+      locale={locale}
+      messages={translations[locale]}
+      context={context.getComponentContext()}
+    >
+      <MuiThemeProvider
+        muiTheme={getMuiTheme(MUITheme(context.getComponentContext().config), {
+          userAgent,
+        })}
       >
-        <MuiThemeProvider
-          muiTheme={getMuiTheme(MUITheme(config), { userAgent })}
-        >
-          <React.Fragment>
-            <Helmet
-              {...meta(
-                context.getStore('PreferencesStore').getLanguage(),
-                req.hostname,
-                `https://${req.hostname}${req.originalUrl}`,
-                config,
-              )}
-            />
-            {IsomorphicRouter.render(renderProps)}
-          </React.Fragment>
-        </MuiThemeProvider>
-      </ContextProvider>
-    </BreakpointProvider>,
+        {IsomorphicRouter.render(renderProps)}
+      </MuiThemeProvider>
+    </ContextProvider>,
   );
-  return `<div id="app" data-initial-breakpoint="${breakpoint}">${content}</div>\n`;
 }
 
 const isRobotRequest = agent =>
@@ -216,6 +187,7 @@ export default function(req, res, next) {
   const locale = getLocale(req, res, config);
   const application = appCreator(config);
   const context = application.createContext({
+    url: req.url,
     headers: req.headers,
     config,
   });
@@ -269,61 +241,49 @@ export default function(req, res, next) {
       res.status(404);
     }
 
-    const spriteName = config.sprites;
-
-    const ASSET_URL = process.env.ASSET_URL || config.APP_PATH;
-
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.write('<!doctype html>\n');
     res.write(`<html lang="${locale}">\n`);
     res.write('<head>\n');
+    res.write(
+      `<link rel="stylesheet" type="text/css" href="${config.URL.FONT}"/>\n`,
+    );
 
-    // Write preload hints before doing anything else
+    // Write stylesheets and preload hints before doing anything else
     if (process.env.NODE_ENV !== 'development') {
-      const preloads = [
-        { as: 'style', href: config.URL.FONT },
-        {
-          as: 'style',
-          href: `${ASSET_URL}/${assets[`${config.CONFIG}_theme.css`]}`,
-          crossorigin: true,
-        },
-        ...mainAssets.map(asset => ({
-          as: 'script',
-          href: `${ASSET_URL}/${asset}`,
-          crossorigin: true,
-        })),
-      ];
+      const mainHref = `${config.APP_PATH}/${assets['main.css']}`;
+      const themeHref = `${config.APP_PATH}/${
+        assets[`${config.CONFIG}_theme.css`]
+      }`;
 
-      preloads.forEach(({ as, href, crossorigin }) =>
-        res.write(
-          `<link rel="preload" as="${as}" ${
-            crossorigin ? 'crossorigin' : ''
-          } href="${href}">\n`,
-        ),
+      res.write(
+        `<link rel="stylesheet" type="text/css" href="${mainHref}"/>\n`,
       );
-
-      const preconnects = [
-        config.URL.API_URL,
-        config.URL.MAP_URL,
-        'https://dev.hsl.fi/',
-        config.staticMessagesUrl,
-      ];
-
-      preconnects.forEach(href =>
-        res.write(`<link rel="preconnect" crossorigin href="${href}">\n`),
+      res.write(
+        `<link rel="stylesheet" type="text/css" href="${themeHref}"/>\n`,
       );
 
       res.write(
-        `<link rel="stylesheet" type="text/css" crossorigin href="${ASSET_URL}/${
-          assets[`${config.CONFIG}_theme.css`]
-        }"/>\n`,
+        `<link rel="preload" as="script" href="${config.APP_PATH}/${
+          assets['common.js']
+        }">\n`,
+      );
+      res.write(
+        `<link rel="preload" as="script" href="${config.APP_PATH}/${
+          assets['main.js']
+        }">\n`,
+      );
+
+      res.write(
+        `<link rel="preconnect" crossorigin href="${config.URL.API_URL}">\n`,
+      );
+      res.write(
+        `<link rel="preconnect" crossorigin href="${config.URL.MAP_URL}">\n`,
+      );
+      res.write(
+        `<link rel="preconnect" crossorigin as="font" href="https://dev.hsl.fi/">\n`,
       );
     }
-
-    res.write(
-      // TODO: Add crossorigin here, when dev.hsl.fi supports it.
-      `<link rel="stylesheet" type="text/css" href="${config.URL.FONT}"/>\n`,
-    );
 
     const networkLayer = getNetworkLayer(config, agent);
 
@@ -344,7 +304,6 @@ export default function(req, res, next) {
                 relayData.props,
                 locale,
                 req.headers['user-agent'],
-                req,
               )
             : undefined;
 
@@ -370,9 +329,11 @@ export default function(req, res, next) {
     res.write('</head>\n');
     res.write('<body>\n');
 
+    const spriteName = config.sprites;
+
     if (process.env.NODE_ENV !== 'development') {
       res.write('<script>\n');
-      res.write(`fetch('${ASSET_URL}/${assets[spriteName]}')
+      res.write(`fetch('${config.APP_PATH}/${assets[spriteName]}')
         .then(function(response) {return response.text();}).then(function(blob) {
           var div = document.createElement('div');
           div.innerHTML = blob;
@@ -385,7 +346,7 @@ export default function(req, res, next) {
       res.write('</div>\n');
     }
 
-    res.write(content || '<div id="app" />');
+    res.write(`<div id="app">${content}</div>\n`);
 
     res.write(
       `<script>\nwindow.state=${serialize(
@@ -401,15 +362,13 @@ export default function(req, res, next) {
       res.write('<script async src="/proxy/js/bundle.js"></script>\n');
     } else {
       res.write('<script>');
-      res.write(
-        manifest.replace(/\/\/# sourceMappingURL=/g, `$&${ASSET_URL}/js/`),
-      );
+      res.write(manifest);
       res.write('\n</script>\n');
-      res.write(`<script>window.ASSET_URL="${ASSET_URL}/"</script>\n`);
-      mainAssets.forEach(asset =>
-        res.write(
-          `<script src="${ASSET_URL}/${asset}" crossorigin defer></script>\n`,
-        ),
+      res.write(
+        `<script src="${config.APP_PATH}/${assets['common.js']}"></script>\n`,
+      );
+      res.write(
+        `<script src="${config.APP_PATH}/${assets['main.js']}"></script>\n`,
       );
     }
     res.write('</body>\n');

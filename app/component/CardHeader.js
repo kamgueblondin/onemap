@@ -39,9 +39,7 @@ const CardHeader = ({
       </span>
       <div className="card-sub-header">
         {code != null ? <p className="card-code">{code}</p> : null}
-        {description != null && description !== 'null' ? (
-          <p className="sub-header-h4">{description}</p>
-        ) : null}
+        <p className="sub-header-h4">{description}</p>
       </div>
     </div>
     {icons ? <SplitBars>{icons}</SplitBars> : null}

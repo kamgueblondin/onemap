@@ -4,11 +4,10 @@ import Relay from 'react-relay/classic';
 import { Link } from 'react-router';
 import { FormattedMessage } from 'react-intl';
 import { PREFIX_ROUTES } from '../util/path';
-import withBreakpoint from '../util/withBreakpoint';
 
 import RouteNumberContainer from './RouteNumberContainer';
 
-const RouteTitle = ({ route, breakpoint }) =>
+const RouteTitle = ({ route }, { breakpoint }) =>
   breakpoint === 'large' || !route || !route.mode ? (
     <FormattedMessage id="route-page.title-short" defaultMessage="Route" />
   ) : (
@@ -30,10 +29,13 @@ RouteTitle.propTypes = {
     shortName: PropTypes.string,
     color: PropTypes.string,
   }),
+};
+
+RouteTitle.contextTypes = {
   breakpoint: PropTypes.string,
 };
 
-export default Relay.createContainer(withBreakpoint(RouteTitle), {
+export default Relay.createContainer(RouteTitle, {
   fragments: {
     route: () =>
       Relay.QL`

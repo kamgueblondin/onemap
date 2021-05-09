@@ -4,38 +4,20 @@ import { routerShape, locationShape } from 'react-router';
 import getContext from 'recompose/getContext';
 import AppBarSmall from './AppBarSmall';
 import AppBarLarge from './AppBarLarge';
-import { DesktopOrMobile } from '../util/withBreakpoint';
 
-const AppBarContainer = ({ router, location, homeUrl, logo, ...args }) => (
-  <DesktopOrMobile
-    mobile={() => (
-      <AppBarSmall
-        {...args}
-        showLogo={location.pathname.indexOf(homeUrl) === 0}
-        logo={logo}
-        homeUrl={homeUrl}
-      />
-    )}
-    desktop={() => (
-      <AppBarLarge
-        {...args}
-        logo={logo}
-        titleClicked={() => router.push(homeUrl)}
-      />
-    )}
-  />
-);
-
-AppBarContainer.propTypes = {
-  location: locationShape.isRequired,
-  router: routerShape.isRequired,
-  homeUrl: PropTypes.string.isRequired,
-  logo: PropTypes.string,
-};
+const AppBarContainer = ({ breakpoint, router, location, homeUrl, ...args }) =>
+  (breakpoint !== 'large' && (
+    <AppBarSmall
+      {...args}
+      showLogo={location.pathname.indexOf(homeUrl) === 0}
+      homeUrl={homeUrl}
+    />
+  )) || <AppBarLarge {...args} titleClicked={() => router.push(homeUrl)} />;
 
 const WithContext = getContext({
   location: locationShape.isRequired,
   router: routerShape.isRequired,
+  breakpoint: PropTypes.string.isRequired,
 })(AppBarContainer);
 
 WithContext.propTypes = {

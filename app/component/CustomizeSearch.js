@@ -6,7 +6,6 @@ import { routerShape, locationShape } from 'react-router';
 import range from 'lodash/range';
 import xor from 'lodash/xor';
 import without from 'lodash/without';
-import upperFirst from 'lodash/upperFirst';
 import cx from 'classnames';
 
 import Icon from './Icon';
@@ -21,11 +20,7 @@ import {
 } from '../store/localStorage';
 import SaveCustomizedSettingsButton from './SaveCustomizedSettingsButton';
 import ResetCustomizedSettingsButton from './ResetCustomizedSettingsButton';
-import {
-  getDefaultModes,
-  defaultSettings,
-  WALKBOARDCOST_DEFAULT,
-} from './../util/planParamUtil';
+import { getDefaultModes } from './../util/planParamUtil';
 
 // find the array slot closest to a value
 function mapToSlider(value, arr) {
@@ -43,7 +38,19 @@ function mapToSlider(value, arr) {
 }
 
 const WALKBOARDCOST_MIN = 1;
+const WALKBOARDCOST_DEFAULT = 600;
 const WALKBOARDCOST_MAX = 3600;
+
+// Get default settings
+export const defaultSettings = {
+  accessibilityOption: 0,
+  minTransferTime: 120,
+  walkBoardCost: WALKBOARDCOST_DEFAULT,
+  transferPenalty: 0,
+  walkReluctance: 2,
+  walkSpeed: 1.2,
+  ticketTypes: 'none',
+};
 
 class CustomizeSearch extends React.Component {
   static contextTypes = {
@@ -51,7 +58,6 @@ class CustomizeSearch extends React.Component {
     router: routerShape.isRequired,
     location: locationShape.isRequired,
     config: PropTypes.object.isRequired,
-    piwik: PropTypes.object,
   };
 
   static propTypes = {
@@ -277,9 +283,9 @@ class CustomizeSearch extends React.Component {
           defaultMessage: 'Accessibility',
         })}
         name="accessible"
-        selected={val || this.context.config.accessibilityOptions[0].value}
+        selected={val || 0}
         options={this.context.config.accessibilityOptions.map((o, i) => ({
-          displayNameObject: (
+          displayName: (
             <FormattedMessage
               defaultMessage={
                 this.context.config.accessibilityOptions[i].displayName
@@ -287,7 +293,6 @@ class CustomizeSearch extends React.Component {
               id={this.context.config.accessibilityOptions[i].messageId}
             />
           ),
-          displayName: this.context.config.accessibilityOptions[i].displayName,
           value: this.context.config.accessibilityOptions[i].value,
         }))}
         onSelectChange={e =>
@@ -312,49 +317,7 @@ class CustomizeSearch extends React.Component {
     return this.getModes().includes(mode.toUpperCase());
   }
 
-  replaceParams = newParams => {
-    if (this.context.piwik != null && newParams) {
-      const len = Object.keys(newParams).length;
-      if (len > 1) {
-        this.context.piwik.trackEvent(
-          'ItinerarySettings',
-          'SettingsPanelResetSettingsButton',
-          'ResetSettings',
-        );
-      } else if (len === 1) {
-        const key = Object.keys(newParams)[0];
-        switch (key) {
-          case 'modes':
-            this.context.piwik.trackEvent(
-              'ItinerarySettings',
-              'ExtraSettingsTransportModeSelection',
-              newParams[key],
-            );
-            break;
-          case 'walkReluctance':
-          case 'walkSpeed':
-          case 'walkBoardCost':
-          case 'minTransferTime':
-          case 'accessibilityOption':
-            this.context.piwik.trackEvent(
-              'ItinerarySettings',
-              'ExtraSettings',
-              upperFirst(key),
-            );
-            break;
-          case 'ticketTypes':
-            this.context.piwik.trackEvent(
-              'ItinerarySettings',
-              'ExtraSettingsTicketTypes',
-              newParams[key],
-            );
-            break;
-          default:
-            break;
-        }
-      }
-    }
-
+  replaceParams = newParams =>
     this.context.router.replace({
       ...this.context.location,
       query: {
@@ -362,22 +325,18 @@ class CustomizeSearch extends React.Component {
         ...newParams,
       },
     });
-  };
 
   resetParameters = () => {
     resetCustomizedSettings();
-    this.replaceParams(
-      {
-        walkSpeed: defaultSettings.walkSpeed,
-        walkReluctance: defaultSettings.walkReluctance,
-        walkBoardCost: defaultSettings.walkBoardCost,
-        minTransferTime: defaultSettings.minTransferTime,
-        accessibilityOption: defaultSettings.accessibilityOption,
-        modes: getDefaultModes(this.context.config).toString(),
-        ticketTypes: defaultSettings.ticketTypes,
-      },
-      ...this.context.config.defaultSettings,
-    );
+    this.replaceParams({
+      walkSpeed: defaultSettings.walkSpeed,
+      walkReluctance: defaultSettings.walkReluctance,
+      walkBoardCost: defaultSettings.walkBoardCost,
+      minTransferTime: defaultSettings.minTransferTime,
+      accessibilityOption: defaultSettings.accessibilityOption,
+      modes: getDefaultModes(this.context.config).toString(),
+      ticketTypes: defaultSettings.ticketTypes,
+    });
   };
 
   toggleTransportMode(mode, otpMode) {
@@ -412,7 +371,6 @@ class CustomizeSearch extends React.Component {
     // compose current settings
     const merged = {
       ...defaultSettings,
-      ...this.context.config.defaultSettings,
       ...getCustomizedSettings(),
       ...this.context.location.query,
     };

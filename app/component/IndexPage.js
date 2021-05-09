@@ -3,6 +3,7 @@ import React from 'react';
 import { intlShape } from 'react-intl';
 import cx from 'classnames';
 import { routerShape, locationShape } from 'react-router';
+import getContext from 'recompose/getContext';
 import connectToStores from 'fluxible-addons-react/connectToStores';
 import shouldUpdate from 'recompose/shouldUpdate';
 import isEqual from 'lodash/isEqual';
@@ -31,7 +32,6 @@ import Icon from './Icon';
 import NearbyRoutesPanel from './NearbyRoutesPanel';
 import FavouritesPanel from './FavouritesPanel';
 import events from '../util/events';
-import withBreakpoint from '../util/withBreakpoint';
 
 const debug = d('IndexPage.js');
 
@@ -50,13 +50,6 @@ class IndexPage extends React.Component {
     destination: dtLocationShape.isRequired,
     tab: PropTypes.string,
     showSpinner: PropTypes.bool.isRequired,
-    routes: PropTypes.arrayOf(
-      PropTypes.shape({
-        footerOptions: PropTypes.shape({
-          hidden: PropTypes.bool,
-        }),
-      }).isRequired,
-    ).isRequired,
   };
 
   constructor(props, context) {
@@ -77,6 +70,7 @@ class IndexPage extends React.Component {
   }
 
   componentWillReceiveProps = nextProps => {
+    this.handleBreakpointProps(nextProps);
     this.handleLocationProps(nextProps);
   };
 
@@ -96,6 +90,20 @@ class IndexPage extends React.Component {
         return 1;
       default:
         return undefined;
+    }
+  };
+
+  handleBreakpointProps = nextProps => {
+    const frombp = this.props.breakpoint;
+    const tobp = nextProps.breakpoint;
+
+    if (frombp === tobp) {
+      return;
+    }
+
+    if (this.getSelectedTab() === undefined) {
+      // auto open nearby tab on bp change to large
+      this.clickNearby();
     }
   };
 
@@ -149,27 +157,27 @@ class IndexPage extends React.Component {
   };
 
   renderTab = () => {
-    let Tab;
     switch (this.props.tab) {
       case TAB_NEARBY:
-        Tab = NearbyRoutesPanel;
-        break;
+        return (
+          <NearbyRoutesPanel
+            origin={this.props.origin}
+            destination={this.props.destination}
+          />
+        );
       case TAB_FAVOURITES:
-        Tab = FavouritesPanel;
-        break;
+        return (
+          <FavouritesPanel
+            origin={this.props.origin}
+            destination={this.props.destination}
+          />
+        );
       default:
-        Tab = NearbyRoutesPanel;
+        return null;
     }
-    return (
-      <Tab origin={this.props.origin} destination={this.props.destination} />
-    );
   };
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
   render() {
-    const footerOptions = Object.assign(
-      {},
-      ...this.props.routes.map(route => route.footerOptions),
-    );
     const selectedMainTab = this.getSelectedTab();
 
     return this.props.breakpoint === 'large' ? (
@@ -203,17 +211,15 @@ class IndexPage extends React.Component {
           origin={this.props.origin}
         />
         {(this.props.showSpinner && <OverlayWithSpinner />) || null}
-        {!footerOptions.hidden && (
-          <div id="page-footer-container">
-            <PageFooter
-              content={
-                (this.context.config.footer &&
-                  this.context.config.footer.content) ||
-                []
-              }
-            />
-          </div>
-        )}
+        <div id="page-footer-container">
+          <PageFooter
+            content={
+              (this.context.config.footer &&
+                this.context.config.footer.content) ||
+              []
+            }
+          />
+        </div>
       </div>
     ) : (
       <div
@@ -287,7 +293,17 @@ const Index = shouldUpdate(
     ),
 )(IndexPage);
 
-const IndexPageWithBreakpoint = withBreakpoint(Index);
+const IndexPageWithBreakpoint = getContext({
+  breakpoint: PropTypes.string.isRequired,
+})(Index);
+
+const IndexPageWithLang = connectToStores(
+  IndexPageWithBreakpoint,
+  ['PreferencesStore'],
+  context => ({
+    lang: context.getStore('PreferencesStore').getLanguage(),
+  }),
+);
 
 /* eslint-disable no-param-reassign */
 const processLocation = (locationString, locationState, intl) => {
@@ -324,7 +340,7 @@ const processLocation = (locationString, locationState, intl) => {
 const tabs = [TAB_FAVOURITES, TAB_NEARBY];
 
 const IndexPageWithPosition = connectToStores(
-  IndexPageWithBreakpoint,
+  IndexPageWithLang,
   ['PositionStore'],
   (context, props) => {
     const locationState = context.getStore('PositionStore').getLocationState();
@@ -409,8 +425,6 @@ const IndexPageWithPosition = connectToStores(
         }
       });
     }
-    newProps.lang = context.getStore('PreferencesStore').getLanguage();
-
     return newProps;
   },
 );

@@ -30,9 +30,6 @@ export default configMerger(walttiConfig, {
 
   textLogo: false, // title text instead of logo img
 
-  // Navbar logo
-  logo: 'tampere/tampere-logo.png',
-
   favicon: './sass/themes/tampere/favicon.png',
 
   feedIds: ['tampere'],

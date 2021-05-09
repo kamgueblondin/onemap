@@ -6,16 +6,12 @@ export function deleteFavouriteLocation(actionContext, location) {
   actionContext.dispatch('DeleteFavouriteLocation', location);
 }
 
-export function deleteFavouriteStop(actionContext, stop) {
-  actionContext.dispatch('DeleteFavouriteStop', stop);
-}
-
 export function addFavouriteRoute(actionContext, routeId) {
   actionContext.dispatch('AddFavouriteRoute', routeId);
 }
 
-export function addFavouriteStop(actionContext, stop) {
-  actionContext.dispatch('AddFavouriteStop', stop);
+export function addFavouriteStop(actionContext, stopId) {
+  actionContext.dispatch('AddFavouriteStop', stopId);
 }
 
 export function toggleFavouriteCityBikeStation(actionContext, stationId) {

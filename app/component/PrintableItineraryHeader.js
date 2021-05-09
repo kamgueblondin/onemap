@@ -5,7 +5,6 @@ import get from 'lodash/get';
 
 import { FormattedMessage } from 'react-intl';
 import { displayDistance } from '../util/geo-utils';
-import { getTotalWalkingDistance } from '../util/legUtils';
 import RelativeDuration from './RelativeDuration';
 import Icon from './Icon';
 
@@ -34,7 +33,7 @@ export default class PrintableItineraryHeader extends React.Component {
             defaultMessage={`${obj.name}`}
           />
         </div>
-        <div className={obj.name === 'ticket' ? `faretype-span` : undefined}>
+        <div className={obj.name === 'ticket' && `faretype-span`}>
           <span className="header-details-content">{obj.contentDetails}</span>
         </div>
       </div>
@@ -107,7 +106,7 @@ export default class PrintableItineraryHeader extends React.Component {
           {this.createHeaderBlock({
             name: 'walk',
             contentDetails: displayDistance(
-              getTotalWalkingDistance(this.props.itinerary),
+              this.props.itinerary.walkDistance,
               this.context.config,
             ),
           })}

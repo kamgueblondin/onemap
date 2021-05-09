@@ -12,11 +12,7 @@ import RouteNumber from './RouteNumber';
 import LegAgencyInfo from './LegAgencyInfo';
 import CityBikeMarker from './map/non-tile-layer/CityBikeMarker';
 import PrintableItineraryHeader from './/PrintableItineraryHeader';
-import {
-  compressLegs,
-  getLegMode,
-  isCallAgencyPickupType,
-} from '../util/legUtils';
+import { isCallAgencyPickupType } from '../util/legUtils';
 import MapContainer from './map/MapContainer';
 import ItineraryLine from './map/ItineraryLine';
 import RouteLine from './map/route/RouteLine';
@@ -64,12 +60,8 @@ const getHeadSignFormat = sentLegObj => {
 };
 
 const getHeadSignDetails = sentLegObj => {
-  if (sentLegObj.rentedBike) {
-    return null;
-  }
-
-  let headSignDetails = '';
-  let transitMode = '';
+  let headSignDetails;
+  let transitMode;
 
   if (sentLegObj.isCheckin) {
     headSignDetails = (
@@ -80,7 +72,7 @@ const getHeadSignDetails = sentLegObj => {
     );
   } else if (sentLegObj.isLuggage) {
     headSignDetails = '';
-  } else if (sentLegObj.route && sentLegObj.trip) {
+  } else {
     headSignDetails = ` ${
       sentLegObj.route.shortName && sentLegObj
         ? sentLegObj.route.shortName
@@ -110,8 +102,8 @@ const getItineraryStops = sentLegObj => (
         defaultMessage="{number, plural, =0 {No stops} one {1 stop} other {{number} stops} }"
         values={{
           number:
-            (sentLegObj.intermediatePlaces &&
-              sentLegObj.intermediatePlaces.length) ||
+            (sentLegObj.intermediateStops &&
+              sentLegObj.intermediateStops.length) ||
             0,
         }}
       />
@@ -119,18 +111,18 @@ const getItineraryStops = sentLegObj => (
         {` (${durationToString(sentLegObj.duration * 1000)})`}
       </span>
     </div>
-    {sentLegObj.intermediatePlaces.map(o2 => (
+    {sentLegObj.intermediateStops.map(o2 => (
       <div key={o2.gtfsId} className="intermediate-stop-single">
-        <span className="print-itinerary-stop-shortname">{o2.stop.name}</span>
+        <span className="print-itinerary-stop-shortname">{o2.name}</span>
         <span className="print-itinerary-stop-code">
-          {o2.stop.code !== null ? ` [${o2.stop.code}]` : ``}
+          {o2.code !== null ? ` [${o2.code}]` : ``}
         </span>
       </div>
     ))}
   </div>
 );
 
-export function TransferMap(props) {
+function TransferMap(props) {
   const bounds = [].concat(polyline.decode(props.legObj.legGeometry.points));
   const nextLeg = props.originalLegs[props.index + 1];
   const previousLeg = props.originalLegs[props.index - 1];
@@ -215,37 +207,28 @@ TransferMap.propTypes = {
   mapsLoaded: PropTypes.func,
 };
 
-const isWalking = legOrMode =>
-  ['WALK', 'BICYCLE_WALK'].find(mode => mode === getLegMode(legOrMode));
-
-export function PrintableLeg(props) {
-  const legMode = getLegMode(props.legObj) || '';
+function PrintableLeg(props) {
   const isVehicle =
-    legMode !== 'WALK' &&
-    legMode !== 'CITYBIKE' &&
-    legMode !== 'BICYCLE' &&
-    legMode !== 'BICYCLE_WALK' &&
-    legMode !== 'CAR';
-
+    props.legObj.mode !== 'WALK' &&
+    props.legObj.mode !== 'CITYBIKE' &&
+    props.legObj.mode !== 'BICYCLE' &&
+    props.legObj.mode !== 'CAR';
   // Set up details for a vehicle route
   const vehicleItinerary = o => {
     const arr = [];
     arr.push(getHeadSignDetails(o));
-    if (o.intermediatePlaces.length > 0) {
+    if (o.intermediateStops.length > 0) {
       arr.push(getItineraryStops(o));
     }
     return arr;
   };
-
-  const messagePrefix =
-    legMode === 'BICYCLE_WALK' ? 'cyclewalk' : legMode.toLowerCase();
 
   // Check if the leg is a vehicle leg or not
   const itineraryDescription = isVehicle ? (
     vehicleItinerary(props.legObj)
   ) : (
     <FormattedMessage
-      id={`${messagePrefix}-distance-duration`}
+      id={`${props.legObj.mode.toLowerCase()}-distance-duration`}
       defaultMessage="Travel {distance} ({duration})"
       values={{
         distance: displayDistance(
@@ -267,7 +250,7 @@ export function PrintableLeg(props) {
           <div className={`special-icon ${props.legObj.mode.toLowerCase()}`}>
             <RouteNumber
               mode={props.legObj.mode.toLowerCase()}
-              vertical
+              vertical={`${true}`}
               text={
                 props.legObj.route !== null
                   ? props.legObj.route.shortName
@@ -315,8 +298,8 @@ export function PrintableLeg(props) {
         <div
           className={`itinerary-center-right ${props.legObj.mode.toLowerCase()}`}
         >
-          {(isWalking(legMode) || // For vehicle leg maps
-            (props.originalLegs.length === 1 && !isVehicle)) && ( // If there's only one leg during walking/cycling/car mode
+          {// For vehicle leg maps
+          props.legObj.mode === 'WALK' && (
             <TransferMap
               originalLegs={props.originalLegs}
               index={props.index}
@@ -324,6 +307,16 @@ export function PrintableLeg(props) {
               mapsLoaded={() => props.mapsLoaded()}
             />
           )}
+          {// If there's only one leg during walking/cycling/car mode
+          props.originalLegs.length === 1 &&
+            !isVehicle && (
+              <TransferMap
+                originalLegs={props.originalLegs}
+                index={props.index}
+                legObj={props.legObj}
+                mapsLoaded={() => props.mapsLoaded()}
+              />
+            )}
         </div>
       </div>
     </div>
@@ -348,9 +341,8 @@ class PrintableItinerary extends React.Component {
   }
 
   render() {
-    const originalLegs = this.props.itinerary.legs;
-    const compressedLegs = compressLegs(originalLegs);
-    const legs = compressedLegs.map((o, i) => {
+    const originalLegs = this.props.itinerary.legs.filter(o => o.distance > 0);
+    const legs = originalLegs.map((o, i) => {
       if (o.mode !== 'AIRPLANE') {
         const cloneObj = Object.assign({}, o);
         let specialMode;
@@ -378,7 +370,7 @@ class PrintableItinerary extends React.Component {
                 this.setState({ mapsLoaded: this.state.mapsLoaded + 1 }, () => {
                   if (
                     this.state.mapsLoaded >=
-                    compressedLegs.filter(o2 => isWalking(o2)).length
+                    originalLegs.filter(o2 => o2.mode === 'WALK').length
                   ) {
                     setTimeout(() => window.print(), 1000);
                   }
@@ -517,16 +509,13 @@ export default Relay.createContainer(PrintableItinerary, {
             length
             points
           }
-          intermediatePlaces {
-            arrivalTime
-            stop {
-              gtfsId
-              lat
-              lon
-              name
-              code
-              platformCode
-            }
+          intermediateStops {
+            gtfsId
+            lat
+            lon
+            name
+            code
+            platformCode
           }
           realTime
           transitLeg

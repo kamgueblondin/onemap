@@ -25,39 +25,28 @@ class TransitLeg extends React.Component {
   stopCode = stopCode => stopCode && <StopCode code={stopCode} />;
 
   toggleShowIntermediateStops = () => {
-    if (this.context.piwik != null) {
-      this.context.piwik.trackEvent(
-        'ItinerarySettings',
-        'IntermediateStopsClick',
-        this.state.showIntermediateStops
-          ? 'IntermediateStopsCollapse'
-          : 'IntermediateStopsExpand',
-      );
-    }
     this.setState({ showIntermediateStops: !this.state.showIntermediateStops });
   };
 
   renderIntermediate() {
     if (
-      this.props.leg.intermediatePlaces.length > 0 &&
+      this.props.leg.intermediateStops.length > 0 &&
       this.state.showIntermediateStops === true
     ) {
-      const stopList = this.props.leg.intermediatePlaces.map(place => (
+      const stopList = this.props.leg.intermediateStops.map(stop => (
         <IntermediateLeg
           color={
             this.props.leg.route
               ? `#${this.props.leg.route.color}`
               : 'currentColor'
           }
-          key={place.stop.gtfsId}
+          key={stop.gtfsId}
           mode={this.props.mode}
-          name={place.stop.name}
-          arrivalTime={place.arrivalTime}
-          realTime={this.props.leg.realTime}
-          stopCode={place.stop.code}
+          name={stop.name}
+          stopCode={stop.code}
           focusFunction={this.context.focusFunction({
-            lat: place.stop.lat,
-            lon: place.stop.lon,
+            lat: stop.lat,
+            lon: stop.lon,
           })}
         />
       ));
@@ -202,7 +191,7 @@ class TransitLeg extends React.Component {
             <StopInfo
               toggleFunction={this.toggleShowIntermediateStops}
               leg={this.props.leg}
-              stops={this.props.leg.intermediatePlaces}
+              stops={this.props.leg.intermediateStops}
             />
           </div>
         </div>
@@ -242,14 +231,11 @@ TransitLeg.propTypes = {
     }).isRequired,
     startTime: PropTypes.number.isRequired,
     departureDelay: PropTypes.number.isRequired,
-    intermediatePlaces: PropTypes.arrayOf(
+    intermediateStops: PropTypes.arrayOf(
       PropTypes.shape({
-        arrivalTime: PropTypes.number.isRequired,
-        stop: PropTypes.shape({
-          gtfsId: PropTypes.string.isRequired,
-          code: PropTypes.string,
-          platformCode: PropTypes.string,
-        }).isRequired,
+        gtfsId: PropTypes.string.isRequired,
+        code: PropTypes.string,
+        platformCode: PropTypes.string,
       }),
     ),
   }).isRequired,
@@ -262,7 +248,6 @@ TransitLeg.propTypes = {
 TransitLeg.contextTypes = {
   focusFunction: PropTypes.func.isRequired,
   config: PropTypes.object.isRequired,
-  piwik: PropTypes.object,
 };
 
 export default TransitLeg;

@@ -24,10 +24,7 @@ export default configMerger(walttiConfig, {
 
   textLogo: false, // title text instead of logo img
 
-  favicon: './app/configurations/images/kuopio/favicon.png',
-
-  // Navbar logo
-  logo: 'kuopio/logo.png',
+  favicon: './sass/themes/kuopio/favicon.png',
 
   feedIds: ['Kuopio', 'KuopioEly'],
 
@@ -71,8 +68,6 @@ export default configMerger(walttiConfig, {
       lon: 27.63598893,
     },
   ],
-
-  showTicketInformation: true,
 
   footer: {
     content: [

@@ -40,26 +40,10 @@ export default configMerger(walttiConfig, {
 
   title: APP_TITLE,
 
-  // Navbar logo
-  logo: 'turku/foli-logo.png',
-
-  cityBike: {
-    showCityBikes: true,
-    useUrl: {
-      fi: 'https://www.foli.fi/kaupunkipyorat',
-      sv: 'https://www.foli.fi/sv/stadscyklar',
-      en: 'https://www.foli.fi/en/citybikes',
-    },
-  },
-
   transportModes: {
     ferry: {
       availableForSelection: true,
       defaultValue: true,
-    },
-
-    citybike: {
-      availableForSelection: true,
     },
   },
 

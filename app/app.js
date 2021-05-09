@@ -33,11 +33,13 @@ export default config => {
   app.plug({
     name: 'extra-context-plugin',
     plugContext: options => {
-      let { headers } = options;
+      let { url, headers } = options;
       return {
         plugComponentContext: componentContext => {
           // eslint-disable-next-line no-param-reassign
           componentContext.config = config;
+          // eslint-disable-next-line no-param-reassign
+          componentContext.url = url;
           // eslint-disable-next-line no-param-reassign
           componentContext.headers = headers;
         },
@@ -51,12 +53,13 @@ export default config => {
         },
         dehydrate() {
           return {
+            url,
             headers,
             config,
           };
         },
         rehydrate(state) {
-          ({ config, headers } = state); // eslint-disable-line no-param-reassign
+          ({ config, url, headers } = state); // eslint-disable-line no-param-reassign
         },
       };
     },

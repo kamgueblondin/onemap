@@ -3,7 +3,7 @@ import React from 'react';
 import Relay from 'react-relay/classic';
 import cx from 'classnames';
 import { routerShape, locationShape } from 'react-router';
-import { FormattedMessage, intlShape } from 'react-intl';
+import { intlShape } from 'react-intl';
 
 import TicketInformation from './TicketInformation';
 import RouteInformation from './RouteInformation';
@@ -14,7 +14,6 @@ import ItineraryLegs from './ItineraryLegs';
 import LegAgencyInfo from './LegAgencyInfo';
 import CityBikeMarker from './map/non-tile-layer/CityBikeMarker';
 import SecondaryButton from './SecondaryButton';
-import { BreakpointConsumer } from '../util/withBreakpoint';
 
 class ItineraryTab extends React.Component {
   static propTypes = {
@@ -25,11 +24,11 @@ class ItineraryTab extends React.Component {
   };
 
   static contextTypes = {
+    breakpoint: PropTypes.string.isRequired,
     config: PropTypes.object.isRequired,
     router: routerShape.isRequired,
     location: locationShape.isRequired,
     intl: intlShape.isRequired,
-    piwik: PropTypes.object,
   };
 
   state = {
@@ -53,15 +52,6 @@ class ItineraryTab extends React.Component {
 
   printItinerary = e => {
     e.stopPropagation();
-
-    if (this.context.piwik != null) {
-      this.context.piwik.trackEvent(
-        'ItinerarySettings',
-        'ItineraryPrintButton',
-        'PrintItinerary',
-      );
-    }
-
     const printPath = `${this.props.location.pathname}/tulosta`;
     this.context.router.push({
       ...this.props.location,
@@ -77,59 +67,48 @@ class ItineraryTab extends React.Component {
 
     return (
       <div className="itinerary-tab">
-        <BreakpointConsumer>
-          {breakpoint => [
-            breakpoint !== 'large' ? (
-              <ItinerarySummary itinerary={this.props.itinerary} key="summary">
-                <TimeFrame
-                  startTime={this.props.itinerary.startTime}
-                  endTime={this.props.itinerary.endTime}
-                  refTime={this.props.searchTime}
-                  className="timeframe--itinerary-summary"
-                />
-              </ItinerarySummary>
-            ) : (
-              <div className="itinerary-timeframe" key="timeframe">
-                <DateWarning
-                  date={this.props.itinerary.startTime}
-                  refTime={this.props.searchTime}
-                />
-              </div>
-            ),
-            <div className="momentum-scroll itinerary-tabs__scroll" key="legs">
-              <div
-                className={cx('itinerary-main', {
-                  'bp-large': breakpoint === 'large',
-                })}
-              >
-                <ItineraryLegs
-                  itinerary={this.props.itinerary}
-                  focusMap={this.handleFocus}
-                />
-                {config.showTicketInformation && (
-                  <TicketInformation fares={this.props.itinerary.fares} />
-                )}
-                {routeInformation}
-              </div>
-              <div className="row print-itinerary-button-container">
-                <SecondaryButton
-                  ariaLabel="print"
-                  buttonName="print"
-                  buttonClickAction={e => this.printItinerary(e)}
-                  buttonIcon="icon-icon_print"
-                />
-              </div>
-              {config.showDisclaimer && (
-                <div className="itinerary-disclaimer">
-                  <FormattedMessage
-                    id="disclaimer"
-                    defaultMessage="Results are based on estimated travel times"
-                  />
-                </div>
-              )}
-            </div>,
-          ]}
-        </BreakpointConsumer>
+        {this.context.breakpoint !== 'large' && (
+          <ItinerarySummary itinerary={this.props.itinerary}>
+            <TimeFrame
+              startTime={this.props.itinerary.startTime}
+              endTime={this.props.itinerary.endTime}
+              refTime={this.props.searchTime}
+              className="timeframe--itinerary-summary"
+            />
+          </ItinerarySummary>
+        )}
+        {this.context.breakpoint === 'large' && (
+          <div className="itinerary-timeframe">
+            <DateWarning
+              date={this.props.itinerary.startTime}
+              refTime={this.props.searchTime}
+            />
+          </div>
+        )}
+        <div className="momentum-scroll itinerary-tabs__scroll">
+          <div
+            className={cx('itinerary-main', {
+              'bp-large': this.context.breakpoint === 'large',
+            })}
+          >
+            <ItineraryLegs
+              itinerary={this.props.itinerary}
+              focusMap={this.handleFocus}
+            />
+            {config.showTicketInformation && (
+              <TicketInformation fares={this.props.itinerary.fares} />
+            )}
+            {routeInformation}
+          </div>
+          <div className="row print-itinerary-button-container">
+            <SecondaryButton
+              ariaLabel="print"
+              buttonName="print"
+              buttonClickAction={e => this.printItinerary(e)}
+              buttonIcon="icon-icon_print"
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -191,16 +170,13 @@ export default Relay.createContainer(ItineraryTab, {
             length
             points
           }
-          intermediatePlaces {
-            arrivalTime
-            stop {
-              gtfsId
-              lat
-              lon
-              name
-              code
-              platformCode
-            }
+          intermediateStops {
+            gtfsId
+            lat
+            lon
+            name
+            code
+            platformCode
           }
           realTime
           transitLeg
@@ -216,7 +192,6 @@ export default Relay.createContainer(ItineraryTab, {
             color
             gtfsId
             longName
-            desc
             agency {
               phone
             }

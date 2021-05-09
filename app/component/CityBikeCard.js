@@ -6,7 +6,7 @@ import { station as exampleStation } from './ExampleData';
 import ComponentUsageExample from './ComponentUsageExample';
 import Card from './Card';
 
-const CityBikeCard = ({ station, children, className }, { config }) => {
+const CityBikeCard = ({ station, children, className }) => {
   if (!station || !children || children.length === 0) {
     return false;
   }
@@ -15,7 +15,7 @@ const CityBikeCard = ({ station, children, className }, { config }) => {
     <Card className={className}>
       <CardHeader
         name={station.name}
-        description={config.cityBike.showStationId ? station.stationId : ''}
+        description={station.stationId}
         icon="icon-icon_citybike"
         unlinked
       />
@@ -41,10 +41,6 @@ CityBikeCard.propTypes = {
   station: PropTypes.object.isRequired,
   className: PropTypes.string,
   children: PropTypes.node.isRequired,
-};
-
-CityBikeCard.contextTypes = {
-  config: PropTypes.object.isRequired,
 };
 
 export default CityBikeCard;

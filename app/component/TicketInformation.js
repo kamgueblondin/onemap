@@ -1,23 +1,11 @@
-import cx from 'classnames';
-import get from 'lodash/get';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
-
+import get from 'lodash/get';
 import ComponentUsageExample from './ComponentUsageExample';
 import { plan as examplePlan } from './ExampleData';
-import ExternalLink from './ExternalLink';
 import Icon from './Icon';
-
-// eslint-disable-next-line react/prop-types
-const FareInformation = ({ fareId, config }) => {
-  const fareMapping = get(config, 'fareMapping', {});
-  const mappedFareId = fareId ? fareMapping[fareId] : null;
-  if (!mappedFareId) {
-    return null;
-  }
-  return <FormattedMessage id={`ticket-type-${mappedFareId}`} />;
-};
+import ExternalLink from './ExternalLink';
 
 export default function TicketInformation({ fares }, { config }) {
   let currency;
@@ -36,9 +24,11 @@ export default function TicketInformation({ fares }, { config }) {
       currency = '€';
   }
 
-  const { components } = regularFare;
-  const hasComponent = Array.isArray(components) && components.length > 0;
-  const isMultiComponent = hasComponent && components.length > 1;
+  // XXX for now we only use single (first) component
+  const fareId = get(regularFare, 'components[0].fareId');
+  const fareMapping = get(config, 'fareMapping', {});
+
+  const mappedFareId = fareId ? fareMapping[fareId] : null;
 
   return (
     <div className="row itinerary-ticket-information">
@@ -47,25 +37,11 @@ export default function TicketInformation({ fares }, { config }) {
       </div>
       <div className="itinerary-ticket-layout-right">
         <div className="itinerary-ticket-type">
-          {isMultiComponent && (
-            <div className="ticket-type-title">
-              <FormattedMessage
-                id="itinerary-tickets.title"
-                defaultMessage="Required tickets"
-              />
-            </div>
-          )}
-          {hasComponent &&
-            components.map((component, i) => (
-              <div
-                className={cx('ticket-type-zone', {
-                  'multi-component': isMultiComponent,
-                })}
-                key={i} // eslint-disable-line react/no-array-index-key
-              >
-                <FareInformation fareId={component.fareId} config={config} />
-              </div>
-            ))}
+          <div className="ticket-type-zone">
+            {mappedFareId && (
+              <FormattedMessage id={`ticket-type-${mappedFareId}`} />
+            )}
+          </div>
           <div>
             <span className="ticket-type-group">
               <FormattedMessage
@@ -100,6 +76,7 @@ TicketInformation.propTypes = {
 
 TicketInformation.contextTypes = {
   config: PropTypes.object,
+  breakpoint: PropTypes.string,
 };
 
 TicketInformation.displayName = 'TicketInformation';

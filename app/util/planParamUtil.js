@@ -2,45 +2,9 @@ import omitBy from 'lodash/omitBy';
 
 import moment from 'moment';
 // Localstorage data
-import {
-  getCustomizedSettings,
-  getRoutingSettings,
-} from '../store/localStorage';
+import { getCustomizedSettings } from '../store/localStorage';
+import { defaultSettings } from '../component/CustomizeSearch';
 import { otpToLocation } from './otpStrings';
-
-export const WALKBOARDCOST_DEFAULT = 600;
-
-export const defaultSettings = {
-  accessibilityOption: 0,
-  minTransferTime: 120,
-  walkBoardCost: WALKBOARDCOST_DEFAULT,
-  transferPenalty: 0,
-  walkReluctance: 2,
-  walkSpeed: 1.2,
-  ticketTypes: 'none',
-};
-
-// These values need to be null so if no values for the variables are defined somewhere else,
-// these variables will be left out from queries
-export const defaultRoutingSettings = {
-  ignoreRealtimeUpdates: null,
-  maxPreTransitTime: null,
-  walkOnStreetReluctance: null,
-  waitReluctance: null,
-  bikeSpeed: null,
-  bikeSwitchTime: null,
-  bikeSwitchCost: null,
-  bikeBoardCost: null,
-  optimize: null,
-  triangle: null,
-  carParkCarLegWeight: null,
-  maxTransfers: null,
-  waitAtBeginningFactor: null,
-  heuristicStepsPerMainStep: null,
-  compactLegsByReversedSearch: null,
-  disableRemainingWeightHeuristic: null,
-  modeWeight: null,
-};
 
 function getIntermediatePlaces(intermediatePlaces) {
   if (!intermediatePlaces) {
@@ -66,48 +30,12 @@ function setTicketTypes(ticketType, settingsTicketType) {
   return null;
 }
 
-function isTrue(val) {
-  return val === 'true';
-}
-
 function nullOrUndefined(val) {
   return val === null || val === undefined;
 }
 
-function getMaxWalkDistance(modes, settings, config) {
-  let maxWalkDistance;
-  if (
-    typeof modes === 'undefined' ||
-    (typeof modes === 'string' && !modes.split(',').includes('BICYCLE'))
-  ) {
-    if (!nullOrUndefined(settings.maxWalkDistance)) {
-      ({ maxWalkDistance } = settings);
-    } else {
-      ({ maxWalkDistance } = config);
-    }
-  } else if (!nullOrUndefined(settings.maxBikingDistance)) {
-    maxWalkDistance = settings.maxBikingDistance;
-  } else {
-    maxWalkDistance = config.maxBikingDistance;
-  }
-  return maxWalkDistance;
-}
-
-function getDisableRemainingWeightHeuristic(modes, settings) {
-  let disableRemainingWeightHeuristic;
-  if (modes && modes.split(',').includes('CITYBIKE')) {
-    disableRemainingWeightHeuristic = true;
-  } else if (nullOrUndefined(settings.disableRemainingWeightHeuristic)) {
-    disableRemainingWeightHeuristic = false;
-  } else {
-    ({ disableRemainingWeightHeuristic } = settings);
-  }
-  return disableRemainingWeightHeuristic;
-}
-
 export const getSettings = () => {
   const custSettings = getCustomizedSettings();
-  const routingSettings = getRoutingSettings();
 
   return {
     walkSpeed:
@@ -142,114 +70,6 @@ export const getSettings = () => {
     transferPenalty:
       custSettings.transferPenalty !== undefined
         ? Number(custSettings.transferPenalty)
-        : undefined,
-    maxWalkDistance:
-      routingSettings.maxWalkDistance !== undefined
-        ? Number(routingSettings.maxWalkDistance)
-        : undefined,
-    maxBikingDistance:
-      routingSettings.maxBikingDistance !== undefined
-        ? Number(routingSettings.maxBikingDistance)
-        : undefined,
-    ignoreRealtimeUpdates:
-      routingSettings.ignoreRealtimeUpdates !== undefined
-        ? isTrue(routingSettings.ignoreRealtimeUpdates)
-        : undefined,
-    maxPreTransitTime:
-      routingSettings.maxPreTransitTime !== undefined
-        ? Number(routingSettings.maxPreTransitTime)
-        : undefined,
-    walkOnStreetReluctance:
-      routingSettings.walkOnStreetReluctance !== undefined
-        ? Number(routingSettings.walkOnStreetReluctance)
-        : undefined,
-    waitReluctance:
-      routingSettings.waitReluctance !== undefined
-        ? Number(routingSettings.waitReluctance)
-        : undefined,
-    bikeSpeed:
-      routingSettings.bikeSpeed !== undefined
-        ? Number(routingSettings.bikeSpeed)
-        : undefined,
-    bikeSwitchTime:
-      routingSettings.bikeSwitchTime !== undefined
-        ? Number(routingSettings.bikeSwitchTime)
-        : undefined,
-    bikeSwitchCost:
-      routingSettings.bikeSwitchCost !== undefined
-        ? Number(routingSettings.bikeSwitchCost)
-        : undefined,
-    bikeBoardCost:
-      routingSettings.bikeBoardCost !== undefined
-        ? Number(routingSettings.bikeBoardCost)
-        : undefined,
-    optimize:
-      routingSettings.optimize !== undefined
-        ? routingSettings.optimize
-        : undefined,
-    safetyFactor:
-      routingSettings.safetyFactor !== undefined
-        ? Number(routingSettings.safetyFactor)
-        : undefined,
-    slopeFactor:
-      routingSettings.slopeFactor !== undefined
-        ? Number(routingSettings.slopeFactor)
-        : undefined,
-    timeFactor:
-      routingSettings.timeFactor !== undefined
-        ? Number(routingSettings.timeFactor)
-        : undefined,
-    carParkCarLegWeight:
-      routingSettings.carParkCarLegWeight !== undefined
-        ? Number(routingSettings.carParkCarLegWeight)
-        : undefined,
-    maxTransfers:
-      routingSettings.maxTransfers !== undefined
-        ? Number(routingSettings.maxTransfers)
-        : undefined,
-    waitAtBeginningFactor:
-      routingSettings.waitAtBeginningFactor !== undefined
-        ? Number(routingSettings.waitAtBeginningFactor)
-        : undefined,
-    heuristicStepsPerMainStep:
-      routingSettings.heuristicStepsPerMainStep !== undefined
-        ? Number(routingSettings.heuristicStepsPerMainStep)
-        : undefined,
-    compactLegsByReversedSearch:
-      routingSettings.compactLegsByReversedSearch !== undefined
-        ? isTrue(routingSettings.compactLegsByReversedSearch)
-        : undefined,
-    disableRemainingWeightHeuristic:
-      routingSettings.disableRemainingWeightHeuristic !== undefined
-        ? isTrue(routingSettings.disableRemainingWeightHeuristic)
-        : undefined,
-    itineraryFiltering:
-      routingSettings.itineraryFiltering !== undefined
-        ? Number(routingSettings.itineraryFiltering)
-        : undefined,
-    busWeight:
-      routingSettings.busWeight !== undefined
-        ? Number(routingSettings.busWeight)
-        : undefined,
-    railWeight:
-      routingSettings.railWeight !== undefined
-        ? Number(routingSettings.railWeight)
-        : undefined,
-    subwayWeight:
-      routingSettings.subwayWeight !== undefined
-        ? Number(routingSettings.subwayWeight)
-        : undefined,
-    tramWeight:
-      routingSettings.tramWeight !== undefined
-        ? Number(routingSettings.tramWeight)
-        : undefined,
-    ferryWeight:
-      routingSettings.ferryWeight !== undefined
-        ? Number(routingSettings.ferryWeight)
-        : undefined,
-    airplaneWeight:
-      routingSettings.airplaneWeight !== undefined
-        ? Number(routingSettings.airplaneWeight)
         : undefined,
   };
 };
@@ -295,7 +115,6 @@ export const preparePlanParams = config => (
 
   return {
     ...defaultSettings,
-    ...config.defaultSettings,
     ...omitBy(
       {
         fromPlace: from,
@@ -328,7 +147,11 @@ export const preparePlanParams = config => (
         walkSpeed:
           walkSpeed !== undefined ? Number(walkSpeed) : settings.walkSpeed,
         arriveBy: arriveBy ? arriveBy === 'true' : undefined,
-        maxWalkDistance: getMaxWalkDistance(modes, settings, config),
+        maxWalkDistance:
+          typeof modes === 'undefined' ||
+          (typeof modes === 'string' && !modes.split(',').includes('BICYCLE'))
+            ? config.maxWalkDistance
+            : config.maxBikingDistance,
         wheelchair:
           accessibilityOption !== undefined
             ? Number(accessibilityOption) === 1
@@ -337,56 +160,9 @@ export const preparePlanParams = config => (
           transferPenalty !== undefined
             ? Number(transferPenalty)
             : settings.transferPenalty,
-        ignoreRealtimeUpdates: settings.ignoreRealtimeUpdates,
-        maxPreTransitTime: settings.maxPreTransitTime,
-        walkOnStreetReluctance: settings.walkOnStreetReluctance,
-        waitReluctance: settings.waitReluctance,
-        bikeSpeed: settings.bikeSpeed,
-        bikeSwitchTime: settings.bikeSwitchTime,
-        bikeSwitchCost: settings.bikeSwitchCost,
-        bikeBoardCost: settings.bikeBoardCost,
-        optimize: settings.optimize,
-        triangle:
-          settings.optimize === 'TRIANGLE'
-            ? {
-                safetyFactor: settings.safetyFactor,
-                slopeFactor: settings.slopeFactor,
-                timeFactor: settings.timeFactor,
-              }
-            : null,
-        carParkCarLegWeight: settings.carParkCarLegWeight,
-        maxTransfers: settings.maxTransfers,
-        waitAtBeginningFactor: settings.waitAtBeginningFactor,
-        heuristicStepsPerMainStep: settings.heuristicStepsPerMainStep,
-        compactLegsByReversedSearch: settings.compactLegsByReversedSearch,
-        itineraryFiltering:
-          settings.itineraryFiltering !== undefined
-            ? settings.itineraryFiltering
-            : config.itineraryFiltering,
-        modeWeight:
-          settings.busWeight !== undefined ||
-          settings.railWeight !== undefined ||
-          settings.subwayWeight !== undefined ||
-          settings.tramWeight !== undefined ||
-          settings.ferryWeight !== undefined ||
-          settings.airplaneWeight !== undefined
-            ? omitBy(
-                {
-                  BUS: settings.busWeight,
-                  RAIL: settings.railWeight,
-                  SUBWAY: settings.subwayWeight,
-                  TRAM: settings.tramWeight,
-                  FERRY: settings.ferryWeight,
-                  AIRPLANE: settings.airplaneWeight,
-                },
-                nullOrUndefined,
-              )
-            : null,
         preferred: { agencies: config.preferredAgency || '' },
-        disableRemainingWeightHeuristic: getDisableRemainingWeightHeuristic(
-          modes,
-          settings,
-        ),
+        disableRemainingWeightHeuristic:
+          modes && modes.split(',').includes('CITYBIKE'),
       },
       nullOrUndefined,
     ),

@@ -10,18 +10,7 @@ const printStop = e => {
   window.print();
 };
 
-const printStopPDF = (e, stopPDFURL) => {
-  e.stopPropagation();
-
-  window.open(stopPDFURL);
-};
-
-const StopPageActionBar = ({
-  stopPDFURL,
-  startDate,
-  selectedDate,
-  onDateChange,
-}) => (
+const StopPageActionBar = ({ startDate, selectedDate, onDateChange }) => (
   <div id="stop-page-action-bar">
     <DateSelect
       startDate={startDate}
@@ -30,15 +19,6 @@ const StopPageActionBar = ({
       onDateChange={onDateChange}
     />
     <div className="print-button-container">
-      {stopPDFURL && (
-        <SecondaryButton
-          ariaLabel="print-timetable"
-          buttonName="print-timetable"
-          buttonClickAction={e => printStopPDF(e, stopPDFURL)}
-          buttonIcon="icon-icon_print"
-          smallSize
-        />
-      )}
       <SecondaryButton
         ariaLabel="print"
         buttonName="print"
@@ -56,7 +36,6 @@ StopPageActionBar.propTypes = {
   startDate: PropTypes.string,
   selectedDate: PropTypes.string,
   onDateChange: PropTypes.func,
-  stopPDFURL: PropTypes.string,
 };
 
 export default StopPageActionBar;

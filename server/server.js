@@ -4,9 +4,15 @@
 
 /* ********* Polyfills (for node) ********* */
 const path = require('path');
-const fs = require('fs');
 
-require('@babel/register')();
+require('babel-core/register')({
+  presets: [['env', { targets: { node: 'current' } }], 'stage-2', 'react'],
+  plugins: [
+    'dynamic-import-node',
+    ['relay', { compat: true, schema: 'build/schema.json' }],
+  ],
+  ignore: [/node_modules/],
+});
 
 global.fetch = require('node-fetch');
 const proxy = require('express-http-proxy');
@@ -40,29 +46,6 @@ const app = express();
 
 /* Setup functions */
 function setUpStaticFolders() {
-  // First set up a specific path for sw.js
-  if (process.env.ASSET_URL) {
-    const swText = fs.readFileSync(
-      path.join(process.cwd(), '_static', 'sw.js'),
-      { encoding: 'utf8' },
-    );
-    const injectionPoint = swText.indexOf(';') + 2;
-    const swPreText = swText.substring(0, injectionPoint);
-    const swPostText = swText.substring(injectionPoint);
-    const swInjectionText = fs
-      .readFileSync(path.join(process.cwd(), 'server', 'swInjection.js'), {
-        encoding: 'utf8',
-      })
-      .replace(/ASSET_URL/g, process.env.ASSET_URL);
-    const swTextInjected = swPreText + swInjectionText + swPostText;
-
-    app.get(`${config.APP_PATH}/sw.js`, (req, res) => {
-      res.setHeader('Cache-Control', 'public, max-age=0');
-      res.setHeader('Content-type', 'application/javascript; charset=UTF-8');
-      res.send(swTextInjected);
-    });
-  }
-
   const staticFolder = path.join(process.cwd(), '_static');
   // Sert cache for 1 week
   const oneDay = 86400000;
@@ -79,8 +62,6 @@ function setUpStaticFolders() {
         ) {
           res.setHeader('Cache-Control', 'public, max-age=0');
         }
-        // Always set cors header
-        res.header('Access-Control-Allow-Origin', '*');
       },
     }),
   );
@@ -121,9 +102,6 @@ function setUpRoutes() {
     require('./reittiopasParameterMiddleware').default,
   );
   app.use(require('../app/server').default);
-
-  // Make sure req has the correct hostname extracted from the proxy info
-  app.enable('trust proxy');
 }
 
 function startServer() {

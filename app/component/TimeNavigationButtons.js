@@ -6,7 +6,6 @@ import ComponentUsageExample from './ComponentUsageExample';
 import { plan as examplePlan } from './ExampleData';
 import ItineraryFeedback from './itinerary-feedback';
 import Icon from './Icon';
-import { BreakpointConsumer } from '../util/withBreakpoint';
 
 // TODO: sptlit into container and view
 
@@ -24,6 +23,7 @@ class TimeNavigationButtons extends React.Component {
   };
 
   static contextTypes = {
+    breakpoint: PropTypes.string,
     config: PropTypes.object.isRequired,
   };
 
@@ -59,37 +59,33 @@ class TimeNavigationButtons extends React.Component {
     ) : null;
 
     return (
-      <BreakpointConsumer>
-        {breakpoint => (
-          <div
-            className={cx('time-navigation-buttons', {
-              'bp-large': breakpoint === 'large',
-            })}
-          >
-            {itineraryFeedback}
-            <button
-              className="standalone-btn time-navigation-earlier-btn"
-              onClick={this.props.onEarlier}
-            >
-              {leftArrow}
-              <FormattedMessage id="earlier" defaultMessage="Earlier" />
-            </button>
-            <button
-              className="standalone-btn time-navigation-now-btn"
-              onClick={this.props.onNow}
-            >
-              <FormattedMessage id="now" defaultMessage="Now" />
-            </button>
-            <button
-              className="standalone-btn time-navigation-later-btn"
-              onClick={this.props.onLater}
-            >
-              <FormattedMessage id="later" defaultMessage="Later" />
-              {rightArrow}
-            </button>
-          </div>
-        )}
-      </BreakpointConsumer>
+      <div
+        className={cx('time-navigation-buttons', {
+          'bp-large': this.context.breakpoint === 'large',
+        })}
+      >
+        {itineraryFeedback}
+        <button
+          className="standalone-btn time-navigation-earlier-btn"
+          onClick={this.props.onEarlier}
+        >
+          {leftArrow}
+          <FormattedMessage id="earlier" defaultMessage="Earlier" />
+        </button>
+        <button
+          className="standalone-btn time-navigation-now-btn"
+          onClick={this.props.onNow}
+        >
+          <FormattedMessage id="now" defaultMessage="Now" />
+        </button>
+        <button
+          className="standalone-btn time-navigation-later-btn"
+          onClick={this.props.onLater}
+        >
+          <FormattedMessage id="later" defaultMessage="Later" />
+          {rightArrow}
+        </button>
+      </div>
     );
   }
 }

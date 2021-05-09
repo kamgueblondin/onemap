@@ -8,12 +8,8 @@ import Icon from './Icon';
 import ComponentUsageExample from './ComponentUsageExample';
 import LangSelect from './LangSelect';
 import MessageBar from './MessageBar';
-import { isBrowser } from '../util/browser';
 
-const AppBarLarge = (
-  { titleClicked, logo },
-  { router, location, config, intl },
-) => {
+const AppBarLarge = ({ titleClicked }, { router, location, config, intl }) => {
   const openDisruptionInfo = () => {
     router.push({
       ...location,
@@ -24,30 +20,18 @@ const AppBarLarge = (
     });
   };
 
-  let logoElement;
-
-  if (config.textLogo) {
-    logoElement = (
-      <section className="title">
-        <span className="title">{config.title}</span>
-      </section>
-    );
-  } else if (isBrowser && logo) {
-    logoElement = (
-      <div className="navi-logo" style={{ backgroundImage: `url(${logo})` }} />
-    );
-  } else {
-    logoElement = (
-      <div className="navi-logo" style={{ backgroundImage: 'none' }} />
-    );
-  }
-
   /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions, jsx-a11y/anchor-is-valid */
   return (
     <div>
       <div className="top-bar bp-large flex-horizontal">
         <button className="noborder" onClick={titleClicked}>
-          {logoElement}
+          {config.textLogo ? (
+            <section className="title">
+              <span className="title">{config.title}</span>
+            </section>
+          ) : (
+            <div className="navi-logo" />
+          )}
         </button>
         <div className="empty-space flex-grow" />
         <div className="navi-languages right-border navi-margin">
@@ -77,11 +61,6 @@ const AppBarLarge = (
 
 AppBarLarge.propTypes = {
   titleClicked: PropTypes.func.isRequired,
-  logo: PropTypes.string,
-};
-
-AppBarLarge.defaultProps = {
-  logo: undefined,
 };
 
 AppBarLarge.displayName = 'AppBarLarge';
