@@ -25,14 +25,6 @@ class AddFavouriteContainer extends React.Component {
     'icon-icon_shopping',
   ];
 
-  static FavouriteIconIdToNameMap = {
-    'icon-icon_home': 'home',
-    'icon-icon_work': 'work',
-    'icon-icon_sport': 'sport',
-    'icon-icon_school': 'school',
-    'icon-icon_shopping': 'shopping',
-  };
-
   static contextTypes = {
     intl: intlShape.isRequired,
     executeAction: PropTypes.func.isRequired,
@@ -106,24 +98,8 @@ class AddFavouriteContainer extends React.Component {
   };
 
   selectIcon = id => {
-    const favourite = { ...this.state.favourite, selectedIconId: id };
-    // If the user hasn't set a location name yet,
-    // let's attempt to autodetermine it based on the icon they chose.
-    if (isEmpty(this.state.favourite.locationName)) {
-      let suggestedName = AddFavouriteContainer.FavouriteIconIdToNameMap[id];
-      if (suggestedName) {
-        // If there is a suggested name in the map,
-        // attempt to translate it, then assign it to
-        // the update favourite object.
-        suggestedName = this.context.intl.formatMessage({
-          id: `location-${suggestedName}`,
-          defaultMessage: suggestedName,
-        });
-        favourite.locationName = suggestedName;
-      }
-    }
     this.setState({
-      favourite,
+      favourite: { ...this.state.favourite, selectedIconId: id },
     });
   };
 

@@ -333,7 +333,7 @@ div.map {
 }
 
 div.autosuggest-panel {
-  position: absolute;
+  position: fixed;
   z-index: 1000;
   margin-top: 1em;
   width: 52.5%;
@@ -363,11 +363,6 @@ div.autosuggest-panel {
     input.react-autosuggest__input {
       z-index: 1004;
       background: $white;
-    }
-    .clear-input {
-      border-top: 1px solid #ddd;
-      border-right: 1px solid #ddd;
-      border-bottom: 1px solid #ddd;
     }
   }
   &.small {
@@ -527,9 +522,6 @@ div.autosuggest-panel {
     color: $link-color;
     text-align: center;
     font-size: 1em;
-    span {
-      font-size: $font-size-xsmall;
-    }
   }
 }
 .mobile .itinerary-search-controls {
@@ -662,11 +654,6 @@ input.react-autosuggest__input{
   position: relative;
   &.viapoint {
     width: 94%;
-  }
-  input[type="text"]{
-    border-top: 1px solid #ddd;
-    border-left: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
   }
 }
 

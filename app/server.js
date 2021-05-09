@@ -32,7 +32,6 @@ import LRU from 'lru-cache';
 import appCreator from './app';
 import translations from './translations';
 import MUITheme from './MuiTheme';
-import configureMoment from './util/configure-moment';
 
 // configuration
 import { getConfiguration } from './config';
@@ -178,7 +177,7 @@ function getLocale(req, res, config) {
 }
 
 function validateParams(params) {
-  const idFields = ['stopId', 'routeId', 'terminalId', 'patternId', 'tripId'];
+  const idFields = ['stopId', 'routeId', 'terminalId', 'patternId'];
   return idFields.every(f => !params[f] || params[f].indexOf(':') !== -1);
 }
 
@@ -196,13 +195,6 @@ export default function(req, res, next) {
     .getComponentContext()
     .getStore('MessageStore')
     .addConfigMessages(config);
-
-  const language = context
-    .getComponentContext()
-    .getStore('PreferencesStore')
-    .getLanguage();
-
-  configureMoment(language, config);
 
   // required by material-ui
   const agent = req.headers['user-agent'];

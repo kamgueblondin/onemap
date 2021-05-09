@@ -34,18 +34,17 @@
 .time-selectors {
   @include font-book;
   font-size: $font-size-small;
-  background-color: $background-color-lighter;
+  background-color: $background-color-darker;
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  max-height: 2.2em;
-  flex: 0 1 49.6%;
 
   input[type="date"], input[type="time"].time-selector, input[type="text"], input[type="tel"],select, .time-mui > input {
     vertical-align: middle;
     text-align: left;
+    height: 2.6em;
     margin: 0;
-    padding: 0 1rem 0 0.9em;
+    padding: 0 1rem 0 $padding-small;
     font-size: $font-size-xxsmall;
     display: inline-block;
     background-image: none;
@@ -55,8 +54,6 @@
     border-radius: $border-radius;
     appearance: none;
     @include font-book;
-    font-weight: 700;
-    height: 2.6em;
 
     &:hover {
       background-color: $white;
@@ -79,16 +76,12 @@
     flex-direction: row;
     align-items: center;
     border-radius: $border-radius;
-    background: $background-color-lighter;
+    background: $background-color-darker;
     margin-right: 1px;
-    flex: 0 1 14.5em;
 
     > span {
       margin-left: -1rem;
       pointer-events: none;
-    }
-    select {
-      border-radius: 5px;
     }
   }
   .time-box-shadow input {
@@ -99,7 +92,8 @@
   }
 
   .fake-select-arrow {
-    font-size: 0.7rem;
+    font-size: 0.5rem;
+    width: 2em;
     color: $link-color;
   }
 
@@ -108,10 +102,7 @@
     text-align: left;
     font-family: $font-family !important;
     display: flex !important;
-    border: 1px solid #ddd;
-    &:hover {
-      border: 1px solid #007ac9;
-    }
+    border: solid 1px $light-gray;
     input {
       font-size: $font-size-xxsmall !important;
     }
@@ -143,14 +134,6 @@
     }
   }
 }
-
-.mobile .time-selectors {
-  flex: 0 1 48.5%;
-  .select-wrapper > span {
-    margin-left: -1.4rem;
-  }
-}
-
 .time-input-container {
   form {
     display: inherit;
@@ -158,10 +141,9 @@
   }
   display: flex;
   background: $white;
-  padding: 0 0.6em 0 0.2em;
-  border-radius: 5px;
-  margin-right: 0.6em;
-  flex: 0 0 3em;
+  padding: 0 calc(0.7em + 1.5rem) 0 0.7em;
+  box-shadow: inset 1px 1px 3px 0 rgba(0, 0, 0, 0.43);
+  border-radius: 3px;
   .time-input-field {
     width: 1.5em;
     padding-right: 0 !important;
@@ -174,15 +156,13 @@
     }
     &#inputMinutes{
       text-align: left;
-      padding-bottom: 0.2em;
     }
     &#inputHours{
       text-align: right;
-      padding-bottom: 0.2em;
     }
   }
-  #timeinput-digit-separator {
-    margin: 0.25em 1px 0 1px;
+  .digit-separator {
+    margin: 0.35em 3px;
     color: $link-color;
   }
 }
@@ -205,88 +185,25 @@
   }
 }
 
-.quicksettings-separator-line {
-  display: block;
-  width: auto;
-  margin: 0 auto;
-  margin-left: 1em;
-  margin-right: 1em;
-  margin-top: 0.3em;
-  border-top: 1px solid #ddd;
-  background: $background-color-lighter;
-  &.hidden {
-    display: none;
-  }
-}
-
-.mobile .quicksettings-separator-line {
-  margin-left: 6px;
-  margin-right: 6px;
-}
-
 .time-selector-settings-row {
   padding: $padding-small 6px;
   overflow-x: hidden;
-  background-color: $background-color-lighter;
+  background-color: $background-color-darker;
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  flex-direction: initial;
 
-  &.quickSettingsOpen {
-    padding: 1em 6px $padding-small 6px;
-    padding-top: 0.8em;
-    //background: linear-gradient(rgba(194, 197, 199, 0.8), $background-color-lighter 12%);
-    //background-size: 100%;
-    //background-repeat-y: no-repeat;
+  &.bp-large {
+    height: 50px;
   }
-
-  .button-container {
-    position: relative;
-    margin-top: -3px;
-    .icon-holder {
-      left: 1.4em;
-      position: absolute;
-      z-index: 2;
-    }
-  }
-
-  button.secondary-button {
-    background: none;
-    border: none;
-    margin-bottom: 0;
-    padding: 0.6em;
-    padding-right: 0.8em;
-    outline: none;
-    span {
-      font-weight: 700;
-      font-size: $font-size-xxsmall;
-    }
-    &.settings .icon {
-      font-size: 1.7em;
-      margin-top: -0.15em;
-    }
-    &.close {
-      .icon {
-        font-size: $font-size-small;
-      }
-      :first-child {
-        margin-left: 0.4em;
-      }
-    }
-  }
-}
-.mobile button.secondary-button.close {
-  padding-right: 0.5em;
 }
 
 .bp-large.time-selector-settings-row {
-      padding: 0.8em 1em;
+  padding: $padding-small 20px;
 
   .select-wrapper {
     margin-right: 2px;
-    flex: 0 1 14.5em;
-    // padding-right: 0.5rem;
+    padding-right: 0.5rem;
 
     > span {
       margin-left: -1.5rem;
@@ -300,8 +217,9 @@
   }
 
   input[type="date"], input[type="time"], input[type="text"], input[type="tel"], select, .time-mui > input {
-    font-size: $font-size-xxsmall !important;
+    font-size: $font-size-normal !important;
     padding: 0 calc(#{$padding-medium} + 1.5rem) 0 $padding-medium;
+    height: 35px !important;
 
     &.text-time-selector, &.desktop {
       padding: 0 0.5em 0 0.5em;
@@ -316,6 +234,7 @@
       border-radius: $border-radius;
   }
 }
+
 .right-offcanvas-toggle {
 
   &:hover {

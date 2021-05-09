@@ -1,4 +1,5 @@
 import omitBy from 'lodash/omitBy';
+import isNil from 'lodash/isNil';
 
 import moment from 'moment';
 // Localstorage data
@@ -30,26 +31,19 @@ function setTicketTypes(ticketType, settingsTicketType) {
   return null;
 }
 
-function nullOrUndefined(val) {
-  return val === null || val === undefined;
-}
-
 export const getSettings = () => {
   const custSettings = getCustomizedSettings();
 
   return {
-    walkSpeed:
-      custSettings.walkSpeed !== undefined
-        ? Number(custSettings.walkSpeed)
-        : undefined,
-    walkReluctance:
-      custSettings.walkReluctance !== undefined
-        ? Number(custSettings.walkReluctance)
-        : undefined,
-    walkBoardCost:
-      custSettings.walkBoardCost !== undefined
-        ? Number(custSettings.walkBoardCost)
-        : undefined,
+    walkSpeed: custSettings.walkSpeed
+      ? Number(custSettings.walkSpeed)
+      : undefined,
+    walkReluctance: custSettings.walkReluctance
+      ? Number(custSettings.walkReluctance)
+      : undefined,
+    walkBoardCost: custSettings.walkBoardCost
+      ? Number(custSettings.walkBoardCost)
+      : undefined,
     modes: custSettings.modes
       ? custSettings.modes
           .toString()
@@ -58,19 +52,15 @@ export const getSettings = () => {
           .sort()
           .join(',')
       : undefined,
-    minTransferTime:
-      custSettings.minTransferTime !== undefined
-        ? Number(custSettings.minTransferTime)
-        : undefined,
-    accessibilityOption:
-      custSettings.accessibilityOption !== undefined
-        ? Number(custSettings.accessibilityOption) === 1
-        : undefined,
-    ticketTypes: custSettings.ticketTypes,
-    transferPenalty:
-      custSettings.transferPenalty !== undefined
-        ? Number(custSettings.transferPenalty)
-        : undefined,
+    minTransferTime: custSettings.minTransferTime
+      ? Number(custSettings.minTransferTime)
+      : undefined,
+    accessibilityOption: custSettings.accessibilityOption
+      ? custSettings.accessibilityOption
+      : undefined,
+    ticketTypes: custSettings.ticketTypes
+      ? custSettings.ticketTypes
+      : undefined,
   };
 };
 
@@ -82,13 +72,6 @@ export const getDefaultModes = config => [
     .filter(mode => config.streetModes[mode].defaultValue)
     .map(mode => mode.toUpperCase()),
 ];
-
-// all modes except one, citybike, have the same values in UI code and in OTP
-// this is plain madness but hard to change afterwards
-export const getDefaultOTPModes = config =>
-  getDefaultModes(config).map(
-    mode => (mode === 'CITYBIKE' ? 'BICYCLE_RENT' : mode),
-  );
 
 export const preparePlanParams = config => (
   { from, to },
@@ -106,7 +89,6 @@ export const preparePlanParams = config => (
         modes,
         accessibilityOption,
         ticketTypes,
-        transferPenalty,
       },
     },
   },
@@ -132,20 +114,16 @@ export const preparePlanParams = config => (
           : settings.modes,
         date: time ? moment(time * 1000).format('YYYY-MM-DD') : undefined,
         time: time ? moment(time * 1000).format('HH:mm:ss') : undefined,
-        walkReluctance:
-          walkReluctance !== undefined
-            ? Number(walkReluctance)
-            : settings.walkReluctance,
-        walkBoardCost:
-          walkBoardCost !== undefined
-            ? Number(walkBoardCost)
-            : settings.walkBoardCost,
-        minTransferTime:
-          minTransferTime !== undefined
-            ? Number(minTransferTime)
-            : settings.minTransferTime,
-        walkSpeed:
-          walkSpeed !== undefined ? Number(walkSpeed) : settings.walkSpeed,
+        walkReluctance: walkReluctance
+          ? Number(walkReluctance)
+          : settings.walkReluctance,
+        walkBoardCost: walkBoardCost
+          ? Number(walkBoardCost)
+          : settings.walkBoardCost,
+        minTransferTime: minTransferTime
+          ? Number(minTransferTime)
+          : settings.minTransferTime,
+        walkSpeed: walkSpeed ? Number(walkSpeed) : settings.walkSpeed,
         arriveBy: arriveBy ? arriveBy === 'true' : undefined,
         maxWalkDistance:
           typeof modes === 'undefined' ||
@@ -153,18 +131,14 @@ export const preparePlanParams = config => (
             ? config.maxWalkDistance
             : config.maxBikingDistance,
         wheelchair:
-          accessibilityOption !== undefined
-            ? Number(accessibilityOption) === 1
-            : settings.accessibilityOption,
-        transferPenalty:
-          transferPenalty !== undefined
-            ? Number(transferPenalty)
-            : settings.transferPenalty,
+          accessibilityOption === '1'
+            ? true
+            : settings.accessibilityOption === '1',
         preferred: { agencies: config.preferredAgency || '' },
         disableRemainingWeightHeuristic:
           modes && modes.split(',').includes('CITYBIKE'),
       },
-      nullOrUndefined,
+      isNil,
     ),
     ticketTypes: setTicketTypes(ticketTypes, settings.ticketTypes),
   };

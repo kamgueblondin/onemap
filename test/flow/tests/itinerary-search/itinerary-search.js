@@ -1,11 +1,12 @@
 module.exports = {
   '@tags': ['itinerary'],
+  '@disabled': true,
   'Origin and destination exists in instructions if suggestion is chosen': browser => {
     browser.url(browser.launch_url);
 
     browser.page
       .searchFields()
-      .itinerarySearch('Helsingin rautatieasema', 'Narinkkatori');
+      .itinerarySearch('helsingin rautatieasema', 'Narinkkatori');
 
     const itinerarySummary = browser.page.itinerarySummary();
     itinerarySummary.waitForFirstItineraryRow();
@@ -13,11 +14,8 @@ module.exports = {
 
     const itineraryInstructions = browser.page.itineraryInstructions();
     itineraryInstructions.waitForFirstItineraryInstructionColumn();
-    // test in 2 parts so that helsingin p‰‰rautatieasema matches too
-    itineraryInstructions.verifyOrigin('Helsingin');
-    itineraryInstructions.verifyOrigin('rautatieasema');
-
-    itineraryInstructions.verifyDestination('Narinkka');
+    itineraryInstructions.verifyOrigin('Helsingin rautatieasema');
+    itineraryInstructions.verifyDestination('Narinkkatori');
     browser.end();
   },
 
@@ -27,6 +25,7 @@ module.exports = {
     browser.page
       .searchFields()
       .itinerarySearch('kuninkaanportti', 'Pohjolanaukio');
+    browser.page.itinerarySummary().waitForFirstItineraryRow();
 
     const itinerarySummary = browser.page.itinerarySummary();
     itinerarySummary.waitForFirstItineraryRow();

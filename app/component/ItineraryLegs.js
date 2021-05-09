@@ -39,8 +39,8 @@ class ItineraryLegs extends React.Component {
 
   continueWithBicycle = (leg1, leg2) =>
     leg1 != null &&
-    leg1.mode === 'BICYCLE' &&
-    (leg2 != null && leg2.mode === 'BICYCLE');
+    (leg1.mode === 'BICYCLE' || leg1.mode === 'WALK') &&
+    (leg2 != null && (leg2.mode === 'BICYCLE' || leg2.mode === 'WALK'));
 
   continueWithRentedBicycle = (leg1, leg2) =>
     leg1 != null && leg1.rentedBike && (leg2 != null && leg2.rentedBike);
@@ -52,12 +52,11 @@ class ItineraryLegs extends React.Component {
     let nextLeg;
     const waitThreshold = this.context.config.itinerary.waitThreshold * 1000;
     const legs = [];
-    const originalLegs = this.props.itinerary.legs;
     const usingOwnBicycle =
-      originalLegs[0] != null &&
-      originalLegs[1] != null &&
-      ((originalLegs[0].mode === 'BICYCLE' && !originalLegs[0].rentedBike) ||
-        (originalLegs[1].mode === 'BICYCLE' && !originalLegs[1].rentedBike));
+      this.props.itinerary.legs[0] != null &&
+      (this.props.itinerary.legs[0].mode === 'BICYCLE' &&
+        !this.props.itinerary.legs[0].rentedBike);
+    const originalLegs = this.props.itinerary.legs;
     const compressedLegs = [];
     let compressLeg = false;
 
@@ -85,10 +84,6 @@ class ItineraryLegs extends React.Component {
 
           compressedLegs.push(compressLeg);
           compressLeg = cloneDeep(cleg);
-
-          if (usingOwnBicycle && cleg.mode === 'WALK') {
-            compressLeg.mode = 'BICYCLE_WALK';
-          }
         }
       } else {
         compressLeg = cloneDeep(cleg);
@@ -116,15 +111,6 @@ class ItineraryLegs extends React.Component {
             key={j}
             index={j}
             leg={leg}
-            focusAction={this.focus(leg.from)}
-          />,
-        );
-      } else if (leg.intermediatePlace) {
-        legs.push(
-          <ViaLeg
-            key={`${j}via`}
-            leg={leg}
-            arrivalTime={compressedLegs[j - 1].endTime}
             focusAction={this.focus(leg.from)}
           />,
         );
@@ -224,6 +210,15 @@ class ItineraryLegs extends React.Component {
           >
             {this.stopCode(leg.from.stop)}
           </CarLeg>,
+        );
+      } else if (leg.intermediatePlace) {
+        legs.push(
+          <ViaLeg
+            key={`${j}via`}
+            leg={leg}
+            arrivalTime={compressedLegs[j - 1].endTime}
+            focusAction={this.focus(leg.from)}
+          />,
         );
       } else {
         legs.push(

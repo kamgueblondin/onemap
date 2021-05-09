@@ -458,9 +458,6 @@ div.background-gradient {
   background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
   pointer-events: none;
   z-index: 801;
-  @media print {
-    display: none;
-  }
 }
 
 div.map-click-prevent-overlay {

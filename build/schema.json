@@ -306,13 +306,9 @@
                                 "name": "lat",
                                 "description": "Latitude of the location",
                                 "type": {
-                                    "kind": "NON_NULL",
-                                    "name": null,
-                                    "ofType": {
-                                        "kind": "SCALAR",
-                                        "name": "Float",
-                                        "ofType": null
-                                    }
+                                    "kind": "SCALAR",
+                                    "name": "Float",
+                                    "ofType": null
                                 },
                                 "defaultValue": null
                             },
@@ -320,13 +316,9 @@
                                 "name": "lon",
                                 "description": "Longitude of the location",
                                 "type": {
-                                    "kind": "NON_NULL",
-                                    "name": null,
-                                    "ofType": {
-                                        "kind": "SCALAR",
-                                        "name": "Float",
-                                        "ofType": null
-                                    }
+                                    "kind": "SCALAR",
+                                    "name": "Float",
+                                    "ofType": null
                                 },
                                 "defaultValue": null
                             },
@@ -1097,16 +1089,6 @@
                                 "type": {
                                     "kind": "SCALAR",
                                     "name": "Int",
-                                    "ofType": null
-                                },
-                                "defaultValue": null
-                            },
-                            {
-                                "name": "carParkCarLegWeight",
-                                "description": "How expensive it is to drive a car when car&parking, increase this value to make car driving legs shorter. Default value: 1.",
-                                "type": {
-                                    "kind": "SCALAR",
-                                    "name": "Float",
                                     "ofType": null
                                 },
                                 "defaultValue": null
@@ -2682,16 +2664,6 @@
                                     "ofType": null
                                 },
                                 "defaultValue": "2"
-                            },
-                            {
-                                "name": "omitNonPickups",
-                                "description": null,
-                                "type": {
-                                    "kind": "SCALAR",
-                                    "name": "Boolean",
-                                    "ofType": null
-                                },
-                                "defaultValue": "false"
                             }
                         ],
                         "type": {
@@ -2987,16 +2959,6 @@
                                     "ofType": null
                                 },
                                 "defaultValue": null
-                            },
-                            {
-                                "name": "omitNonPickups",
-                                "description": null,
-                                "type": {
-                                    "kind": "SCALAR",
-                                    "name": "Boolean",
-                                    "ofType": null
-                                },
-                                "defaultValue": "false"
                             }
                         ],
                         "type": {
@@ -3044,16 +3006,6 @@
                                     "ofType": null
                                 },
                                 "defaultValue": "5"
-                            },
-                            {
-                                "name": "omitNonPickups",
-                                "description": null,
-                                "type": {
-                                    "kind": "SCALAR",
-                                    "name": "Boolean",
-                                    "ofType": null
-                                },
-                                "defaultValue": "false"
                             }
                         ],
                         "type": {
@@ -3101,16 +3053,6 @@
                                     "ofType": null
                                 },
                                 "defaultValue": "5"
-                            },
-                            {
-                                "name": "omitNonPickups",
-                                "description": null,
-                                "type": {
-                                    "kind": "SCALAR",
-                                    "name": "Boolean",
-                                    "ofType": null
-                                },
-                                "defaultValue": "false"
                             }
                         ],
                         "type": {
@@ -3146,16 +3088,6 @@
                 "kind": "SCALAR",
                 "name": "Long",
                 "description": "Long type",
-                "fields": null,
-                "inputFields": null,
-                "interfaces": null,
-                "enumValues": null,
-                "possibleTypes": null
-            },
-            {
-                "kind": "SCALAR",
-                "name": "Boolean",
-                "description": "Built-in Boolean",
                 "fields": null,
                 "inputFields": null,
                 "interfaces": null,
@@ -3691,6 +3623,16 @@
                 ],
                 "inputFields": null,
                 "interfaces": [],
+                "enumValues": null,
+                "possibleTypes": null
+            },
+            {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "description": "Built-in Boolean",
+                "fields": null,
+                "inputFields": null,
+                "interfaces": null,
                 "enumValues": null,
                 "possibleTypes": null
             },
@@ -4729,16 +4671,6 @@
                                     "ofType": null
                                 },
                                 "defaultValue": "1"
-                            },
-                            {
-                                "name": "omitNonPickups",
-                                "description": null,
-                                "type": {
-                                    "kind": "SCALAR",
-                                    "name": "Boolean",
-                                    "ofType": null
-                                },
-                                "defaultValue": "false"
                             }
                         ],
                         "type": {
@@ -4873,18 +4805,6 @@
                         "type": {
                             "kind": "SCALAR",
                             "name": "Int",
-                            "ofType": null
-                        },
-                        "isDeprecated": false,
-                        "deprecationReason": null
-                    },
-                    {
-                        "name": "state",
-                        "description": null,
-                        "args": [],
-                        "type": {
-                            "kind": "SCALAR",
-                            "name": "String",
                             "ofType": null
                         },
                         "isDeprecated": false,
@@ -6089,54 +6009,6 @@
                         "type": {
                             "kind": "SCALAR",
                             "name": "Long",
-                            "ofType": null
-                        },
-                        "isDeprecated": false,
-                        "deprecationReason": null
-                    },
-                    {
-                        "name": "pathCalculationTime",
-                        "description": null,
-                        "args": [],
-                        "type": {
-                            "kind": "SCALAR",
-                            "name": "Long",
-                            "ofType": null
-                        },
-                        "isDeprecated": false,
-                        "deprecationReason": null
-                    },
-                    {
-                        "name": "precalculationTime",
-                        "description": null,
-                        "args": [],
-                        "type": {
-                            "kind": "SCALAR",
-                            "name": "Long",
-                            "ofType": null
-                        },
-                        "isDeprecated": false,
-                        "deprecationReason": null
-                    },
-                    {
-                        "name": "renderingTime",
-                        "description": null,
-                        "args": [],
-                        "type": {
-                            "kind": "SCALAR",
-                            "name": "Long",
-                            "ofType": null
-                        },
-                        "isDeprecated": false,
-                        "deprecationReason": null
-                    },
-                    {
-                        "name": "timedOut",
-                        "description": null,
-                        "args": [],
-                        "type": {
-                            "kind": "SCALAR",
-                            "name": "Boolean",
                             "ofType": null
                         },
                         "isDeprecated": false,

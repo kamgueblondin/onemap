@@ -164,14 +164,14 @@ export default {
     locationAware: true,
   },
 
-  // TODO: Switch off in autumn
+  // TODO: Switch back in april
   cityBike: {
-    showCityBikes: true,
+    showCityBikes: false,
 
     useUrl: {
-      fi: 'https://www.hsl.fi/kaupunkipyorat',
-      sv: 'https://www.hsl.fi/sv/stadscyklar',
-      en: 'https://www.hsl.fi/en/citybikes',
+      fi: 'https://www.hsl.fi/citybike',
+      sv: 'https://www.hsl.fi/sv/citybike',
+      en: 'https://www.hsl.fi/en/citybike',
     },
 
     infoUrl: {
@@ -276,9 +276,10 @@ export default {
       defaultValue: true,
     },
 
+    // TODO: Switch back in april
     citybike: {
-      availableForSelection: true, // TODO: Turn off in autumn
-      defaultValue: false, // always false
+      availableForSelection: false,
+      defaultValue: false,
     },
 
     airplane: {
@@ -327,12 +328,10 @@ export default {
 
   accessibilityOptions: [
     {
-      messageId: 'accessibility-nolimit',
       displayName: 'Ei rajoitusta',
       value: '0',
     },
     {
-      messageId: 'accessibility-limited',
       displayName: 'Liikun pyörätuolilla',
       value: '1',
     },
@@ -370,9 +369,6 @@ export default {
     },
 
     accessibility: {
-      available: true,
-    },
-    transferpenalty: {
       available: true,
     },
   },
@@ -549,7 +545,6 @@ export default {
     oulu: 'oulu',
     hameenlinna: 'hameenlinna',
     matka: 'matka',
-    tampere: 'tampere',
     mikkeli: 'mikkeli',
     kotka: 'kotka',
     jyvaskyla: 'jyvaskyla',
@@ -562,16 +557,11 @@ export default {
     { id: '10', expr: 'dev-joensuu' },
     { id: '11', expr: 'joensuu' },
     { id: '12', expr: 'dev-turku' },
-    { id: '27', expr: '(turku|foli)' },
+    { id: '13', expr: '(turku|foli)' },
     { id: '14', expr: 'hameenlinna' },
     { id: '15', expr: 'jyvaskyla' },
     { id: '16', expr: 'kuopio' },
-    { id: '17', expr: 'lahti' },
-    { id: '18', expr: 'lappeenranta' },
     { id: '21', expr: 'oulu' },
-    { id: '29', expr: 'kotka' },
-    { id: '31', expr: 'mikkeli' },
-    { id: '35', expr: 'tampere' },
     // put generic expressions last so that they do not match waltti cities
     // e.g. reittiopas.hameenlinna.fi or turku.digitransit.fi
     { id: '5', expr: 'dev.reittiopas' },

@@ -9,50 +9,31 @@ branches:
 cache: yarn
 
 language: node_js
-
-before_install:
-- export TZ=Europe/Helsinki
-
 install: true
-
 services:
   - docker
 
 jobs:
   include:
-
-    - stage: test
-      env: LINT=1
+    - stage: build container
       node_js: "8"
-      script:
-      - yarn install
-      - yarn lint
+      script: test/build.sh
     - stage: test
-      env: FLOW=1
-      node_js: "8"
-      script: test/flow.sh
-
-    - stage: visual
-      env: VISUAL=chrome
+      env: VISUAL=chrome50
       node_js: "8"
       script: test/visual.sh
-    - stage: visual
+    - stage: test
       env: VISUAL=ie11
       node_js: "8"
       script: test/visual.sh
-    - stage: visual
-      env: VISUAL=edge15
-      node_js: "8"
-      script: test/visual.sh
-    - stage: visual
+    - stage: test
       env: VISUAL=safari10
       node_js: "8"
       script: test/visual.sh
-    - stage: visual
-      env: VISUAL=firefox
+    - stage: test
+      env: VISUAL=edge15
       node_js: "8"
       script: test/visual.sh
-
-    - stage: build and deploy container
+    - stage: deploy
       node_js: "8"
       script: test/deploy.sh

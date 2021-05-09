@@ -20,6 +20,15 @@ function checkDependencies() {
     echo "Downloading Selenium..."
     curl -o $SELENIUM_BINARY $SELENIUM_URL
   fi
+
+  ##ff
+  if [ -z "$NOFIREFOX" ]; then
+    if [ ! -f $FIREFOX_BINARY ]; then
+      echo "Downloading Firefox..."
+      curl -o firefox-45.4.0esr.tar.bz2 $FIREFOX_URL
+      tar xjf firefox-45.4.0esr.tar.bz2
+    fi
+  fi
 }
 
 echo "Running flow-tests"
@@ -34,9 +43,9 @@ if [ -z "$CHROMEDRIVER" ]; then CHROMEDRIVER="chromedriver"; fi
 checkDependencies
 
 echo "Starting chromedriver '$CHROMEDRIVER'"
-DBUS_SESSION_BUS_ADDRESS=/dev/null CHROMEDRIVER_VERSION=2.36 $CHROMEDRIVER --verbose --log-path=chromedriver.log &
+DBUS_SESSION_BUS_ADDRESS=/dev/null CHROMEDRIVER_VERSION=2.24 $CHROMEDRIVER --verbose --log-path=chromedriver.log &
 DRIVER_PID=$!
-sleep 3
+sleep 4
 
 echo "Running tests NWENV=$NWENV"
 $NIGHTWATCH_BINARY -c ./test/flow/nightwatch.json -e $NWENV --retries 3

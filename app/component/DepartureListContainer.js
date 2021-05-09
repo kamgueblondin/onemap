@@ -2,18 +2,13 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import Relay from 'react-relay/classic';
 import filter from 'lodash/filter';
+import get from 'lodash/get';
 import moment from 'moment';
 import { Link } from 'react-router';
 import cx from 'classnames';
 import Departure from './Departure';
 import { isBrowser } from '../util/browser';
 import { PREFIX_ROUTES } from '../util/path';
-
-const hasActiveDisruption = (t, alerts) =>
-  filter(
-    alerts,
-    alert => alert.effectiveStartDate < t && t < alert.effectiveEndDate,
-  ).length > 0;
 
 const asDepartures = stoptimes =>
   !stoptimes
@@ -107,10 +102,15 @@ class DepartureListContainer extends Component {
       const id = `${departure.pattern.code}:${departure.stoptime}`;
 
       const classes = {
-        disruption: hasActiveDisruption(
-          departure.stoptime,
-          departure.pattern.route.alerts,
-        ),
+        disruption:
+          filter(
+            departure.pattern.alerts,
+            alert =>
+              alert.effectiveStartDate <= departure.stoptime &&
+              departure.stoptime <= alert.effectiveEndDate &&
+              (get(alert.trip.gtfsId) === null ||
+                get(alert.trip.gtfsId) === get(departure.trip.gtfsId)),
+          ).length > 0,
         canceled: departure.canceled,
       };
 
@@ -120,7 +120,6 @@ class DepartureListContainer extends Component {
           departure={departure}
           showStop={this.props.showStops}
           currentTime={currentTime}
-          hasDisruption={classes.disruption}
           className={cx(classes, this.props.rowClasses)}
           canceled={departure.canceled}
           isArrival={departure.isArrival}
@@ -175,17 +174,19 @@ export default Relay.createContainer(DepartureListContainer, {
           trip {
             gtfsId
             pattern {
+              alerts {
+                effectiveStartDate
+                effectiveEndDate
+                trip {
+                  gtfsId
+                }
+              }
               route {
                 gtfsId
                 shortName
                 longName
                 mode
                 color
-                alerts {
-                  id
-                  effectiveStartDate
-                  effectiveEndDate
-                }
                 agency {
                   name
                 }

@@ -1,6 +1,6 @@
 function clickFavourites() {
   this.api.debug('opening favourites tab');
-  this.api.pause(this.api.globals.pause_ms);
+  this.api.pause(1000);
   this.waitForElementVisible(
     '@favouritePaneSelect',
     this.api.globals.elementVisibleTimeout,
@@ -171,7 +171,7 @@ module.exports = {
       selector: '.favourite-location-name',
     },
     favouriteRoute: {
-      selector: '.vehicle-number',
+      selector: '.favourites .vehicle-number',
     },
     searchResultCurrentLocation: {
       selector: '.search-result.CurrentLocation',

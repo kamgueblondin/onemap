@@ -9,7 +9,7 @@ import cx from 'classnames';
 import { getDistanceToNearestStop } from '../util/geo-utils';
 import RouteStop from './RouteStop';
 
-class RouteStopListContainer extends React.PureComponent {
+class RouteStopListContainer extends React.Component {
   static propTypes = {
     pattern: PropTypes.object.isRequired,
     className: PropTypes.string,
@@ -30,11 +30,7 @@ class RouteStopListContainer extends React.PureComponent {
   }
 
   componentWillReceiveProps({ relay, currentTime }) {
-    const currUnix = this.props.currentTime.unix();
-    const nextUnix = currentTime.unix();
-    if (currUnix !== nextUnix) {
-      relay.setVariables({ currentTime: nextUnix });
-    }
+    relay.setVariables({ currentTime: currentTime.unix() });
   }
 
   setNearestStop = element => {

@@ -7,16 +7,14 @@ import Distance from './Distance';
 import RouteNumber from './RouteNumber';
 import Icon from './Icon';
 import ComponentUsageExample from './ComponentUsageExample';
-import {
-  BIKESTATION_ON,
-  BIKESTATION_OFF,
-  BIKESTATION_CLOSED,
-} from '../util/citybikes';
 
 const BicycleRentalStationRow = (props, context) => {
   let availabilityIcon = null;
 
-  if (props.station.state !== BIKESTATION_ON) {
+  if (
+    props.station.bikesAvailable === 0 &&
+    props.station.spacesAvailable === 0
+  ) {
     availabilityIcon = <Icon img="icon-icon_not-in-use" />;
   } else if (
     props.station.bikesAvailable > context.config.cityBike.fewAvailableCount
@@ -29,10 +27,6 @@ const BicycleRentalStationRow = (props, context) => {
   }
 
   // TODO implement disruption checking
-  // VM: is that needed? new state attribute tells if station is off
-
-  const mode =
-    props.station.state === BIKESTATION_ON ? 'citybike' : 'citybike_off';
 
   return (
     <tr className="next-departure-row-tr">
@@ -41,7 +35,7 @@ const BicycleRentalStationRow = (props, context) => {
       </td>
       <td className="td-route-number">
         <RouteNumber
-          mode={mode}
+          mode="citybike"
           text={props.station.stationId}
           hasDisruption={false}
         />
@@ -88,7 +82,6 @@ const exampleStation1 = {
   name: 'Mannerheimintie',
   bikesAvailable: 12,
   spacesAvailable: 16,
-  state: BIKESTATION_ON,
 };
 
 const exampleStation2 = {
@@ -96,7 +89,6 @@ const exampleStation2 = {
   name: 'Mannerheimintie',
   bikesAvailable: 2,
   spacesAvailable: 16,
-  state: BIKESTATION_ON,
 };
 
 const exampleStation3 = {
@@ -104,23 +96,6 @@ const exampleStation3 = {
   name: 'Mannerheimintie',
   bikesAvailable: 0,
   spacesAvailable: 16,
-  state: BIKESTATION_ON,
-};
-
-const exampleStation4 = {
-  stationId: 'A27',
-  name: 'Mannerheimintie',
-  bikesAvailable: 5,
-  spacesAvailable: 16,
-  state: BIKESTATION_OFF,
-};
-
-const exampleStation5 = {
-  stationId: 'A27',
-  name: 'Mannerheimintie',
-  bikesAvailable: 5,
-  spacesAvailable: 16,
-  state: BIKESTATION_CLOSED,
 };
 
 BicycleRentalStationRow.description = () => (
@@ -146,20 +121,6 @@ BicycleRentalStationRow.description = () => (
         currentTime={1473676196}
       />
     </ComponentUsageExample>
-    <ComponentUsageExample description="station off">
-      <BicycleRentalStationRow
-        station={exampleStation4}
-        distance={256}
-        currentTime={1473676196}
-      />
-    </ComponentUsageExample>
-    <ComponentUsageExample description="station closed">
-      <BicycleRentalStationRow
-        station={exampleStation5}
-        distance={256}
-        currentTime={1473676196}
-      />
-    </ComponentUsageExample>
   </div>
 );
 
@@ -173,7 +134,6 @@ export default Relay.createContainer(BicycleRentalStationRow, {
         stationId
         bikesAvailable
         spacesAvailable
-        state
       }
     `,
   },

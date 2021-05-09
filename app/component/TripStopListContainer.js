@@ -10,7 +10,7 @@ import values from 'lodash/values';
 import TripRouteStop from './TripRouteStop';
 import { getDistanceToNearestStop } from '../util/geo-utils';
 
-class TripStopListContainer extends React.PureComponent {
+class TripStopListContainer extends React.Component {
   static propTypes = {
     trip: PropTypes.object.isRequired,
     className: PropTypes.string,
@@ -18,6 +18,7 @@ class TripStopListContainer extends React.PureComponent {
     locationState: PropTypes.object.isRequired,
     currentTime: PropTypes.object.isRequired,
     tripStart: PropTypes.string.isRequired,
+    fullscreenMap: PropTypes.bool,
   };
 
   static contextTypes = {
@@ -25,20 +26,10 @@ class TripStopListContainer extends React.PureComponent {
     config: PropTypes.object.isRequired,
   };
 
-  constructor(props) {
-    super(props);
-    this.state = { hasScrolled: false };
-  }
-
   componentDidMount() {
-    if (this.context.breakpoint === 'large') {
-      this.scrollToSelectedTailIcon();
-    }
-  }
-
-  componentDidUpdate() {
-    if (this.context.breakpoint === 'large' && !this.state.hasScrolled) {
-      this.scrollToSelectedTailIcon();
+    const el = document.getElementsByClassName('selected-tail-icon')[0];
+    if (el) {
+      el.scrollIntoView();
     }
   }
 
@@ -135,19 +126,12 @@ class TripStopListContainer extends React.PureComponent {
           route={this.props.trip.route.gtfsId}
           last={index === this.props.trip.stoptimesForDate.length - 1}
           first={index === 0}
+          fullscreenMap={this.props.fullscreenMap}
           className={`bp-${this.context.breakpoint}`}
         />
       );
     });
   }
-
-  scrollToSelectedTailIcon = () => {
-    const el = document.getElementsByClassName('selected-tail-icon')[0];
-    if (el) {
-      el.scrollIntoView();
-      this.setState({ hasScrolled: true });
-    }
-  };
 
   render() {
     return (

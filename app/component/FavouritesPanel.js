@@ -94,7 +94,6 @@ const FilteredFavouritesPanel = shouldUpdate(
   (props, nextProps) =>
     nextProps.currentTime !== props.currentTime ||
     nextProps.routes !== props.routes ||
-    nextProps.favouriteLocations !== props.favouriteLocations ||
     nextProps.origin.gps !== props.origin.gps ||
     (!nextProps.origin.gps &&
       (nextProps.origin.lat !== props.origin.lat ||

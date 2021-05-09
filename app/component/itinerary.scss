@@ -23,7 +23,6 @@ $itinerary-tab-switch-height: 48px;
     &.walk { @include getCircleSvg($walk-color, $fill); }
     &.wait { @include getCircleSvg($wait-color, $fill); }
     &.bicycle { @include getCircleSvg($bicycle-color, $fill); }
-    &.bicycle_walk { @include getCircleSvg($walk-color, $fill); }
     &.car { @include getCircleSvg($car-color, $fill); }
     &.via { @include getCircleSvg($walk-color, $fill); }
     &.call { @include getCircleSvg($bus-color, $fill); }
@@ -263,7 +262,6 @@ $itinerary-tab-switch-height: 48px;
     & { @include setModeCircles($walk-color); }
     &.wait { @include setModeCircles($wait-color); }
     &.bicycle { @include setModeCircles($bicycle-color); }
-    &.bicycle_walk { @include setModeCircles($walk-color); }
     &.car { @include setModeCircles($car-color); }
     &.via { @include setModeCircles($walk-color); }
     &.call { @include setModeCircles($bus-color); }
@@ -277,7 +275,7 @@ $itinerary-tab-switch-height: 48px;
     left: 8px;
     border-left: 6px solid;
 
-    &.walk, &.bicycle_walk {
+    &.walk {
       background-image: url('../default/dotted-line-bg.png');
       background-size: 100% auto;
       background-position-y: -3px;
@@ -800,20 +798,12 @@ div.itinerary-container-content {
 
 .vehicle-number-container-v {
         margin-top: 4px;
-        .vehicle-number {
-          mask-image: none;
-          max-width: none;
-        }
   }
 
 .print-itinerary-button-container {
   display: flex;
   padding: 0 $padding-medium;
   justify-content: flex-end;
-}
-
-.mobile .print-itinerary-button-container {
-  display: none;
 }
 
 $font-print-decrease: 0.7;
@@ -978,7 +968,7 @@ $font-print-decrease: 0.7;
     border-left: 6px solid;
     flex-grow: 1;
 
-    &.walk, &.bicycle_walk {
+    &.walk {
       border-color: transparent $walk-color transparent transparent;
       border-style: dotted;
       border-width: 8px;
@@ -1016,7 +1006,7 @@ $font-print-decrease: 0.7;
       border-bottom: none;
       min-height: 11em;
     }
-    &.walk, &.bicycle_walk {
+    &.walk {
       border-bottom: none;
     }
     .itinerary-leg-stopname {
@@ -1054,7 +1044,7 @@ $font-print-decrease: 0.7;
 
   .itinerary-center-right {
     display: none;
-    &.walk, &.bicycle_walk, &.bicycle {
+    &.walk {
       display: block;
       margin-left: auto;
       height: 16em;

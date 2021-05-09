@@ -1,30 +1,29 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import { intlShape } from 'react-intl';
 import Icon from './Icon';
 import ComponentUsageExample from './ComponentUsageExample';
 
 const subIconTemplate = {
   fontSize: '65%',
   position: 'absolute',
-  bottom: '-1px',
-  left: '-6px',
+  bottom: '-0.3em',
+  left: '-0.3em',
 };
-const IconWithIcon = (
-  { id, className, img, subIcon, subIconClassName, color },
-  { intl },
-) => (
+const IconWithIcon = ({
+  id,
+  className,
+  img,
+  subIcon,
+  subIconClassName,
+  color,
+}) => (
   <span style={{ position: 'relative' }} id={id} className={className}>
     <span>
       <Icon color={color} img={img} />
     </span>
     {subIcon && (
-      <span
-        className={subIconClassName}
-        style={subIconTemplate}
-        title={intl.formatMessage({ id: 'disruption' })}
-      >
+      <span className={subIconClassName} style={subIconTemplate}>
         <Icon img={subIcon} />
       </span>
     )}
@@ -73,11 +72,6 @@ IconWithIcon.propTypes = {
   subIcon: PropTypes.string,
   subIconClassName: PropTypes.string,
   color: PropTypes.string,
-};
-
-IconWithIcon.contextTypes = {
-  // eslint-disable-next-line
-  intl: intlShape.isRequired,
 };
 
 IconWithIcon.defaultProps = {

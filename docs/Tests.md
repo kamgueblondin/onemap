@@ -16,7 +16,7 @@ Selenium standalone implementation and BrowserStack tunneling software (automati
 
 ## Running tests
 
-Running the tests starts a local prod server with HSL config to port 8080 (iPhone 6+ on BrowserStack can only use a limited number of ports).
+Running the tests starts a local dev server (with nowatch and HSL config) to port 8000 (iPhone 6+ on BrowserStack can only use a limited number of ports).
 
 Using local firefox
 ```
@@ -30,7 +30,7 @@ npm run test-browserstack -- YOUR_BROWSERSTACK_USERNAME YOUR_BROWSERSTACK_KEY
 
 ## Running a single test locally
 ```
-CONFIG=hsl yarn start
+PORT=8000 npm run dev
 nightwatch -c ./test/flow/nightwatch.json test/flow/tests/itinerary-search/itinerary-search.js
 ```
 
@@ -45,8 +45,7 @@ Test output and screenshots will be generated to 'test_output'
 
 ## Writing tests
 
-At top-level use the [suite](../test/api/suite.js) construct to reuse common test setup code. The browser you get is an upgraded version with useful extra methods,
-such as setCurrentPosition. See other tests for examples.
+At top-level use the [suite](../test/api/suite.js) construct to reuse common test setup code. The browser you get is an upgraded version with useful extra methods, such as setCurrentPosition. See other tests for examples.
 
 The basic structure is then this:
 ```js

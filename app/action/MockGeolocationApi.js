@@ -4,14 +4,14 @@ import range from 'lodash/range';
 
 const debug = d('MockGeolocationApi.js');
 
-export function init(permission, lat, lon) {
+export function init(permission) {
   debug('Position mock activated');
   window.mock = { permission, data: {} };
 
   window.mock.data.position = {
     coords: {
-      latitude: lat || 60.1992,
-      longitude: lon || 24.9402,
+      latitude: 60.1992,
+      longitude: 24.9402,
       heading: 0,
     },
   };
@@ -30,13 +30,12 @@ export function init(permission, lat, lon) {
       const track = range(steps).map(i => {
         const f = i / steps;
         const variation = Math.random() * 0.0001 - 0.00005;
-        const latitude = f * to.latitude + (1 - f) * from.latitude + variation;
-        const longitude =
-          f * to.longitude + (1 - f) * from.longitude + variation;
+        const lat = f * to.latitude + (1 - f) * from.latitude + variation;
+        const lon = f * to.longitude + (1 - f) * from.longitude + variation;
 
         return {
-          latitude,
-          longitude,
+          latitude: lat,
+          longitude: lon,
         };
       });
 
@@ -73,9 +72,9 @@ export function init(permission, lat, lon) {
       }
     },
 
-    setCurrentPosition: (latitude, longitude, heading) => {
-      window.mock.data.position.coords.latitude = latitude;
-      window.mock.data.position.coords.longitude = longitude;
+    setCurrentPosition: (lat, lon, heading) => {
+      window.mock.data.position.coords.latitude = lat;
+      window.mock.data.position.coords.longitude = lon;
 
       if (heading) {
         window.mock.data.position.coords.heading = heading;
@@ -87,15 +86,11 @@ export function init(permission, lat, lon) {
 export const api = {
   watchPosition: success => {
     debug('setting mock interval');
-    let i = 0;
     setInterval(() => {
       if (window.mock) {
         debug('broadcasting position', window.mock.data.position);
         window.mock.permission = 'granted';
-        // debounce does not seem to work within setInterval
-        // so disable debounce once every 5 seconds
-        success(window.mock.data.position, i % 10 === 0);
-        i += 1;
+        success(window.mock.data.position);
       } else {
         debug('window.mock is undefined');
       }

@@ -8,7 +8,7 @@ import ItinerarySummaryListContainer from './ItinerarySummaryListContainer';
 import TimeNavigationButtons from './TimeNavigationButtons';
 import { getRoutePath } from '../util/path';
 import Loading from './Loading';
-import { preparePlanParams, getDefaultOTPModes } from '../util/planParamUtil';
+import { preparePlanParams, getDefaultModes } from '../util/planParamUtil';
 
 class SummaryPlanContainer extends React.Component {
   static propTypes = {
@@ -115,7 +115,7 @@ class SummaryPlanContainer extends React.Component {
       );
 
       const tunedParams = {
-        ...{ modes: getDefaultOTPModes(this.props.config).join(',') },
+        ...{ modes: getDefaultModes(this.props.config).join(',') },
         ...params,
         numItineraries:
           this.props.itineraries.length > 0 ? this.props.itineraries.length : 3,
@@ -184,7 +184,7 @@ class SummaryPlanContainer extends React.Component {
       );
 
       const tunedParams = {
-        ...{ modes: getDefaultOTPModes(this.props.config).join(',') },
+        ...{ modes: getDefaultModes(this.props.config).join(',') },
         ...params,
         numItineraries:
           this.props.itineraries.length > 0 ? this.props.itineraries.length : 3,
@@ -244,8 +244,7 @@ class SummaryPlanContainer extends React.Component {
       $date: String!,
       $time: String!,
       $arriveBy: Boolean!,
-      $modes: String!,
-      $transferPenalty: Int!,
+      $modes: String!
     ) { viewer {
         plan(
           fromPlace:$fromPlace,
@@ -264,7 +263,6 @@ class SummaryPlanContainer extends React.Component {
           arriveBy:$arriveBy,
           preferred:$preferred,
           modes:$modes
-          transferPenalty:$transferPenalty,
         ) {itineraries {startTime,endTime}}
       }
     }`;
